@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klasseromsskjerm Grok V4</title>
+    <style>
+        @font-face {
+            font-family: 'Helvetica Neue';
+            src: local('Helvetica Neue'), local('Arial'), sans-serif;
+        }
+        body {
+            background-color: #222;
+            color: white;
+            font-family: 'Helvetica Neue', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+            margin: 0;
+        }
+        .date-time {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 1.5rem;
+            font-weight: 100;
+            color: #aaa;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .date-time .clickable {
+            cursor: pointer;
+        }
+        .reset-button {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            font-size: 1.5rem;
+            font-weight: 100;
+            color: #aaa;
+            background-color: #333;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            cursor: pointer;
+            display: none;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .thin {
+            font-weight: 100;
+            font-size: 2rem;
+        }
+        .bold {
+            font-weight: 900;
+            font-size: 6rem;
+            text-transform: uppercase;
+            white-space: pre-line;
+        }
+        .countdown {
+            font-size: 2rem;
+            margin-top: 10px;
+        }
+        .timeline {
+            position: absolute;
+            bottom: 20px;
+            width: 90%;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .event-box {
+            height: 100%;
+            background-color: #555;
+            color: #aaa;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            text-align: center;
+            white-space: pre-line;
+            position: absolute;
+        }
+        .event-box.break {
+            background-color: #777;
+            color: #fff;
+        }
+        .event-box.active {
+            background-color: #ddd;
+            color: black;
+        }
+        .marker {
+            position: absolute;
+            width: 2px;
+            height: 60px;
+            background-color: red;
+            top: -5px;
+            transition: left 1s linear;
+            z-index: 10; /* Markøren foran boksene */
+        }
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: #333;
+            color: #aaa;
+            border: 1px solid #555;
+            padding: 5px;
+            display: none;
+            z-index: 1000;
+        }
+        .dropdown-list.show {
+            display: block;
+        }
+        .dropdown-list button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            color: #aaa;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .dropdown-list button:hover {
+            background-color: #555;
+        }
+        /* Stiler for nedtelling-verktøyet */
+        .timer-toggle {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #aaa;
+            z-index: 1001;
+        }
+        .timer-panel {
+            position: absolute;
+            top: 60px;
+            left: 30px;
+            background-color: #333;
+            padding: 20px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1000;
+            width: 150px;
+        }
+        .timer-panel.active {
+            display: flex;
+        }
+        .timer-circle {
+            width: 156px; /* 25% større enn 125px (125 * 1.25) */
+            height: 156px; /* 25% større */
+            margin-bottom: 20px; /* Økt avstand til input-felt */
+        }
+        .timer-circle svg {
+            width: 100%;
+            height: 100%;
+        }
+        .timer-circle .circle-bg {
+            fill: none;
+            stroke: #555;
+            stroke-width: 5;
+        }
+        .timer-circle .circle-fill {
+            fill: none;
+            stroke: #ff4500;
+            stroke-width: 5;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .timer-input {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 10px;
+            width: 100%;
+            text-align: right;
+        }
+        .timer-input div {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 5px;
+        }
+        .timer-input label {
+            font-size: 1rem;
+            color: #aaa;
+            text-align: right;
+            min-width: 50px;
+        }
+        .timer-input input {
+            width: 50px;
+            padding: 5px;
+            background-color: #444;
+            border: 1px solid #555;
+            color: white;
+            text-align: center;
+        }
+        #timer-start {
+            padding: 5px 10px;
+            background-color: #555;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        #timer-start:hover {
+            background-color: #777;
+        }
+        #timer-display {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 10px; /* Plassert under sirkel */
+        }
+        #reset-text {
+            font-size: 1rem;
+            color: #aaa;
+            cursor: pointer;
+            display: none;
+            margin-top: 5px;
+        }
+        #reset-text:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="timer-toggle" id="timer-toggle">🕒</div>
+    <div class="timer-panel" id="timer-panel">
+        <div class="timer-circle">
+            <svg>
+                <circle class="circle-bg" cx="78" cy="78" r="70.3125"></circle> <!-- 25% større radius (56.25 * 1.25) -->
+                <circle class="circle-fill" cx="78" cy="78" r="70.3125"></circle>
+            </svg>
+        </div>
+        <div id="timer-display">00:00:00</div>
+        <div class="timer-input">
+            <div><label>timer</label><input type="number" id="timer-hours" min="0" max="23" value="0"></div>
+            <div><label>minutter</label><input type="number" id="timer-minutes" min="0" max="59" value="0"></div>
+            <div><label>sekunder</label><input type="number" id="timer-seconds" min="0" max="59" value="0"></div>
+        </div>
+        <button id="timer-start">START</button>
+        <div id="reset-text" style="display: none;">Nullstill</div>
+    </div>
+    <button class="reset-button" id="reset-button">Reset</button>
+    <div class="date-time" id="date-time">
+        <span class="clickable" id="day-display">Laster...</span>
+        <span id="date-display">Laster...</span>
+        <span class="clickable" id="hour-display">Laster...</span>
+        <span>:</span>
+        <span class="clickable" id="minute-display">Laster...</span>
+    </div>
+    <div class="container" id="main-container">
+        <div class="thin" id="label">Akkurat nå:</div>
+        <div id="current-activity" class="bold">Laster...</div>
+        <div class="thin countdown" id="countdown-container">Neste pause om <span id="countdown">--</span> min</div>
+    </div>
+    <div class="timeline" id="timeline"></div>
+
+    <script>
+        const schedule = {
+            "Mandag": [
+                { time: "08:30", activity: "ANDAKT / NORSK" },
+                { time: "09:40", activity: "KRLE" },
+                { time: "11:25", activity: "NORSK 6 / MATTE 7" },
+                { time: "12:35", activity: "NATUR/FYS 30" },
+                { time: "13:35", activity: "MATTE 6 / NORSK 7", end: "14:30" }
+            ],
+            "Tirsdag": [
+                { time: "08:30", activity: "ANDAKT / MATTE 6 / NORSK 7" },
+                { time: "09:40", activity: "SAMFUNNSFAG" },
+                { time: "11:25", activity: "ENGELSK", end: "12:25" },
+                { time: "12:35", activity: "FHL/FYS 15", end: "13:35" }
+            ],
+            "Onsdag": [
+                { time: "08:30", activity: "ANDAKT / SAMFUNNSFAG" },
+                { time: "09:40", activity: "ENGELSK" },
+                { time: "11:25", activity: "NORSK" },
+                { time: "12:35", activity: "GYM", end: "13:35" }
+            ],
+            "Torsdag": [
+                { time: "08:30", activity: "NATUR/FYS 30" },
+                { time: "09:40", activity: "M&H 6 / K&H 7" },
+                { time: "11:25", activity: "M&H 6 / K&H 7" },
+                { time: "12:35", activity: "K&H 6 / GYM 7" },
+                { time: "13:35", activity: "K&H 6 / MATTE 7", end: "14:30" }
+            ],
+            "Fredag": [
+                { time: "08:30", activity: "ANDAKT / NORSK 6 / MATTE 7" },
+                { time: "09:40", activity: "MATTE 6 / NORSK 7" },
+                { time: "11:25", activity: "MUSIKK" },
+                { time: "12:35", activity: "MUSIKK" },
+                { time: "13:35", activity: "KRLE", end: "14:30" }
+            ]
+        };
+
+        const breaks = {
+            "Mandag": [
+                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "10:40", activity: "Matpause", end: "10:55" },
+                { time: "10:55", activity: "Storefri", end: "11:25" },
+                { time: "12:25", activity: "Pause", end: "12:35" }
+            ],
+            "Tirsdag": [
+                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "10:40", activity: "Matpause", end: "10:55" },
+                { time: "10:55", activity: "Storefri", end: "11:25" },
+                { time: "12:25", activity: "Pause", end: "12:35" }
+            ],
+            "Onsdag": [
+                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "10:40", activity: "Matpause", end: "10:55" },
+                { time: "10:55", activity: "Storefri", end: "11:25" },
+                { time: "12:25", activity: "Pause", end: "12:35" }
+            ],
+            "Torsdag": [
+                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "10:40", activity: "Matpause", end: "10:55" },
+                { time: "10:55", activity: "Storefri", end: "11:25" },
+                { time: "12:25", activity: "Pause", end: "12:35" }
+            ],
+            "Fredag": [
+                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "10:40", activity: "Matpause", end: "10:55" },
+                { time: "10:55", activity: "Storefri", end: "11:25" },
+                { time: "12:25", activity: "Pause", end: "12:35" }
+            ]
+        };
+
+        function getMinutesFromTime(timeStr) {
+            const [hours, minutes] = timeStr.split(":").map(Number);
+            return hours * 60 + minutes;
+        }
+
+        function getOsloTimeAndDay() {
+            const now = new Date();
+            const utcHours = now.getUTCHours();
+            const utcMinutes = now.getUTCMinutes();
+            const osloOffset = 1; // CET, ingen sommertid i mars
+            let osloHours = (utcHours + osloOffset) % 24;
+            if (osloHours < 0) osloHours += 24;
+            const realOsloTime = `${osloHours.toString().padStart(2, '0')}:${utcMinutes.toString().padStart(2, '0')}`;
+            let realDay = new Intl.DateTimeFormat('no-NO', { 
+                weekday: 'long', 
+                timeZone: 'Europe/Oslo' 
+            }).format(now);
+            realDay = realDay.charAt(0).toUpperCase() + realDay.slice(1).toLowerCase();
+
+            const dayDisplay = document.getElementById("day-display");
+            const hourDisplay = document.getElementById("hour-display");
+            const minuteDisplay = document.getElementById("minute-display");
+            const osloTime = hourDisplay.textContent && minuteDisplay.textContent ? 
+                `${hourDisplay.textContent}:${minuteDisplay.textContent}` : realOsloTime;
+
+            return { osloTime, currentDay: dayDisplay.textContent || realDay, realDay, realOsloTime };
+        }
+
+        function createTimeline(todaySchedule, breakSchedule, currentMinutes, useRealTime) {
+            const timeline = document.getElementById("timeline");
+            timeline.innerHTML = '<div class="marker" id="marker"></div>';
+
+            const { currentDay } = getOsloTimeAndDay();
+            const schoolDayDuration = ["Mandag", "Torsdag", "Fredag"].includes(currentDay) ? 360 : 305;
+            const schoolDayStart = getMinutesFromTime("08:30");
+            const schoolDayEnd = schoolDayStart + schoolDayDuration;
+
+            const events = [...todaySchedule.map(e => ({ ...e, type: "class" }))];
+            breakSchedule.forEach(breakEvent => {
+                if (getMinutesFromTime(breakEvent.time) < schoolDayEnd) {
+                    events.push({ ...breakEvent, type: "break" });
+                }
+            });
+            events.sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
+
+            const totalEvents = events.length;
+            const gapPercent = totalEvents > 1 ? (0.5 / schoolDayDuration) * 100 : 0;
+
+            events.forEach((event, index) => {
+                const startTime = getMinutesFromTime(event.time);
+                let endTime = event.end ? getMinutesFromTime(event.end) : 
+                    (index + 1 < events.length ? getMinutesFromTime(events[index + 1].time) : schoolDayEnd);
+                const duration = endTime - startTime;
+                const widthPercent = (duration / schoolDayDuration) * 100 - (totalEvents > 1 ? gapPercent : 0);
+                const position = startTime - schoolDayStart;
+                const leftPercent = (position / schoolDayDuration) * 100 + (index * gapPercent);
+
+                const box = document.createElement("div");
+                box.className = `event-box ${event.type === "break" ? "break" : ""}`;
+                box.style.width = `${widthPercent}%`;
+                box.style.left = `${leftPercent}%`;
+                box.textContent = event.activity;
+                if (currentMinutes >= startTime && currentMinutes < endTime) {
+                    box.classList.add("active");
+                }
+                timeline.appendChild(box);
+            });
+
+            const marker = document.getElementById("marker");
+            const markerTime = useRealTime ? getMinutesFromTime(getOsloTimeAndDay().realOsloTime) : currentMinutes;
+            let markerPosition = markerTime < schoolDayStart ? 0 : 
+                markerTime >= schoolDayEnd ? 100 : ((markerTime - schoolDayStart) / schoolDayDuration) * 100;
+            marker.style.left = `${markerPosition}%`;
+        }
+
+        function updateActivityAndCountdown() {
+            const { osloTime, currentDay, realDay, realOsloTime } = getOsloTimeAndDay();
+            const dayDisplay = document.getElementById("day-display");
+            const hourDisplay = document.getElementById("hour-display");
+            const minuteDisplay = document.getElementById("minute-display");
+
+            const useRealTime = dayDisplay.dataset.changed === "false" && 
+                                hourDisplay.dataset.changed === "false" && 
+                                minuteDisplay.dataset.changed === "false";
+            const currentTime = useRealTime ? realOsloTime : osloTime;
+            const currentMinutes = getMinutesFromTime(currentTime);
+
+            let todaySchedule = schedule[currentDay] || [];
+            let breakSchedule = breaks[currentDay] || [];
+            let currentActivity = "FRI";
+            let countdownText = "";
+            const firstClassTime = todaySchedule.length ? getMinutesFromTime(todaySchedule[0].time) : 24 * 60;
+            const schoolDayDuration = ["Mandag", "Torsdag", "Fredag"].includes(currentDay) ? 360 : 305;
+            const schoolDayEnd = todaySchedule.length ? getMinutesFromTime(todaySchedule[0].time) + schoolDayDuration : 24 * 60;
+
+            const resetButton = document.getElementById("reset-button");
+            const isDifferent = (dayDisplay.dataset.changed === "true" || 
+                                hourDisplay.dataset.changed === "true" || 
+                                minuteDisplay.dataset.changed === "true") && 
+                                (currentDay !== realDay || currentTime !== realOsloTime);
+            resetButton.style.display = isDifferent ? "block" : "none";
+
+            if (dayDisplay && currentDay) dayDisplay.textContent = currentDay;
+            if (hourDisplay && minuteDisplay && currentTime) {
+                const [hours, minutes] = currentTime.split(':');
+                hourDisplay.textContent = hours;
+                minuteDisplay.textContent = minutes;
+            }
+
+            for (let i = 0; i < todaySchedule.length; i++) {
+                const startTime = getMinutesFromTime(todaySchedule[i].time);
+                const endTime = todaySchedule[i].end ? getMinutesFromTime(todaySchedule[i].end) : 
+                    (i + 1 < todaySchedule.length ? getMinutesFromTime(todaySchedule[i + 1].time) : schoolDayEnd);
+                if (currentMinutes >= startTime && currentMinutes < endTime) {
+                    currentActivity = todaySchedule[i].activity;
+                    break;
+                }
+            }
+
+            for (let breakEvent of breakSchedule) {
+                const startTime = getMinutesFromTime(breakEvent.time);
+                const endTime = getMinutesFromTime(breakEvent.end);
+                if (currentMinutes >= startTime && currentMinutes < endTime) {
+                    currentActivity = breakEvent.activity;
+                    break;
+                }
+            }
+
+            if (currentMinutes >= schoolDayEnd) {
+                document.getElementById("main-container").innerHTML = currentDay === "Fredag" ?
+                    '<div id="current-activity" class="bold">Ha en fantastisk helg!</div>' :
+                    '<div id="current-activity" class="bold">Skoledagen er over!\nNyt dagen!</div>';
+                document.getElementById("timeline").style.display = isWeekend() ? "none" : "flex";
+                createTimeline(todaySchedule, breakSchedule, currentMinutes, useRealTime);
+                return;
+            } else if (currentMinutes < firstClassTime) {
+                document.getElementById("main-container").innerHTML = `
+                    <div class="thin" id="label">Skoledagen begynner om</div>
+                    <div id="current-activity" class="bold"></div>
+                    <div class="thin countdown" id="countdown-container">${firstClassTime - currentMinutes} min</div>`;
+                document.getElementById("timeline").style.display = isWeekend() ? "none" : "flex";
+                createTimeline(todaySchedule, breakSchedule, currentMinutes, useRealTime);
+                return;
+            } else {
+                document.getElementById("main-container").innerHTML = `
+                    <div class="thin" id="label">Akkurat nå:</div>
+                    <div id="current-activity" class="bold">${currentActivity}</div>
+                    <div class="thin countdown" id="countdown-container"></div>`;
+                document.getElementById("timeline").style.display = isWeekend() ? "none" : "flex";
+            }
+
+            let nextEventTime = null;
+            let isBreak = false;
+
+            if (["Pause", "Matpause", "Storefri"].includes(currentActivity)) {
+                for (let i = 0; i < todaySchedule.length; i++) {
+                    const classTime = getMinutesFromTime(todaySchedule[i].time);
+                    if (currentMinutes < classTime && classTime < schoolDayEnd && (!nextEventTime || classTime < nextEventTime)) {
+                        nextEventTime = classTime;
+                        isBreak = false;
+                    }
+                }
+                countdownText = nextEventTime ? 
+                    `Det er ${nextEventTime - currentMinutes} min. til neste time` : 
+                    "Ingen flere timer i dag";
+            } else {
+                for (let breakEvent of breakSchedule) {
+                    const breakStart = getMinutesFromTime(breakEvent.time);
+                    if (currentMinutes < breakStart && breakStart < schoolDayEnd && (!nextEventTime || breakStart < nextEventTime)) {
+                        nextEventTime = breakStart;
+                        isBreak = true;
+                    }
+                }
+                if (!nextEventTime && currentMinutes < schoolDayEnd) {
+                    for (let i = 0; i < todaySchedule.length; i++) {
+                        const classTime = getMinutesFromTime(todaySchedule[i].time);
+                        if (currentMinutes < classTime && classTime <= schoolDayEnd && (!nextEventTime || classTime < nextEventTime)) {
+                            nextEventTime = classTime;
+                            isBreak = false;
+                        }
+                    }
+                }
+                if (nextEventTime) {
+                    const minutesLeft = nextEventTime - currentMinutes;
+                    const isLastActivity = todaySchedule.length && todaySchedule[todaySchedule.length - 1].activity === currentActivity && 
+                                          currentMinutes >= getMinutesFromTime(todaySchedule[todaySchedule.length - 1].time);
+                    countdownText = isLastActivity ? 
+                        (currentDay === "Fredag" ? `Det er helg om ${minutesLeft} min.` : `Skoledagen er over om ${minutesLeft} min.`) :
+                        `Neste pause om ${minutesLeft} min`;
+                } else if (todaySchedule.length && todaySchedule[todaySchedule.length - 1].activity === currentActivity && 
+                           currentMinutes >= getMinutesFromTime(todaySchedule[todaySchedule.length - 1].time)) {
+                    const minutesLeft = schoolDayEnd - currentMinutes;
+                    countdownText = currentDay === "Fredag" ? `Det er helg om ${minutesLeft} min.` : `Skoledagen er over om ${minutesLeft} min.`;
+                }
+            }
+
+            document.getElementById("countdown-container").textContent = countdownText;
+            createTimeline(todaySchedule, breakSchedule, currentMinutes, useRealTime);
+        }
+
+        function updateDateTime() {
+            const { osloTime, currentDay, realDay, realOsloTime } = getOsloTimeAndDay();
+            if (!realOsloTime || !realDay) return;
+
+            const dayDisplay = document.getElementById("day-display");
+            const dateElement = document.getElementById("date-display");
+            const hourDisplay = document.getElementById("hour-display");
+            const minuteDisplay = document.getElementById("minute-display");
+
+            if (dayDisplay && dateElement && hourDisplay && minuteDisplay) {
+                const now = new Date();
+                const osloFormatter = new Intl.DateTimeFormat('no-NO', {
+                    day: 'numeric',
+                    month: 'long',
+                    timeZone: 'Europe/Oslo'
+                });
+                const parts = osloFormatter.formatToParts(now);
+                const day = parts.find(p => p.type === 'day').value;
+                const month = parts.find(p => p.type === 'month').value;
+                dayDisplay.textContent = currentDay || realDay;
+                dateElement.textContent = `${day}. ${month}`;
+                const useRealTime = dayDisplay.dataset.changed === "false" && 
+                                    hourDisplay.dataset.changed === "false" && 
+                                    minuteDisplay.dataset.changed === "false";
+                if (useRealTime) {
+                    const [hours, minutes] = realOsloTime.split(':');
+                    hourDisplay.textContent = hours;
+                    minuteDisplay.textContent = minutes;
+                }
+            }
+        }
+
+        function resetToRealTime() {
+            const { realDay, realOsloTime } = getOsloTimeAndDay();
+            const dayDisplay = document.getElementById("day-display");
+            const hourDisplay = document.getElementById("hour-display");
+            const minuteDisplay = document.getElementById("minute-display");
+            dayDisplay.textContent = realDay;
+            const [realHour, realMinute] = realOsloTime.split(':');
+            hourDisplay.textContent = realHour;
+            minuteDisplay.textContent = (Math.round(parseInt(realMinute) / 5) * 5).toString().padStart(2, '0');
+            dayDisplay.dataset.changed = "false";
+            hourDisplay.dataset.changed = "false";
+            minuteDisplay.dataset.changed = "false";
+            updateActivityAndCountdown();
+            updateDateTime();
+        }
+
+        function isWeekend() {
+            const now = new Date();
+            const day = now.getDay();
+            return day === 0 || day === 6;
+        }
+
+        function createDropdown(elementId, options, onChange) {
+            const displayElement = document.getElementById(elementId + "-display");
+            const dropdown = document.createElement("div");
+            dropdown.className = "dropdown-list";
+            dropdown.id = elementId + "-dropdown";
+
+            options.forEach(option => {
+                const button = document.createElement("button");
+                button.textContent = option;
+                button.addEventListener("click", () => {
+                    onChange(option);
+                    displayElement.textContent = option;
+                    displayElement.dataset.changed = "true";
+                    dropdown.classList.remove("show");
+                    updateActivityAndCountdown();
+                    updateDateTime();
+                });
+                dropdown.appendChild(button);
+            });
+
+            displayElement.parentNode.appendChild(dropdown);
+            displayElement.addEventListener("click", (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle("show");
+            });
+        }
+
+        // Nedtelling-verktøy
+        const timerToggle = document.getElementById('timer-toggle');
+        const timerPanel = document.getElementById('timer-panel');
+        const timerHours = document.getElementById('timer-hours');
+        const timerMinutes = document.getElementById('timer-minutes');
+        const timerSeconds = document.getElementById('timer-seconds');
+        const timerStart = document.getElementById('timer-start');
+        const circleFill = document.querySelector('.timer-circle .circle-fill');
+        const timerDisplay = document.getElementById('timer-display');
+        const resetText = document.getElementById('reset-text');
+
+        let timerInterval;
+        let totalTime = 0;
+        let remainingTime = 0;
+        let isPaused = false;
+
+        // Sett sirkelen til tom ved oppstart av panelet
+        timerPanel.addEventListener('transitionend', () => {
+            if (timerPanel.classList.contains('active') && !timerInterval) {
+                const circumference = 2 * Math.PI * 70.3125;
+                circleFill.style.strokeDasharray = `${circumference} ${circumference}`;
+                circleFill.style.strokeDashoffset = circumference;
+                timerStart.textContent = 'START';
+                resetText.style.display = 'none';
+            }
+        });
+
+        timerToggle.addEventListener('click', () => {
+            timerPanel.classList.toggle('active');
+            if (!timerPanel.classList.contains('active') && timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerDisplay.textContent = "00:00:00";
+            }
+        });
+
+        timerStart.addEventListener('click', () => {
+            const hours = parseInt(timerHours.value) || 0;
+            const minutes = parseInt(timerMinutes.value) || 0;
+            const seconds = parseInt(timerSeconds.value) || 0;
+
+            totalTime = (hours * 3600) + (minutes * 60) + seconds;
+
+            if (totalTime > 0) {
+                if (!timerInterval) {
+                    // Start ny timer
+                    remainingTime = totalTime;
+                    const circumference = 2 * Math.PI * 70.3125;
+                    circleFill.style.strokeDasharray = `${circumference} ${circumference}`;
+                    circleFill.style.strokeDashoffset = circumference; // Start tom
+                    updateTimerDisplay();
+                    timerInterval = setInterval(updateTimer, 1000);
+                    timerStart.textContent = 'PAUSE';
+                    resetText.style.display = 'none';
+                } else if (!isPaused) {
+                    // Pause timer
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    isPaused = true;
+                    timerStart.textContent = 'START';
+                    resetText.style.display = 'block';
+                } else {
+                    // Gjenoppta timer
+                    isPaused = false;
+                    timerInterval = setInterval(updateTimer, 1000);
+                    timerStart.textContent = 'PAUSE';
+                    resetText.style.display = 'none';
+                }
+            }
+        });
+
+        resetText.addEventListener('click', () => {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+            remainingTime = 0;
+            totalTime = 0;
+            const circumference = 2 * Math.PI * 70.3125;
+            circleFill.style.strokeDashoffset = circumference; // Tilbake til tom
+            timerDisplay.textContent = "00:00:00";
+            timerStart.textContent = 'START';
+            resetText.style.display = 'none';
+        });
+
+        function updateTimer() {
+            if (remainingTime > 0) {
+                remainingTime--;
+                updateTimerDisplay();
+            } else {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerDisplay.textContent = "00:00:00";
+                const circumference = 2 * Math.PI * 70.3125;
+                circleFill.style.strokeDashoffset = circumference; // Tilbake til tom
+                timerStart.textContent = 'START';
+                resetText.style.display = 'block';
+            }
+        }
+
+        function updateTimerDisplay() {
+            const hours = Math.floor(remainingTime / 3600);
+            const minutes = Math.floor((remainingTime % 3600) / 60);
+            const seconds = remainingTime % 60;
+            timerDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            const circumference = 2 * Math.PI * 70.3125;
+            const progress = ((totalTime - remainingTime) / totalTime) * circumference;
+            circleFill.style.strokeDashoffset = circumference - progress; // Fyll jevnt
+        }
+
+        document.addEventListener("click", (event) => {
+            if (!event.target.matches('.clickable') && !event.target.matches('.dropdown-list button')) {
+                document.querySelectorAll(".dropdown-list.show").forEach(dropdown => {
+                    dropdown.classList.remove("show");
+                });
+            }
+        });
+
+        document.getElementById("reset-button").addEventListener("click", resetToRealTime);
+
+        createDropdown("day", Object.keys(schedule), (selectedDay) => {
+            document.getElementById("day-display").textContent = selectedDay;
+        });
+
+        createDropdown("hour", Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')), (selectedHour) => {
+            document.getElementById("hour-display").textContent = selectedHour;
+        });
+
+        createDropdown("minute", Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0')), (selectedMinute) => {
+            document.getElementById("minute-display").textContent = selectedMinute;
+        });
+
+        const { realDay, realOsloTime } = getOsloTimeAndDay();
+        document.getElementById("day-display").textContent = realDay;
+        const [realHour, realMinute] = realOsloTime.split(':');
+        document.getElementById("hour-display").textContent = realHour;
+        document.getElementById("minute-display").textContent = (Math.round(parseInt(realMinute) / 5) * 5).toString().padStart(2, '0');
+        document.getElementById("day-display").dataset.changed = "false";
+        document.getElementById("hour-display").dataset.changed = "false";
+        document.getElementById("minute-display").dataset.changed = "false";
+
+        setInterval(updateActivityAndCountdown, 1000);
+        setInterval(updateDateTime, 1000);
+        updateActivityAndCountdown();
+        updateDateTime();
+    </script>
+</body>
+</html>
