@@ -163,9 +163,9 @@
             display: flex;
         }
         .timer-circle {
-            width: 156px; /* 25% større enn 125px (125 * 1.25) */
-            height: 156px; /* 25% større */
-            margin-bottom: 20px; /* Økt avstand til input-felt */
+            width: 156px;
+            height: 156px;
+            margin-bottom: 20px;
         }
         .timer-circle svg {
             width: 100%;
@@ -226,7 +226,7 @@
         #timer-display {
             text-align: center;
             font-size: 1.2rem;
-            margin-bottom: 10px; /* Plassert under sirkel */
+            margin-bottom: 10px;
         }
         #reset-text {
             font-size: 1rem;
@@ -245,7 +245,7 @@
     <div class="timer-panel" id="timer-panel">
         <div class="timer-circle">
             <svg>
-                <circle class="circle-bg" cx="78" cy="78" r="70.3125"></circle> <!-- 25% større radius (56.25 * 1.25) -->
+                <circle class="circle-bg" cx="78" cy="78" r="70.3125"></circle>
                 <circle class="circle-fill" cx="78" cy="78" r="70.3125"></circle>
             </svg>
         </div>
@@ -269,7 +269,7 @@
     <div class="container" id="main-container">
         <div class="thin" id="label">Akkurat nå:</div>
         <div id="current-activity" class="bold">Laster...</div>
-        <div class="thin countdown" id="countdown-container">Neste pause om <span id="countdown">--</span> min</div>
+        <div class="thin countdown" id="countdown-container">Neste pause om <span id="countdown">--</span> min.</div>
     </div>
     <div class="timeline" id="timeline"></div>
 
@@ -452,6 +452,16 @@
                 minuteDisplay.textContent = minutes;
             }
 
+            // Sjekk om det er ekte helg og live-visning
+            const now = new Date();
+            const realDayOfWeek = now.getDay(); // 0 = Søndag, 6 = Lørdag
+            const isRealWeekend = realDayOfWeek === 0 || realDayOfWeek === 6;
+            if (useRealTime && isRealWeekend) {
+                document.getElementById("main-container").innerHTML = '<div id="current-activity" class="bold">Ha en fantastisk helg!</div>';
+                document.getElementById("timeline").style.display = "none";
+                return;
+            }
+
             for (let i = 0; i < todaySchedule.length; i++) {
                 const startTime = getMinutesFromTime(todaySchedule[i].time);
                 const endTime = todaySchedule[i].end ? getMinutesFromTime(todaySchedule[i].end) : 
@@ -475,15 +485,15 @@
                 document.getElementById("main-container").innerHTML = currentDay === "Fredag" ?
                     '<div id="current-activity" class="bold">Ha en fantastisk helg!</div>' :
                     '<div id="current-activity" class="bold">Skoledagen er over!\nNyt dagen!</div>';
-                document.getElementById("timeline").style.display = isWeekend() ? "none" : "flex";
+                document.getElementById("timeline").style.display = "flex";
                 createTimeline(todaySchedule, breakSchedule, currentMinutes, useRealTime);
                 return;
             } else if (currentMinutes < firstClassTime) {
                 document.getElementById("main-container").innerHTML = `
                     <div class="thin" id="label">Skoledagen begynner om</div>
                     <div id="current-activity" class="bold"></div>
-                    <div class="thin countdown" id="countdown-container">${firstClassTime - currentMinutes} min</div>`;
-                document.getElementById("timeline").style.display = isWeekend() ? "none" : "flex";
+                    <div class="thin countdown" id="countdown-container">${firstClassTime - currentMinutes} min.</div>`;
+                document.getElementById("timeline").style.display = "flex";
                 createTimeline(todaySchedule, breakSchedule, currentMinutes, useRealTime);
                 return;
             } else {
@@ -491,29 +501,31 @@
                     <div class="thin" id="label">Akkurat nå:</div>
                     <div id="current-activity" class="bold">${currentActivity}</div>
                     <div class="thin countdown" id="countdown-container"></div>`;
-                document.getElementById("timeline").style.display = isWeekend() ? "none" : "flex";
+                document.getElementById("timeline").style.display = "flex";
             }
 
             let nextEventTime = null;
-            let isBreak = false;
+            let isNextBreak = false;
 
             if (["Pause", "Matpause", "Storefri"].includes(currentActivity)) {
+                // Hvis det er en pause, finn neste time
                 for (let i = 0; i < todaySchedule.length; i++) {
                     const classTime = getMinutesFromTime(todaySchedule[i].time);
                     if (currentMinutes < classTime && classTime < schoolDayEnd && (!nextEventTime || classTime < nextEventTime)) {
                         nextEventTime = classTime;
-                        isBreak = false;
+                        isNextBreak = false;
                     }
                 }
                 countdownText = nextEventTime ? 
-                    `Det er ${nextEventTime - currentMinutes} min. til neste time` : 
-                    "Ingen flere timer i dag";
+                    `Neste time om ${nextEventTime - currentMinutes} min.` : 
+                    "Ingen flere timer i dag.";
             } else {
+                // Hvis det er en time, finn neste pause eller neste time
                 for (let breakEvent of breakSchedule) {
                     const breakStart = getMinutesFromTime(breakEvent.time);
                     if (currentMinutes < breakStart && breakStart < schoolDayEnd && (!nextEventTime || breakStart < nextEventTime)) {
                         nextEventTime = breakStart;
-                        isBreak = true;
+                        isNextBreak = true;
                     }
                 }
                 if (!nextEventTime && currentMinutes < schoolDayEnd) {
@@ -521,7 +533,7 @@
                         const classTime = getMinutesFromTime(todaySchedule[i].time);
                         if (currentMinutes < classTime && classTime <= schoolDayEnd && (!nextEventTime || classTime < nextEventTime)) {
                             nextEventTime = classTime;
-                            isBreak = false;
+                            isNextBreak = false;
                         }
                     }
                 }
@@ -531,7 +543,7 @@
                                           currentMinutes >= getMinutesFromTime(todaySchedule[todaySchedule.length - 1].time);
                     countdownText = isLastActivity ? 
                         (currentDay === "Fredag" ? `Det er helg om ${minutesLeft} min.` : `Skoledagen er over om ${minutesLeft} min.`) :
-                        `Neste pause om ${minutesLeft} min`;
+                        (isNextBreak ? `Neste pause om ${minutesLeft} min.` : `Neste time om ${minutesLeft} min.`);
                 } else if (todaySchedule.length && todaySchedule[todaySchedule.length - 1].activity === currentActivity && 
                            currentMinutes >= getMinutesFromTime(todaySchedule[todaySchedule.length - 1].time)) {
                     const minutesLeft = schoolDayEnd - currentMinutes;
