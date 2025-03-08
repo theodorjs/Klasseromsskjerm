@@ -137,8 +137,8 @@
             color: black;
         }
         .event-box:hover {
-            transform: translateY(-2.5%) scale(1.05); /* Finjustert til -2.5% */
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); /* Sterkere skygge */
+            transform: translateY(-2.5%) scale(1.05); /* Bruk din justerte verdi */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
             z-index: 10;
         }
         .event-box.editable:hover {
@@ -363,6 +363,7 @@
         }
         .edit-modal.active {
             display: flex;
+            border: 1px solid white; /* Hvit ramme, litt tynnere enn 2px */
         }
         .edit-modal input {
             padding: 5px;
