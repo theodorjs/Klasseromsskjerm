@@ -21,6 +21,34 @@
             position: relative;
             margin: 0;
         }
+        .menu-container {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 30px;
+            z-index: 1000;
+            cursor: pointer;
+        }
+        .menu-dots {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 5px;
+        }
+        .dot {
+            width: 6px;
+            height: 6px;
+            background-color: #333;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+        .dot:hover {
+            background-color: #444;
+        }
         .date-time {
             position: absolute;
             top: 20px;
@@ -57,16 +85,16 @@
         }
         .thin {
             font-weight: 100;
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 3vw, 2rem);
         }
         .bold {
             font-weight: 900;
-            font-size: 6rem;
+            font-size: clamp(4rem, 8vw, 6rem);
             text-transform: uppercase;
             white-space: pre-line;
         }
         .countdown {
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 3vw, 2rem);
             margin-top: 10px;
         }
         .timeline {
@@ -95,9 +123,10 @@
             padding: 0 5px;
             box-sizing: border-box;
             margin-right: 2px;
-            cursor: pointer;
-            border: 2px solid transparent; /* Start med gjennomsiktig kant */
-            transition: border 0.3s ease; /* Jevn overgang for kant */
+            cursor: default;
+            border: 2px solid transparent;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+            z-index: 1;
         }
         .event-box.break {
             background-color: #777;
@@ -108,7 +137,12 @@
             color: black;
         }
         .event-box:hover {
-            border: 2px solid white; /* Hvit kant på hover */
+            transform: translateY(-2.5%) scale(1.05); /* Finjustert til -2.5% */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); /* Sterkere skygge */
+            z-index: 10;
+        }
+        .event-box.editable:hover {
+            border: 2px solid white;
         }
         .hover-box {
             position: absolute;
@@ -183,14 +217,32 @@
         }
         @media (max-width: 768px) {
             .event-box {
-                font-size: 0.7rem;
-                padding: 0 3px;
+                font-size: clamp(0.6rem, 1.5vw, 0.9rem);
+                padding: 0 clamp(2px, 1vw, 5px);
+            }
+            .thin {
+                font-size: clamp(1rem, 2vw, 1.5rem);
+            }
+            .bold {
+                font-size: clamp(3rem, 6vw, 4rem);
+            }
+            .countdown {
+                font-size: clamp(1rem, 2vw, 1.5rem);
             }
         }
         @media (max-width: 480px) {
             .event-box {
-                font-size: 0.6rem;
-                padding: 0 2px;
+                font-size: clamp(0.5rem, 1.2vw, 0.6rem);
+                padding: 0 clamp(1px, 0.8vw, 2px);
+            }
+            .thin {
+                font-size: clamp(0.8rem, 1.5vw, 1rem);
+            }
+            .bold {
+                font-size: clamp(2rem, 4vw, 3rem);
+            }
+            .countdown {
+                font-size: clamp(0.8rem, 1.5vw, 1rem);
             }
         }
         .timer-toggle {
@@ -337,6 +389,13 @@
     </style>
 </head>
 <body>
+    <div class="menu-container" id="menu-container">
+        <div class="menu-dots" id="menu-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
     <div class="timer-toggle" id="timer-toggle">🕒</div>
     <div class="timer-panel" id="timer-panel">
         <div class="timer-circle">
@@ -454,6 +513,9 @@
             sessionStorage.setItem('tempScheduleChanges', JSON.stringify(tempScheduleChanges));
         }
 
+        let editPermission = false;
+        let editPermissionTimeout = null;
+
         function getMinutesFromTime(timeStr) {
             const [hours, minutes] = timeStr.split(":").map(Number);
             return hours * 60 + minutes;
@@ -500,7 +562,6 @@
             });
             events.sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
 
-            // Opprett en unik nøkkel for tidslinjens tilstand
             const timelineState = JSON.stringify({
                 events: events.map(e => ({
                     time: e.time,
@@ -512,8 +573,7 @@
                 useRealTime
             });
 
-            // Hvis tidslinjen ikke har endret seg, oppdater kun markøren
-            if (lastTimelineState === timelineState) {
+            if (lastTimelineState === timelineState && !editPermission) {
                 const marker = document.getElementById("marker");
                 if (marker) {
                     const markerTime = useRealTime ? getMinutesFromTime(getOsloTimeAndDay().realOsloTime) : currentMinutes;
@@ -538,7 +598,7 @@
                 const leftPercent = ((startTime - schoolDayStart) / schoolDayDuration) * 100;
 
                 const box = document.createElement("div");
-                box.className = `event-box ${event.type === "break" ? "break" : ""}`;
+                box.className = `event-box ${event.type === "break" ? "break" : ""} ${editPermission ? "editable" : ""}`;
                 box.style.width = `calc(${widthPercent}% - 2px)`;
                 box.style.left = `${leftPercent}%`;
 
@@ -567,7 +627,7 @@
                     }
                     const boxRect = box.getBoundingClientRect();
                     const timelineRect = timeline.getBoundingClientRect();
-                    const leftPosition = boxRect.left - timelineRect.left + (boxRect.width / 2);
+                    const leftPosition = boxRect.left - timelineRect.left + (boxRect.width * 1.05 / 2);
                     hoverBox.style.left = `${leftPosition}px`;
                     hoverBox.style.transform = "translateX(-50%)";
                     hoverBox.classList.add("active");
@@ -579,46 +639,48 @@
                     activeHoverBox = null;
                 });
 
-                box.addEventListener("click", () => {
-                    const modal = document.getElementById("edit-modal");
-                    const input = document.getElementById("edit-activity-input");
-                    const resetButton = document.getElementById("reset-activity");
-                    input.value = displayActivity;
-                    modal.classList.add("active");
+                if (editPermission) {
+                    box.addEventListener("click", () => {
+                        const modal = document.getElementById("edit-modal");
+                        const input = document.getElementById("edit-activity-input");
+                        const resetButton = document.getElementById("reset-activity");
+                        input.value = displayActivity;
+                        modal.classList.add("active");
 
-                    resetButton.style.display = tempActivity ? "block" : "none";
+                        resetButton.style.display = tempActivity ? "block" : "none";
 
-                    const saveButton = document.getElementById("save-activity");
-                    const cancelButton = document.getElementById("cancel-edit");
+                        const saveButton = document.getElementById("save-activity");
+                        const cancelButton = document.getElementById("cancel-edit");
 
-                    const saveHandler = () => {
-                        const newActivity = input.value.trim();
-                        if (newActivity) {
-                            tempScheduleChanges.changes[eventKey] = newActivity;
+                        const saveHandler = () => {
+                            const newActivity = input.value.trim();
+                            if (newActivity) {
+                                tempScheduleChanges.changes[eventKey] = newActivity;
+                                sessionStorage.setItem('tempScheduleChanges', JSON.stringify(tempScheduleChanges));
+                                updateActivityAndCountdown();
+                            }
+                            modal.classList.remove("active");
+                            saveButton.removeEventListener("click", saveHandler);
+                        };
+
+                        const resetHandler = () => {
+                            delete tempScheduleChanges.changes[eventKey];
                             sessionStorage.setItem('tempScheduleChanges', JSON.stringify(tempScheduleChanges));
                             updateActivityAndCountdown();
-                        }
-                        modal.classList.remove("active");
-                        saveButton.removeEventListener("click", saveHandler);
-                    };
+                            modal.classList.remove("active");
+                            resetButton.removeEventListener("click", resetHandler);
+                        };
 
-                    const resetHandler = () => {
-                        delete tempScheduleChanges.changes[eventKey];
-                        sessionStorage.setItem('tempScheduleChanges', JSON.stringify(tempScheduleChanges));
-                        updateActivityAndCountdown();
-                        modal.classList.remove("active");
-                        resetButton.removeEventListener("click", resetHandler);
-                    };
+                        const cancelHandler = () => {
+                            modal.classList.remove("active");
+                            cancelButton.removeEventListener("click", cancelHandler);
+                        };
 
-                    const cancelHandler = () => {
-                        modal.classList.remove("active");
-                        cancelButton.removeEventListener("click", cancelHandler);
-                    };
-
-                    saveButton.addEventListener("click", saveHandler);
-                    resetButton.addEventListener("click", resetHandler);
-                    cancelButton.addEventListener("click", cancelHandler);
-                });
+                        saveButton.addEventListener("click", saveHandler);
+                        resetButton.addEventListener("click", resetHandler);
+                        cancelButton.addEventListener("click", cancelHandler);
+                    });
+                }
 
                 timeline.appendChild(box);
             });
@@ -855,6 +917,7 @@
         const circleFill = document.querySelector('.timer-circle .circle-fill');
         const timerDisplay = document.getElementById('timer-display');
         const resetText = document.getElementById('reset-text');
+        const menuContainer = document.getElementById('menu-container');
 
         let timerInterval;
         let totalTime = 0;
@@ -950,8 +1013,20 @@
             circleFill.style.strokeDashoffset = circumference - progress;
         }
 
+        function activateEditPermission() {
+            editPermission = true;
+            clearTimeout(editPermissionTimeout);
+            editPermissionTimeout = setTimeout(() => {
+                editPermission = false;
+                updateActivityAndCountdown();
+            }, 3 * 60 * 1000); // 3 minutter
+            updateActivityAndCountdown();
+        }
+
+        menuContainer.addEventListener('click', activateEditPermission);
+
         document.addEventListener("click", (event) => {
-            if (!event.target.matches('.clickable') && !event.target.matches('.dropdown-list button')) {
+            if (!event.target.matches('.clickable') && !event.target.matches('.dropdown-list button') && !event.target.classList.contains('dot')) {
                 document.querySelectorAll(".dropdown-list.show").forEach(dropdown => {
                     dropdown.classList.remove("show");
                 });
