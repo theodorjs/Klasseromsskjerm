@@ -692,10 +692,10 @@
             clearTimeout(hideTimeout);
             modeToggle.style.opacity = '1';
             modeToggle.style.visibility = 'visible';
-            modeToggle.style.top = '50px';
+            modeToggle.style.top = getComputedStyle(document.documentElement).getPropertyValue('--mode-toggle-visible-top');
             editButton.style.opacity = '1';
             editButton.style.visibility = 'visible';
-            editButton.style.top = '100px';
+            editButton.style.top = getComputedStyle(document.documentElement).getPropertyValue('--edit-button-visible-top');
         });
 
         newMenuContainer.addEventListener('mouseleave', () => {
@@ -703,10 +703,10 @@
                 if (!modeToggle.matches(':hover') && !editButton.matches(':hover')) {
                     modeToggle.style.opacity = '0';
                     modeToggle.style.visibility = 'hidden';
-                    modeToggle.style.top = '40px';
+                    modeToggle.style.top = getComputedStyle(document.documentElement).getPropertyValue('--mode-toggle-hidden-top');
                     editButton.style.opacity = '0';
                     editButton.style.visibility = 'hidden';
-                    editButton.style.top = '90px';
+                    editButton.style.top = getComputedStyle(document.documentElement).getPropertyValue('--edit-button-hidden-top');
                 }
             }, 4000);
         });
@@ -720,10 +720,10 @@
                 if (!newMenuContainer.matches(':hover') && !editButton.matches(':hover')) {
                     modeToggle.style.opacity = '0';
                     modeToggle.style.visibility = 'hidden';
-                    modeToggle.style.top = '40px';
+                    modeToggle.style.top = getComputedStyle(document.documentElement).getPropertyValue('--mode-toggle-hidden-top');
                     editButton.style.opacity = '0';
                     editButton.style.visibility = 'hidden';
-                    editButton.style.top = '90px';
+                    editButton.style.top = getComputedStyle(document.documentElement).getPropertyValue('--edit-button-hidden-top');
                 }
             }, 4000);
         });
@@ -737,10 +737,10 @@
                 if (!newMenuContainer.matches(':hover') && !modeToggle.matches(':hover')) {
                     modeToggle.style.opacity = '0';
                     modeToggle.style.visibility = 'hidden';
-                    modeToggle.style.top = '40px';
+                    modeToggle.style.top = getComputedStyle(document.documentElement).getPropertyValue('--mode-toggle-hidden-top');
                     editButton.style.opacity = '0';
                     editButton.style.visibility = 'hidden';
-                    editButton.style.top = '90px';
+                    editButton.style.top = getComputedStyle(document.documentElement).getPropertyValue('--edit-button-hidden-top');
                 }
             }, 4000);
         });

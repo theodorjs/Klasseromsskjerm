@@ -2,6 +2,12 @@
     font-family: 'Helvetica Neue';
     src: local('Helvetica Neue'), local('Arial'), sans-serif;
 }
+:root {
+    --mode-toggle-hidden-top: 40px; /* Startposisjon for modusvelger når skjult */
+    --mode-toggle-visible-top: 50px; /* Sluttposisjon for modusvelger når synlig */
+    --edit-button-hidden-top: 100px; /* Startposisjon for Rediger når skjult */
+    --edit-button-visible-top: 115px; /* Sluttposisjon for Rediger når synlig */
+}
 body {
     background-color: #222;
     color: white;
@@ -56,7 +62,7 @@ body.colorful-mode .dot:hover {
 }
 .mode-toggle {
     position: absolute;
-    top: 40px;
+    top: var(--mode-toggle-hidden-top);
     left: 50%;
     transform: translateX(-50%);
     width: 120px;
@@ -70,7 +76,7 @@ body.colorful-mode .dot:hover {
 }
 .edit-button {
     position: absolute;
-    top: 95px; /* Økt fra 90px for å starte lenger ned */
+    top: var(--edit-button-hidden-top);
     left: 50%;
     transform: translateX(-50%);
     width: 120px;
@@ -85,12 +91,12 @@ body.colorful-mode .dot:hover {
     cursor: pointer;
 }
 .new-menu-container:hover .mode-toggle {
-    top: 50px;
+    top: var(--mode-toggle-visible-top);
     opacity: 1;
     visibility: visible;
 }
 .new-menu-container:hover .edit-button {
-    top: 105px; /* Økt fra 100px for å beholde glippe på ca. 5px under modusvelger */
+    top: var(--edit-button-visible-top);
     opacity: 1;
     visibility: visible;
 }
@@ -495,9 +501,8 @@ body.light-mode {
     background-color: #fff;
     color: #333;
 }
-body.light-mode .date-time,
 body.colorful-mode .date-time {
-    color: #000;
+    color: #fff; /* Hvit tekst i fargerik modus */
 }
 body.light-mode .timer-panel,
 body.light-mode .edit-modal,
