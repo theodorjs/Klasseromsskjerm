@@ -308,9 +308,21 @@ body.colorful-mode .reset-button {
     padding: 5px;
     display: none;
     z-index: 1000;
+    min-width: 50px;
 }
 .dropdown-list.show {
     display: block;
+}
+.day-dropdown {
+    left: 0;
+}
+
+.hour-dropdown {
+    left: 210px;
+}
+
+.minute-dropdown {
+    left: 250px;
 }
 .dropdown-list button {
     display: block;

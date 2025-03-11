@@ -542,7 +542,7 @@
         function createDropdown(elementId, options, onChange) {
             const displayElement = document.getElementById(elementId + "-display");
             const dropdown = document.createElement("div");
-            dropdown.className = "dropdown-list";
+            dropdown.className = `dropdown-list ${elementId}-dropdown`; // Legg til unik klasse
             dropdown.id = elementId + "-dropdown";
 
             options.forEach(option => {
