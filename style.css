@@ -237,6 +237,8 @@ body.colorful-mode .reset-button {
     border: 2px solid transparent;
     transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
     z-index: 1;
+    /* Add padding or border to prevent gradient edge issues */
+    padding: 2px; /* Small padding to separate content from edges */
 }
 .event-box.break {
     background-color: #777;
@@ -316,11 +318,9 @@ body.colorful-mode .reset-button {
 .day-dropdown {
     left: 0;
 }
-
 .hour-dropdown {
     left: 210px;
 }
-
 .minute-dropdown {
     left: 250px;
 }

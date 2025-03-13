@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timeplan</title>
+    <title>Klasseromsskjerm</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,8 +25,8 @@
     </div>
 
     <div class="date-time">
-        <span class="clickable" id="day-display" data-changed="false"></span>&nbsp;
-        <span id="date-display"></span>&nbsp;
+        <span class="clickable" id="day-display" data-changed="false"></span> 
+        <span id="date-display"></span> 
         <span class="clickable" id="hour-display" data-changed="false"></span>:<span class="clickable" id="minute-display" data-changed="false"></span>
     </div>
 
@@ -62,70 +62,70 @@
     <script>
         const schedule = {
             "Mandag": [
-                { time: "08:30", activity: "ANDAKT / NORSK" },
-                { time: "09:40", activity: "KRLE" },
-                { time: "11:25", activity: "NORSK 6 / MATTE 7" },
-                { time: "12:35", activity: "NATUR/FYS 30" },
-                { time: "13:35", activity: "MATTE 6 / NORSK 7", end: "14:30" }
+                { time: "08:30", activity: "Andakt / Norsk", end: "09:30" },
+                { time: "09:40", activity: "KRLE", end: "10:40" },
+                { time: "11:25", activity: "Norsk 6 / Matematikk 7", end: "12:25" },
+                { time: "12:35", activity: "Naturfag / Fysak 30", end: "13:35" },
+                { time: "13:35", activity: "Matematikk 6 / Norsk 7", end: "14:30" }
             ],
             "Tirsdag": [
-                { time: "08:30", activity: "ANDAKT / MATTE 6 / NORSK 7" },
-                { time: "09:40", activity: "SAMFUNNSFAG" },
-                { time: "11:25", activity: "ENGELSK", end: "12:25" },
-                { time: "12:35", activity: "FHL/FYS 15", end: "13:35" }
+                { time: "08:30", activity: "Andakt / Matematikk 6 / Norsk 7", end: "09:30" },
+                { time: "09:40", activity: "Samfunnsfag", end: "10:40" },
+                { time: "11:25", activity: "Engelsk", end: "12:25" },
+                { time: "12:35", activity: "Folkhelse & livsmestring / Fysak 15", end: "13:35" }
             ],
             "Onsdag": [
-                { time: "08:30", activity: "ANDAKT / SAMFUNNSFAG" },
-                { time: "09:40", activity: "ENGELSK" },
-                { time: "11:25", activity: "NORSK" },
-                { time: "12:35", activity: "GYM", end: "13:35" }
+                { time: "08:30", activity: "Andakt / Samfunnsfag", end: "09:30" },
+                { time: "09:40", activity: "Engelsk", end: "10:40" },
+                { time: "11:25", activity: "Norsk", end: "12:25" },
+                { time: "12:35", activity: "Gym", end: "13:35" }
             ],
             "Torsdag": [
-                { time: "08:30", activity: "NATUR/FYS 30" },
-                { time: "09:40", activity: "M&H 6 / K&H 7" },
-                { time: "11:25", activity: "M&H 6 / K&H 7" },
-                { time: "12:35", activity: "K&H 6 / GYM 7" },
-                { time: "13:35", activity: "K&H 6 / MATTE 7", end: "14:30" }
+                { time: "08:30", activity: "Naturfag / Fysak 30", end: "09:30" },
+                { time: "09:40", activity: "Mat og helse 6 / Kunst og håndtverk 7", end: "10:40" },
+                { time: "11:25", activity: "Mat og helse 6 / Kunst og håndtverk 7", end: "12:25" },
+                { time: "12:35", activity: "Kunst og håndtverk 6 / Gym 7", end: "13:35" },
+                { time: "13:35", activity: "Kunst og håndtverk 6 / Matematikk 7", end: "14:30" }
             ],
             "Fredag": [
-                { time: "08:30", activity: "ANDAKT / NORSK 6 / MATTE 7" },
-                { time: "09:40", activity: "MATTE 6 / NORSK 7" },
-                { time: "11:25", activity: "MUSIKK" },
-                { time: "12:35", activity: "MUSIKK" },
+                { time: "08:30", activity: "Andakt / Norsk 6 / Matematikk 7", end: "09:30" },
+                { time: "09:40", activity: "Matematikk 6 / Norsk 7", end: "10:40" },
+                { time: "11:25", activity: "Musikk", end: "12:25" },
+                { time: "12:35", activity: "Musikk", end: "13:35" },
                 { time: "13:35", activity: "KRLE", end: "14:30" }
             ]
         };
 
         const breaks = {
             "Mandag": [
-                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "09:30", activity: "Friminutt", end: "09:40" },
                 { time: "10:40", activity: "Matpause", end: "10:55" },
                 { time: "10:55", activity: "Storefri", end: "11:25" },
-                { time: "12:25", activity: "Pause", end: "12:35" }
+                { time: "12:25", activity: "Friminutt", end: "12:35" }
             ],
             "Tirsdag": [
-                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "09:30", activity: "Friminutt", end: "09:40" },
                 { time: "10:40", activity: "Matpause", end: "10:55" },
                 { time: "10:55", activity: "Storefri", end: "11:25" },
-                { time: "12:25", activity: "Pause", end: "12:35" }
+                { time: "12:25", activity: "Friminutt", end: "12:35" }
             ],
             "Onsdag": [
-                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "09:30", activity: "Friminutt", end: "09:40" },
                 { time: "10:40", activity: "Matpause", end: "10:55" },
                 { time: "10:55", activity: "Storefri", end: "11:25" },
-                { time: "12:25", activity: "Pause", end: "12:35" }
+                { time: "12:25", activity: "Friminutt", end: "12:35" }
             ],
             "Torsdag": [
-                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "09:30", activity: "Friminutt", end: "09:40" },
                 { time: "10:40", activity: "Matpause", end: "10:55" },
                 { time: "10:55", activity: "Storefri", end: "11:25" },
-                { time: "12:25", activity: "Pause", end: "12:35" }
+                { time: "12:25", activity: "Friminutt", end: "12:35" }
             ],
             "Fredag": [
-                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "09:30", activity: "Friminutt", end: "09:40" },
                 { time: "10:40", activity: "Matpause", end: "10:55" },
                 { time: "10:55", activity: "Storefri", end: "11:25" },
-                { time: "12:25", activity: "Pause", end: "12:35" }
+                { time: "12:25", activity: "Friminutt", end: "12:35" }
             ]
         };
 
@@ -169,6 +169,21 @@
         }
 
         let lastTimelineState = null;
+        let isSmallScreen = window.innerWidth <= 768;
+
+        window.addEventListener('resize', () => {
+            const newIsSmallScreen = window.innerWidth <= 768;
+            if (isSmallScreen !== newIsSmallScreen) {
+                console.log(`Skjermstørrelse endret til ${newIsSmallScreen ? 'små' : 'stor'}: ${window.innerWidth}px`);
+                isSmallScreen = newIsSmallScreen;
+                const { osloTime, currentDay } = getOsloTimeAndDay();
+                const currentMinutes = getMinutesFromTime(osloTime);
+                const todaySchedule = schedule[currentDay] || [];
+                const breakSchedule = breaks[currentDay] || [];
+                createTimeline(todaySchedule, breakSchedule, currentMinutes, true); // Force immediate update
+                updateActivityAndCountdown(); // Update other elements
+            }
+        });
 
         function createTimeline(todaySchedule, breakSchedule, currentMinutes, useRealTime) {
             const timeline = document.getElementById("timeline");
@@ -185,24 +200,42 @@
             });
             events.sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
 
+            const subjectMap = {
+                "Andakt": { full: "Andakt", short: "Andakt", emoji: "✝️" },
+                "Matematikk": { full: "Matematikk", short: "Matte", emoji: "🔢" },
+                "Norsk": { full: "Norsk", short: "No", emoji: "🇳🇴" },
+                "KRLE": { full: "KRLE", short: "KRLE", emoji: "❤️" },
+                "Naturfag": { full: "Naturfag", short: "Natur", emoji: "🔬" },
+                "Fysak": { full: "Fysak", short: "Fys", emoji: "🤸‍♂️" },
+                "Gym": { full: "Gym", short: "Gym", emoji: "🏃‍♀️" },
+                "Musikk": { full: "Musikk", short: "Musikk", emoji: "🎶" },
+                "Engelsk": { full: "Engelsk", short: "En", emoji: "🇬🇧" },
+                "Samfunnsfag": { full: "Samfunnsfag", short: "Samf", emoji: "🌍" },
+                "Folkhelse & livsmestring": { full: "Folkhelse & livsmestring", short: "F.H.L.M", emoji: "🧠❤️" },
+                "Kunst og håndtverk": { full: "Kunst og håndtverk", short: "K&H", emoji: "🎨" },
+                "Mat og helse": { full: "Mat og helse", short: "M&H", emoji: "🌮" },
+                "Friminutt": { full: "Friminutt", short: "Fri", emoji: "⏸️" },
+                "Matpause": { full: "Matpause", short: "Spise", emoji: "🥪" },
+                "Storefri": { full: "Storefri", short: "Storefri", emoji: "😊" }
+            };
+
             const colorMap = {
-                "ANDAKT / NORSK": "#ff4500",
-                "KRLE": "#00cc00",
-                "NORSK 6 / MATTE 7": "#0000cc",
-                "NATUR/FYS 30": "#cc00cc",
-                "MATTE 6 / NORSK 7": "#cccc00",
-                "ANDAKT / MATTE 6 / NORSK 7": "#cccc00",
-                "SAMFUNNSFAG": "#00cccc",
-                "ENGELSK": "#ff69b4",
-                "FHL/FYS 15": "#9400d3",
-                "GYM": "#ff8c00",
-                "M&H 6 / K&H 7": "#00b7eb",
-                "K&H 6 / GYM 7": "#ff4500",
-                "K&H 6 / MATTE 7": "#99cc00",
-                "MUSIKK": "#6a0dad",
-                "Pause": "#ffffff",
-                "Matpause": "#ffffff",
-                "Storefri": "#ffffff"
+                "Andakt": "#7D308E",
+                "KRLE": "#AA3AB8",
+                "Norsk": "#119b81",
+                "Naturfag": "#3a9c45",
+                "Matematikk": "#4076BF",
+                "Musikk": "#FF9900",
+                "Engelsk": "#FF6600",
+                "Samfunnsfag": "#3399CC",
+                "Folkhelse & livsmestring": "#CC3399",
+                "Gym": "#00CC00",
+                "Fysak": "#76D3A9",
+                "Mat og helse": "#FF3300",
+                "Kunst og håndtverk": "#9933FF",
+                "Friminutt": "#BFFFFF",
+                "Matpause": "#BFEDFF",
+                "Storefri": "#D6F3DF"
             };
 
             const timelineState = JSON.stringify({
@@ -216,10 +249,13 @@
                 useRealTime
             });
 
+            console.log(`Rendering timeline for ${currentDay}, mode: ${document.body.classList}, isSmallScreen: ${isSmallScreen}`);
+
             if (lastTimelineState !== timelineState || document.body.dataset.lastMode !== modeSlider.value) {
                 lastTimelineState = timelineState;
                 document.body.dataset.lastMode = modeSlider.value;
                 timeline.innerHTML = '<div class="marker" id="marker"></div>';
+                timeline.style.display = "flex"; // Tving tidslinjen til å vises
 
                 let activeHoverBox = null;
                 let hoverTimeout = null;
@@ -241,10 +277,44 @@
                     const tempActivity = tempScheduleChanges.changes[eventKey];
                     const originalActivity = event.activity;
                     const displayActivity = tempActivity || originalActivity;
-                    box.textContent = displayActivity;
+
+                    const activities = displayActivity.split('/').map(a => a.trim());
+                    let boxTextParts = activities.map(a => {
+                        const match = a.match(/^(\D+)/); // Matcher hele ikke-tall-strengen i starten
+                        if (match) {
+                            const subjectPart = match[1].trim().toUpperCase();
+                            const classNumber = a.replace(match[1], '').trim() || '';
+                            const subject = Object.values(subjectMap).find(s => 
+                                s.full.toUpperCase() === subjectPart || s.short.toUpperCase() === subjectPart);
+                            console.log(`Matching "${subjectPart}" -> ${subject ? subject.short : 'no match'}`);
+                            return subject ? (isSmallScreen ? subject.short + classNumber : subject.full + classNumber) : a;
+                        }
+                        return a;
+                    });
+                    const boxText = boxTextParts.join(' / ');
+                    box.textContent = boxText;
 
                     if (document.body.classList.contains('colorful-mode')) {
-                        box.style.backgroundColor = colorMap[originalActivity] || "#ffffff";
+                        const colors = activities.map(activity => {
+                            const match = activity.match(/^(\D+)/);
+                            if (match) {
+                                const subjectPart = match[1].trim().toUpperCase();
+                                const subject = Object.keys(colorMap).find(s => s.toUpperCase() === subjectPart);
+                                return colorMap[subject] || "#ffffff";
+                            }
+                            return "#ffffff";
+                        });
+                        const validColors = colors.filter(color => color !== "#ffffff" || colors.length === 1);
+                        if (validColors.length > 0) {
+                            if (validColors.length > 1) {
+                            box.style.background = `linear-gradient(to right, ${validColors.join(', ')})`;
+                            box.style.border = `1px solid transparent`; // Prevent solid edge
+                        } else {
+                            box.style.backgroundColor = validColors[0] || "#ffffff";
+                        }
+                        } else {
+                            box.style.backgroundColor = "#ffffff";
+                        }
                     } else if (document.body.classList.contains('light-mode')) {
                         box.style.backgroundColor = event.type === "break" ? "#bbb" : "#ddd";
                         if (currentMinutes >= startTime && currentMinutes < endTime) {
@@ -263,11 +333,25 @@
 
                     const hoverBox = document.createElement("div");
                     hoverBox.className = "hover-box";
-                    hoverBox.innerHTML = `
-                        <div class="activity-name">${displayActivity}</div>
+                    let hoverContent = '';
+                    activities.forEach(activity => {
+                        const match = activity.match(/^(\D+)/);
+                        if (match) {
+                            const subjectPart = match[1].trim().toUpperCase();
+                            const classNumber = activity.replace(match[1], '').trim() || '';
+                            const subject = Object.values(subjectMap).find(s => 
+                                s.full.toUpperCase() === subjectPart || s.short.toUpperCase() === subjectPart);
+                            const emoji = subject ? subject.emoji : '❓';
+                            const displayName = subject ? subject.full + classNumber : activity; // Always use full name
+                            hoverContent += `<div class="activity-name">${emoji} ${displayName}</div>`;
+                            console.log(`Hover: "${subjectPart}" -> ${subject ? `${subject.full} (${emoji})` : 'no match'}`);
+                        }
+                    });
+                    hoverContent += `
                         <div class="time">${event.time}-${event.end || events[index + 1]?.time || "14:30"}</div>
                         <div class="teacher">Lærer: (TBA)</div>
                     `;
+                    hoverBox.innerHTML = hoverContent;
                     timeline.appendChild(hoverBox);
 
                     box.addEventListener("mouseenter", () => {
@@ -395,7 +479,8 @@
             const isRealWeekend = realDayOfWeek === 0 || realDayOfWeek === 6;
             if (useRealTime && isRealWeekend) {
                 document.getElementById("main-container").innerHTML = '<div id="current-activity" class="bold">Ha en fantastisk helg!</div>';
-                document.getElementById("timeline").style.display = "none";
+                document.getElementById("timeline").style.display = "flex";
+                createTimeline(todaySchedule, breakSchedule, currentMinutes, useRealTime);
                 return;
             }
 
@@ -445,7 +530,7 @@
             let nextEventTime = null;
             let isNextBreak = false;
 
-            if (["Pause", "Matpause", "Storefri"].includes(currentActivity)) {
+            if (["Friminutt", "Matpause", "Storefri"].includes(currentActivity)) {
                 for (let i = 0; i < todaySchedule.length; i++) {
                     const classTime = getMinutesFromTime(todaySchedule[i].time);
                     if (currentMinutes < classTime && classTime < schoolDayEnd && (!nextEventTime || classTime < nextEventTime)) {
