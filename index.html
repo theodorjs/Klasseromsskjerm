@@ -299,25 +299,32 @@
                     box.textContent = boxText;
 
                     if (document.body.classList.contains('colorful-mode')) {
-                        const colors = activities.map(activity => {
-                            const match = activity.match(/^(\D+)/);
-                            if (match) {
-                                const subjectPart = match[1].trim().toUpperCase();
-                                const subject = Object.keys(colorMap).find(s => s.toUpperCase() === subjectPart);
-                                return colorMap[subject] || "#ffffff";
+                        if (tempActivity) {
+                            // Hvis økten er endret, bruk fallback-gradering med hvit tekst
+                            box.style.background = `linear-gradient(to right, blue, magenta)`;
+                            box.style.color = "#fff";
+                        } else {
+                            // ...existing code for fargerik modus...
+                            const colors = activities.map(activity => {
+                                const match = activity.match(/^(\D+)/);
+                                if (match) {
+                                    const subjectPart = match[1].trim().toUpperCase();
+                                    const subject = Object.keys(colorMap).find(s => s.toUpperCase() === subjectPart);
+                                    return colorMap[subject] || "#ffffff";
+                                }
+                                return "#ffffff";
+                            });
+                            const validColors = colors.filter(color => color !== "#ffffff" || colors.length === 1);
+                            if (validColors.length > 0) {
+                                if (validColors.length > 1) {
+                                    box.style.background = `linear-gradient(to right, ${validColors.join(', ')})`;
+                                    box.style.border = `1px solid transparent`; // Prevent solid edge
+                                } else {
+                                    box.style.backgroundColor = validColors[0] || "#ffffff";
+                                }
+                            } else {
+                                box.style.backgroundColor = "#ffffff";
                             }
-                            return "#ffffff";
-                        });
-                        const validColors = colors.filter(color => color !== "#ffffff" || colors.length === 1);
-                        if (validColors.length > 0) {
-                            if (validColors.length > 1) {
-                            box.style.background = `linear-gradient(to right, ${validColors.join(', ')})`;
-                            box.style.border = `1px solid transparent`; // Prevent solid edge
-                        } else {
-                            box.style.backgroundColor = validColors[0] || "#ffffff";
-                        }
-                        } else {
-                            box.style.backgroundColor = "#ffffff";
                         }
                     } else if (document.body.classList.contains('light-mode')) {
                         box.style.backgroundColor = event.type === "break" ? "#bbb" : "#ddd";
@@ -852,8 +859,9 @@
             updateActivityAndCountdown();
         });
 
-        // Sett default til mørk modus
-        modeSlider.value = 1;
+        // Sett default til fargerik modus
+        modeSlider.value = 2;
+        document.body.classList.add('colorful-mode');
 
         // Andre event listeners
         document.addEventListener("click", (event) => {
