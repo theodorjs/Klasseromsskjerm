@@ -129,6 +129,15 @@
             ]
         };
 
+        // Endre alle forekomster av "Friminutt" til "Fri" i de korte pausene
+        Object.keys(breaks).forEach(day => {
+            breaks[day].forEach(event => {
+                if (event.activity === "Friminutt") {
+                    event.activity = "Fri";
+                }
+            });
+        });
+
         let tempScheduleChanges = JSON.parse(sessionStorage.getItem('tempScheduleChanges') || '{}');
         const todayDate = new Date().toISOString().split('T')[0];
 
