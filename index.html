@@ -147,23 +147,27 @@
 
         function getOsloTimeAndDay() {
             const now = new Date();
-            const utcHours = now.getUTCHours();
-            const utcMinutes = now.getUTCMinutes();
-            const osloOffset = 1;
-            let osloHours = (utcHours + osloOffset) % 24;
-            if (osloHours < 0) osloHours += 24;
-            const realOsloTime = `${osloHours.toString().padStart(2, '0')}:${utcMinutes.toString().padStart(2, '0')}`;
+            // Hent Oslo-tid med riktig tidssone (inkludert sommertid)
+            const realOsloTime = new Intl.DateTimeFormat('en-GB', { 
+                timeZone: 'Europe/Oslo', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                hour12: false 
+            }).format(now);
+            // Hent dagens navn i Oslo
             let realDay = new Intl.DateTimeFormat('no-NO', { 
                 weekday: 'long', 
                 timeZone: 'Europe/Oslo' 
             }).format(now);
             realDay = realDay.charAt(0).toUpperCase() + realDay.slice(1).toLowerCase();
 
+            // Bruk den formaterte Oslo-tiden direkte
+            const [osloHours, osloMinutes] = realOsloTime.split(':');
+            const osloTime = realOsloTime;
+
             const dayDisplay = document.getElementById("day-display") || { textContent: realDay };
-            const hourDisplay = document.getElementById("hour-display") || { textContent: realOsloTime.split(':')[0] };
-            const minuteDisplay = document.getElementById("minute-display") || { textContent: realOsloTime.split(':')[1] };
-            const osloTime = hourDisplay.textContent && minuteDisplay.textContent ? 
-                `${hourDisplay.textContent}:${minuteDisplay.textContent}` : realOsloTime;
+            const hourDisplay = document.getElementById("hour-display") || { textContent: osloHours };
+            const minuteDisplay = document.getElementById("minute-display") || { textContent: osloMinutes };
 
             return { osloTime, currentDay: dayDisplay.textContent || realDay, realDay, realOsloTime };
         }
