@@ -810,23 +810,27 @@
         }
 
         function startTimer() {
-    const minutes = parseInt(document.getElementById("timer-minutes").value) || 0;
-    const seconds = parseInt(document.getElementById("timer-seconds").value) || 0;
-    totalTime = minutes * 60 + seconds;
+    const hours = parseInt(timerHours.value) || 0;
+    const minutes = parseInt(timerMinutes.value) || 0;
+    const seconds = parseInt(timerSeconds.value) || 0;
+
+    totalTime = (hours * 3600) + (minutes * 60) + seconds;
     if (totalTime <= 0) return;
 
-    remainingTime = totalTime; // Nullstill gjenværende tid
-    isRunning = true; // Sett status til kjørende
-    updateStartButtonText(); // Oppdater knappeteksten
-    updateTimerDisplay(); // Oppdater visningen umiddelbart
+    circleFill.style.stroke = getRandomColor(); // 🎨 Bytt farge på sirkelen
+
+    remainingTime = totalTime;
+    isRunning = true;
+    updateStartButtonText();
+    updateTimerDisplay();
 
     timerInterval = setInterval(() => {
         remainingTime--;
         if (remainingTime <= 0) {
             clearInterval(timerInterval);
             timerInterval = null;
-            isRunning = false; // Timeren er ferdig
-            updateStartButtonText(); // Oppdater knappeteksten
+            isRunning = false;
+            updateStartButtonText();
         }
         updateTimerDisplay();
     }, 1000);
