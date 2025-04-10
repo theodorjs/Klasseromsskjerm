@@ -681,8 +681,8 @@
             lastTimelineState = null;
             updateActivityAndCountdown();
         }
+      
         // Timer/Nedteller
-        // Deklarasjoner
         const newMenuContainer = document.getElementById('new-menu-container');
         const modeToggle = document.getElementById('mode-toggle');
         const modeSlider = document.getElementById('mode-slider');
@@ -699,6 +699,7 @@
         let timerInterval;
         let totalTime = 0;
         let remainingTime = 0;
+        let isRunning = false;
         let isPaused = false;
         let hideTimeout;
 
@@ -730,51 +731,16 @@
             }
         });
 
-        timerStart.addEventListener('click', () => {
-            const hours = parseInt(timerHours.value) || 0;
-            const minutes = parseInt(timerMinutes.value) || 0;
-            const seconds = parseInt(timerSeconds.value) || 0;
-
-            totalTime = (hours * 3600) + (minutes * 60) + seconds;
-            remainingTime = totalTime; // Sørg for at remainingTime oppdateres
-
-            // For å endre fargen på sirkelen
-            circleFill.style.stroke = getRandomColor();
-
-            if (totalTime > 0) {
-                if (!timerInterval) {
-                    remainingTime = totalTime;
-                    const circumference = 2 * Math.PI * 70.3125;
-                    circleFill.style.strokeDasharray = `${circumference} ${circumference}`;
-                    circleFill.style.strokeDashoffset = circumference;
-                    updateTimerDisplay();
-                    timerInterval = setInterval(updateTimer, 1000);
-                    timerStart.textContent = 'PAUSE';
-                    resetText.style.display = 'none';
-                } else if (!isPaused) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                    isPaused = true;
-                    timerStart.textContent = 'START';
-                    resetText.style.display = 'block';
-                } else {
-                    isPaused = false;
-                    timerInterval = setInterval(updateTimer, 1000);
-                    timerStart.textContent = 'PAUSE';
-                    resetText.style.display = 'none';
-                }
-            }
-        });
-
         resetText.addEventListener('click', () => {
-            if (timerInterval) clearInterval(timerInterval);
+            clearInterval(timerInterval);
             timerInterval = null;
-            remainingTime = 0;
+            isRunning = false;
+            isPaused = false;
             totalTime = 0;
-            const circumference = 2 * Math.PI * 70.3125;
+            remainingTime = 0;
+            timerDisplay.textContent = "00:00:00";
             circleFill.style.strokeDashoffset = circumference;
             circleFill.style.stroke = getRandomColor();
-            timerDisplay.textContent = "00:00:00";
             timerStart.textContent = 'START';
             resetText.style.display = 'none';
         });
@@ -794,6 +760,11 @@
             }
         }
 
+        function getRandomColor() {
+            const colors = ['#ff5e78', '#56d9fc', '#6ef2a9', '#ffc14d', '#bf7fff']; // her er noen fine farger
+            return colors[Math.floor(Math.random() * colors.length)];
+        }  
+
         function updateTimerDisplay() {
             const hours = Math.floor(remainingTime / 3600);
             const minutes = Math.floor((remainingTime % 3600) / 60);
@@ -804,59 +775,71 @@
             const offset = circumference * (1 - progress); // Beregn strokeDashoffset basert på fremdriften
             circle.style.strokeDashoffset = offset; // Oppdater sirkelen
         }
-        function updateStartButtonText() {
-            const button = document.getElementById("timer-start");
-            button.textContent = isRunning ? "Pause" : "Start";
-        }
 
-        function startTimer() {
+// ny tilnærming for enklere kode
+        function startOrPauseTimer() {
     const hours = parseInt(timerHours.value) || 0;
     const minutes = parseInt(timerMinutes.value) || 0;
     const seconds = parseInt(timerSeconds.value) || 0;
 
-    totalTime = (hours * 3600) + (minutes * 60) + seconds;
-    if (totalTime <= 0) return;
+    if (!isRunning && !isPaused) {
+        // Ny start
+        totalTime = (hours * 3600) + (minutes * 60) + seconds;
+        if (totalTime <= 0) return;
 
-    circleFill.style.stroke = getRandomColor(); // 🎨 Bytt farge på sirkelen
+        remainingTime = totalTime;
+        isRunning = true;
+        isPaused = false;
+        circleFill.style.stroke = getRandomColor();
 
-    remainingTime = totalTime;
-    isRunning = true;
-    updateStartButtonText();
-    updateTimerDisplay();
+        updateTimerDisplay();
+        startInterval();
+        timerStart.textContent = "PAUSE";
+        resetText.style.display = "none";
+    } else if (isRunning) {
+        // Pause
+        pauseTimer();
+    } else if (isPaused) {
+        // Gjenoppta
+        isRunning = true;
+        isPaused = false;
+        startInterval();
+        timerStart.textContent = "PAUSE";
+        resetText.style.display = "none";
+    }
+}
 
-    timerInterval = setInterval(() => {
-        remainingTime--;
-        if (remainingTime <= 0) {
+        function startInterval() {
+            timerInterval = setInterval(() => {
+                if (remainingTime > 0) {
+                    remainingTime--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    isRunning = false;
+                    timerStart.textContent = "START";
+                    resetText.style.display = "block";
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
             clearInterval(timerInterval);
             timerInterval = null;
             isRunning = false;
-            updateStartButtonText();
+            isPaused = true;
+            timerStart.textContent = "START";
+            resetText.style.display = "block";
         }
-        updateTimerDisplay();
-    }, 1000);
-}
 
-        // PauseTimer-funksjon
-        function pauseTimer() {
-    clearInterval(timerInterval); // Stopp intervallet
-    isRunning = false; // Sett status til ikke kjørende
-    updateStartButtonText(); // Oppdater knappeteksten
-}
+        // Lytt på klikk for å starte eller pause timeren
+        timerStart.addEventListener("click", startOrPauseTimer);
 
-        
-
-        function getRandomColor() {
-            const colors = ['#ff5e78', '#56d9fc', '#6ef2a9', '#ffc14d', '#bf7fff']; // her er noen fine farger
-            return colors[Math.floor(Math.random() * colors.length)];
-        }  
-
-        document.getElementById("timer-start").addEventListener("click", () => {
-    if (isRunning) {
-        pauseTimer();
-    } else {
-        startTimer();
-    }
-});
+        // Lytt på klikk for å resette
+        resetText.addEventListener('click', () => {
+            // ... reset-kode ...
+        });
         
         //Slutt på kodeblokk for timer/nedteller
 
