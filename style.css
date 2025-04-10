@@ -414,7 +414,7 @@ body.colorful-mode .reset-button {
     stroke-linecap: round;
     transform: rotate(-90deg);
     transform-origin: center;
-    transition: stroke-dashoffset 1s linear;
+    transition: stroke-dashoffset 0.5s linear;
 }
 .timer-input {
     display: flex;
