@@ -681,7 +681,7 @@
             lastTimelineState = null;
             updateActivityAndCountdown();
         }
-
+        // Timer/Nedteller
         // Deklarasjoner
         const newMenuContainer = document.getElementById('new-menu-container');
         const modeToggle = document.getElementById('mode-toggle');
@@ -728,6 +728,10 @@
             const seconds = parseInt(timerSeconds.value) || 0;
 
             totalTime = (hours * 3600) + (minutes * 60) + seconds;
+            remainingTime = totalTime; // Sørg for at remainingTime oppdateres
+
+            // For å endre fargen på sirkelen
+            circleFill.style.stroke = getRandomColor();
 
             if (totalTime > 0) {
                 if (!timerInterval) {
@@ -761,6 +765,7 @@
             totalTime = 0;
             const circumference = 2 * Math.PI * 70.3125;
             circleFill.style.strokeDashoffset = circumference;
+            circleFill.style.stroke = getRandomColor();
             timerDisplay.textContent = "00:00:00";
             timerStart.textContent = 'START';
             resetText.style.display = 'none';
@@ -790,7 +795,13 @@
             const circumference = 2 * Math.PI * 70.3125;
             const progress = ((totalTime - remainingTime) / totalTime) * circumference;
             circleFill.style.strokeDashoffset = circumference - progress;
-        }
+        } 
+        function getRandomColor() {
+            const colors = ['#ff5e78', '#56d9fc', '#6ef2a9', '#ffc14d', '#bf7fff']; // her er noen fine farger
+            return colors[Math.floor(Math.random() * colors.length)];
+        }  
+        
+        //Slutt på kodeblokk for timer/nedteller
 
         // Meny-logikk
         newMenuContainer.addEventListener('mouseenter', () => {
