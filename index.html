@@ -799,6 +799,7 @@
     } else if (isRunning) {
         // Pause
         pauseTimer();
+        timerStart.textContent = "Gjenoppta";  // Change text to 'Resume' when paused
     } else if (isPaused) {
         // Gjenoppta
         isRunning = true;
