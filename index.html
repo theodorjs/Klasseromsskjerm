@@ -98,42 +98,44 @@
 
         const breaks = {
             "Mandag": [
-                { time: "09:30", activity: "Friminutt", end: "09:40" },
-                { time: "10:40", activity: "Matpause", end: "10:55" },
+                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "10:40", activity: "Mat", end: "10:55" },
                 { time: "10:55", activity: "Storefri", end: "11:25" },
-                { time: "12:25", activity: "Friminutt", end: "12:35" }
+                { time: "12:25", activity: "Pause", end: "12:35" }
             ],
             "Tirsdag": [
-                { time: "09:30", activity: "Friminutt", end: "09:40" },
-                { time: "10:40", activity: "Matpause", end: "10:55" },
+                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "10:40", activity: "Mat", end: "10:55" },
                 { time: "10:55", activity: "Storefri", end: "11:25" },
-                { time: "12:25", activity: "Friminutt", end: "12:35" }
+                { time: "12:25", activity: "Pause", end: "12:35" }
             ],
             "Onsdag": [
-                { time: "09:30", activity: "Friminutt", end: "09:40" },
-                { time: "10:40", activity: "Matpause", end: "10:55" },
+                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "10:40", activity: "Mat", end: "10:55" },
                 { time: "10:55", activity: "Storefri", end: "11:25" },
-                { time: "12:25", activity: "Friminutt", end: "12:35" }
+                { time: "12:25", activity: "Pause", end: "12:35" }
             ],
             "Torsdag": [
-                { time: "09:30", activity: "Friminutt", end: "09:40" },
-                { time: "10:40", activity: "Matpause", end: "10:55" },
+                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "10:40", activity: "Mat", end: "10:55" },
                 { time: "10:55", activity: "Storefri", end: "11:25" },
-                { time: "12:25", activity: "Friminutt", end: "12:35" }
+                { time: "12:25", activity: "Pause", end: "12:35" }
             ],
             "Fredag": [
-                { time: "09:30", activity: "Friminutt", end: "09:40" },
-                { time: "10:40", activity: "Matpause", end: "10:55" },
+                { time: "09:30", activity: "Pause", end: "09:40" },
+                { time: "10:40", activity: "Mat", end: "10:55" },
                 { time: "10:55", activity: "Storefri", end: "11:25" },
-                { time: "12:25", activity: "Friminutt", end: "12:35" }
+                { time: "12:25", activity: "Pause", end: "12:35" }
             ]
         };
 
-        // Endre alle forekomster av "Friminutt" til "Fri" i de korte pausene
         Object.keys(breaks).forEach(day => {
             breaks[day].forEach(event => {
-                if (event.activity === "Friminutt") {
-                    event.activity = "Fri";
+                if (event.activity === "Pause") {
+                    event.activity = "Pause";
+                }
+                if (event.activity === "Mat") {
+                    event.activity = "Mat";
                 }
             });
         });
@@ -211,7 +213,7 @@
                     events.push({ ...breakEvent, type: "break" });
                 }
             });
-            events.sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
+            events.sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(a.time));
 
             const subjectMap = {
                 "Andakt": { full: "Andakt", short: "Andakt", emoji: "✝️" },
@@ -227,8 +229,8 @@
                 "Folkhelse & livsmestring": { full: "Folkhelse & livsmestring", short: "F.H.L.M", emoji: "🧠❤️" },
                 "Kunst og håndtverk": { full: "Kunst og håndtverk", short: "K&H", emoji: "🎨" },
                 "Mat og helse": { full: "Mat og helse", short: "M&H", emoji: "🌮" },
-                "Friminutt": { full: "Friminutt", short: "Fri", emoji: "⏸️" },
-                "Matpause": { full: "Matpause", short: "Spise", emoji: "🥪" },
+                "Pause": { full: "Pause", short: "Pause", emoji: "⏸️" },
+                "Mat": { full: "Mat", short: "Spise", emoji: "🥪" },
                 "Storefri": { full: "Storefri", short: "Storefri", emoji: "😊" }
             };
 
@@ -246,8 +248,8 @@
                 "Fysak": "#76D3A9",
                 "Mat og helse": "#FF3300",
                 "Kunst og håndtverk": "#9933FF",
-                "Friminutt": "#BFFFFF",
-                "Matpause": "#BFEDFF",
+                "Pause": "#BFFFFF",
+                "Mat": "#BFEDFF",
                 "Storefri": "#D6F3DF"
             };
 
@@ -550,7 +552,7 @@
             let nextEventTime = null;
             let isNextBreak = false;
 
-            if (["Friminutt", "Matpause", "Storefri"].includes(currentActivity)) {
+            if (["Pause", "Mat", "Storefri"].includes(currentActivity)) {
                 for (let i = 0; i < todaySchedule.length; i++) {
                     const classTime = getMinutesFromTime(todaySchedule[i].time);
                     if (currentMinutes < classTime && classTime < schoolDayEnd && (!nextEventTime || classTime < nextEventTime)) {
