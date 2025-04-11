@@ -129,17 +129,6 @@
             ]
         };
 
-        Object.keys(breaks).forEach(day => {
-            breaks[day].forEach(event => {
-                if (event.activity === "Pause") {
-                    event.activity = "Pause";
-                }
-                if (event.activity === "Mat") {
-                    event.activity = "Mat";
-                }
-            });
-        });
-
         let tempScheduleChanges = JSON.parse(sessionStorage.getItem('tempScheduleChanges') || '{}');
         const todayDate = new Date().toISOString().split('T')[0];
 
@@ -230,7 +219,7 @@
                 "Kunst og håndtverk": { full: "Kunst og håndtverk", short: "K&H", emoji: "🎨" },
                 "Mat og helse": { full: "Mat og helse", short: "M&H", emoji: "🌮" },
                 "Pause": { full: "Pause", short: "Pause", emoji: "⏸️" },
-                "Mat": { full: "Mat", short: "Spise", emoji: "🥪" },
+                "Mat": { full: "Mat", short: "Mat", emoji: "🥪" },
                 "Storefri": { full: "Storefri", short: "Storefri", emoji: "😊" }
             };
 
@@ -773,43 +762,46 @@
             const seconds = remainingTime % 60;
             timerDisplay.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-            const progress = 1 - (remainingTime / totalTime); // Beregn fremdriften (omvendt)
+            const progress = remainingTime / totalTime; // Beregn fremdriften (ikke omvendt)
             const offset = circumference * progress; // Beregn strokeDashoffset basert på fremdriften
             circle.style.strokeDashoffset = offset; // Oppdater sirkelen
+            console.log(`Progress: ${progress}, Offset: ${offset}`);
         }
 
         function startOrPauseTimer() {
-    const hours = parseInt(timerHours.value) || 0;
-    const minutes = parseInt(timerMinutes.value) || 0;
-    const seconds = parseInt(timerSeconds.value) || 0;
+            const hours = parseInt(timerHours.value) || 0;
+            const minutes = parseInt(timerMinutes.value) || 0;
+            const seconds = parseInt(timerSeconds.value) || 0;
 
-    if (!isRunning && !isPaused) {
-        // Ny start
-        totalTime = (hours * 3600) + (minutes * 60) + seconds;
-        if (totalTime <= 0) return;
+            if (!isRunning && !isPaused) {
+                // Ny start
+                totalTime = (hours * 3600) + (minutes * 60) + seconds;
+                if (totalTime <= 0) return;
 
-        remainingTime = totalTime;
-        isRunning = true;
-        isPaused = false;
-        circleFill.style.stroke = getRandomColor();
+                remainingTime = totalTime;
+                isRunning = true;
+                isPaused = false;
+                circleFill.style.stroke = getRandomColor();
+                circleFill.style.strokeDasharray = `${circumference} ${circumference}`; // Sørg for at strokeDasharray er satt
+                circleFill.style.strokeDashoffset = `${circumference}`; // Start uten farge
 
-        updateTimerDisplay();
-        startInterval();
-        timerStart.textContent = "PAUSE";
-        resetText.style.display = "none";
-    } else if (isRunning) {
-        // Pause
-        pauseTimer();
-        timerStart.textContent = "Gjenoppta";  // Change text to 'Resume' when paused
-    } else if (isPaused) {
-        // Gjenoppta
-        isRunning = true;
-        isPaused = false;
-        startInterval();
-        timerStart.textContent = "PAUSE";
-        resetText.style.display = "none";
-    }
-}
+                updateTimerDisplay();
+                startInterval();
+                timerStart.textContent = "PAUSE";
+                resetText.style.display = "none";
+            } else if (isRunning) {
+                // Pause
+                pauseTimer();
+                timerStart.textContent = "Gjenoppta";
+            } else if (isPaused) {
+                // Gjenoppta
+                isRunning = true;
+                isPaused = false;
+                startInterval();
+                timerStart.textContent = "PAUSE";
+                resetText.style.display = "none";
+            }
+        }
 
         function startInterval() {
             timerInterval = setInterval(() => {
