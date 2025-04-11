@@ -704,7 +704,7 @@
 
         // Timer-logikk
         timerPanel.addEventListener('transitionend', () => {
-            if (timerPanel.classList.contains('active') && !timerInterval) {
+            if (timerPanel.classList.contains('active') && !timerInterval && !isRunning && !isPaused) {
                 const circumference = 2 * Math.PI * 70.3125;
                 circleFill.style.strokeDasharray = `${circumference} ${circumference}`;
                 circleFill.style.strokeDashoffset = circumference;
@@ -765,7 +765,6 @@
             const progress = remainingTime / totalTime; // Beregn fremdriften (ikke omvendt)
             const offset = circumference * progress; // Beregn strokeDashoffset basert på fremdriften
             circle.style.strokeDashoffset = offset; // Oppdater sirkelen
-            console.log(`Progress: ${progress}, Offset: ${offset}`);
         }
 
         function startOrPauseTimer() {
@@ -782,7 +781,7 @@
                 isRunning = true;
                 isPaused = false;
                 circleFill.style.stroke = getRandomColor();
-                circleFill.style.strokeDasharray = `${circumference} ${circumference}`; // Sørg for at strokeDasharray er satt
+                circleFill.style.strokeDasharray = `${circumference} ${circumference}`;
                 circleFill.style.strokeDashoffset = `${circumference}`; // Start uten farge
 
                 updateTimerDisplay();
@@ -823,7 +822,7 @@
             timerInterval = null;
             isRunning = false;
             isPaused = true;
-            timerStart.textContent = "START";
+            timerStart.textContent = "Gjenoppta";
             resetText.style.display = "block";
         }
 
