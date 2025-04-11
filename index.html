@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="stars"></div>
+    <div id="stars2"></div>
+    <div id="stars3"></div>
     <div class="new-menu-container" id="new-menu-container">
         <div class="menu-dots">
             <div class="dot"></div>
@@ -14,10 +17,11 @@
             <div class="dot"></div>
         </div>
         <div class="mode-toggle" id="mode-toggle">
-            <input type="range" id="mode-slider" min="0" max="2" value="1" step="1">
+            <input type="range" id="mode-slider" min="0" max="3" value="3" step="1">
             <div class="mode-labels">
-                <span>Lys</span>
-                <span>Mørk</span>
+                <span>Lys </span>
+                <span>Mørk </span>
+                <span>Stjerne </span>
                 <span>Farge</span>
             </div>
         </div>
@@ -298,13 +302,11 @@
                     const boxText = boxTextParts.join(' / ');
                     box.textContent = boxText;
 
-                    if (document.body.classList.contains('colorful-mode')) {
+                    if (document.body.classList.contains('colorful-mode') || document.body.classList.contains('star-mode')) {
                         if (tempActivity) {
-                            // Hvis økten er endret, bruk fallback-gradering med hvit tekst
                             box.style.background = `linear-gradient(to right, blue, magenta)`;
                             box.style.color = "#fff";
                         } else {
-                            // ...existing code for fargerik modus...
                             const colors = activities.map(activity => {
                                 const match = activity.match(/^(\D+)/);
                                 if (match) {
@@ -318,7 +320,7 @@
                             if (validColors.length > 0) {
                                 if (validColors.length > 1) {
                                     box.style.background = `linear-gradient(to right, ${validColors.join(', ')})`;
-                                    box.style.border = `1px solid transparent`; // Prevent solid edge
+                                    box.style.border = `1px solid transparent`;
                                 } else {
                                     box.style.backgroundColor = validColors[0] || "#ffffff";
                                 }
@@ -836,6 +838,39 @@
         
         //Slutt på kodeblokk for timer/nedteller
 
+        //Generer stjerner med JavaScript
+        function generateStarShadows(n) {
+        let shadows = [];
+        for (let i = 0; i < n; i++) {
+            const x = Math.random() * window.innerWidth; // Juster til skjermbredde
+            const y = Math.random() * 2000;
+            shadows.push(`${x}px ${y}px #FFF`);
+        }
+        return shadows.join(', ');
+    }
+
+        // Generer stjerner ved oppstart og ved vindustørrelse-endring
+        function updateStars() {
+            const stars = document.getElementById('stars');
+            const stars2 = document.getElementById('stars2');
+            const stars3 = document.getElementById('stars3');
+            stars.style.boxShadow = generateStarShadows(700);
+            stars2.style.boxShadow = generateStarShadows(200);
+            stars3.style.boxShadow = generateStarShadows(100);
+            // Generer for :after-elementene
+            stars.style.setProperty('--after-shadow', generateStarShadows(700));
+            stars2.style.setProperty('--after-shadow', generateStarShadows(200));
+            stars3.style.setProperty('--after-shadow', generateStarShadows(100));
+        }
+
+        updateStars();
+        window.addEventListener('resize', updateStars);
+
+        // Generer stjerner ved oppstart
+        document.getElementById('stars').style.boxShadow = generateStarShadows(700);
+        document.getElementById('stars2').style.boxShadow = generateStarShadows(200);
+        document.getElementById('stars3').style.boxShadow = generateStarShadows(100);
+
         // Meny-logikk
         newMenuContainer.addEventListener('mouseenter', () => {
             clearTimeout(hideTimeout);
@@ -900,21 +935,18 @@
 
         modeSlider.addEventListener('input', () => {
             const value = modeSlider.value;
-            document.body.classList.remove('light-mode', 'colorful-mode');
+            document.body.classList.remove('light-mode', 'colorful-mode', 'star-mode');
             if (value == 0) {
                 document.body.classList.add('light-mode');
             } else if (value == 1) {
-                // Mørk modus (default)
             } else if (value == 2) {
+                document.body.classList.add('star-mode');
+            } else if (value == 3) {
                 document.body.classList.add('colorful-mode');
             }
             lastTimelineState = null;
             updateActivityAndCountdown();
         });
-
-        // Sett default til fargerik modus
-        modeSlider.value = 2;
-        document.body.classList.add('colorful-mode');
 
         // Andre event listeners
         document.addEventListener("click", (event) => {
@@ -953,6 +985,33 @@
         setInterval(updateDateTime, 1000);
         updateActivityAndCountdown();
         updateDateTime();
+
+        // Angi default modus her
+        modeSlider.value = 3;
+        document.body.classList.remove('light-mode', 'star-mode', 'colorful-mode');
+        document.body.classList.add('colorful-mode');
+
+        // Tving siden til å starte på toppen ved lasting
+        window.addEventListener('load', () => {
+            window.scrollTo(0, 0);
+        });
+
+        // Tving en oppdatering ved lasting
+        document.addEventListener('DOMContentLoaded', () => {
+            const value = modeSlider.value;
+            document.body.classList.remove('light-mode', 'colorful-mode', 'star-mode');
+            if (value == 0) {
+                document.body.classList.add('light-mode');
+            } else if (value == 1) {
+                // Mørk modus
+            } else if (value == 2) {
+                document.body.classList.add('star-mode');
+            } else if (value == 3) {
+                document.body.classList.add('colorful-mode');
+            }
+            lastTimelineState = null;
+            updateActivityAndCountdown();
+        });
     </script>
 </body>
 </html>

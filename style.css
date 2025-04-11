@@ -16,7 +16,7 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh; /* Endret fra height til min-height for å unngå klipping */
     position: relative;
     margin: 0;
 }
@@ -121,6 +121,7 @@ body.colorful-mode .edit-button {
     font-size: 0.8rem;
     color: #aaa;
     margin-top: 5px;
+    gap: 2px;
 }
 body.light-mode .mode-labels,
 body.colorful-mode .mode-labels {
@@ -131,7 +132,7 @@ body.colorful-mode .mode-labels {
     -webkit-appearance: none;
     width: 100%;
     height: 10px;
-    background: linear-gradient(to right, #ddd 0%, #ddd 33.33%, #555 33.33%, #555 66.66%, #ff00ff 66.66%, #00ffff 83.33%, #ffff00 100%);
+    background: linear-gradient(to right, #ddd 0%, #ddd 25%, #555 25%, #555 50%, #1B2735 50%, #1B2735 75%, #ff00ff 75%, #00ffff 87.5%, #ffff00 100%);
     border-radius: 5px;
     outline: none;
     cursor: pointer;
@@ -192,6 +193,7 @@ body.colorful-mode .reset-button {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    position: relative; /* Sørg for at den forblir i flyten */
 }
 .thin {
     font-weight: 100;
@@ -540,6 +542,160 @@ body.light-mode .event-box.active {
 body.light-mode .event-box:hover {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
+        /* Stjerne-modus */
+        body.star-mode {
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            color: #fff;
+            position: relative;
+            overflow: auto; /* Endret fra hidden for å tillate scrolling om nødvendig */
+        }
+
+            /* Stjernebakgrunn */
+            #stars, #stars2, #stars3 {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: transparent;
+                z-index: -1;
+                display: none; /* Skjul som standard */
+            }
+
+            body.star-mode #stars,
+            body.star-mode #stars2,
+            body.star-mode #stars3 {
+                display: block; /* Vis kun i star-mode */
+            }
+
+            @keyframes animStar {
+                0% {
+                    transform: translateY(0px);
+                }
+                100% {
+                    transform: translateY(-2000px);
+                }
+            }
+            
+            #stars {
+                width: 1px;
+                height: 1px;
+                animation: animStar 50s linear infinite;
+            }
+            #stars:after {
+                box-shadow: var(--after-shadow);
+                content: " ";
+                position: absolute;
+                top: 0; /* Endret fra 2000px for å starte rett etter */
+                width: 1px;
+                height: 1px;
+                background: transparent;
+                animation: animStar 50s linear infinite;
+                animation-delay: -25s; /* Halvparten av animasjonstiden for å overlappe */
+            }
+            
+            #stars2 {
+                width: 2px;
+                height: 2px;
+                animation: animStar 100s linear infinite;
+            }
+            #stars2:after {
+                box-shadow: var(--after-shadow);
+                content: " ";
+                position: absolute;
+                top: 0;
+                width: 2px;
+                height: 2px;
+                background: transparent;
+                animation: animStar 100s linear infinite;
+                animation-delay: -50s;
+            }
+            
+            #stars3 {
+                width: 3px;
+                height: 3px;
+                animation: animStar 150s linear infinite;
+            }
+            #stars3:after {
+                box-shadow: var(--after-shadow);
+                content: " ";
+                position: absolute;
+                top: 0;
+                width: 3px;
+                height: 3px;
+                background: transparent;
+                animation: animStar 150s linear infinite;
+                animation-delay: -75s;
+            }
+
+        /* Simulert multiple-box-shadow uten SASS */
+        #stars {
+            box-shadow: 
+                random(2000) 1px #FFF,
+                random(2000) random(2000) #FFF,
+                /* Gjenta for ca. 700 stjerner – vi kan bruke JS for å generere flere om nødvendig */
+                random(2000) random(2000) #FFF;
+        }
+        #stars2 {
+            box-shadow: 
+                random(2000) random(2000) #FFF,
+                random(2000) random(2000) #FFF,
+                /* Gjenta for ca. 200 stjerner */
+                random(2000) random(2000) #FFF;
+        }
+        #stars3 {
+            box-shadow: 
+                random(2000) random(2000) #FFF,
+                random(2000) random(2000) #FFF,
+                /* Gjenta for ca. 100 stjerner */
+                random(2000) random(2000) #FFF;
+        }
+
+        /* Gradient på tekst for nåværende aktivitet og nedtelling */
+        body.star-mode #current-activity,
+        body.star-mode #countdown-container {
+            background: -webkit-linear-gradient(white, #38495a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+
+        /* Tidslinje i Stjerne-modus */
+        body.star-mode .event-box {
+            color: #fff;
+        }
+        body.star-mode .event-box.break {
+            background-color: #fff;
+            color: #000;
+        }
+        body.star-mode .event-box.active {
+            background-color: #9400d3;
+        }
+
+        /* Andre elementer i Stjerne-modus */
+        body.star-mode .date-time {
+            color: #aaa;
+        }
+        body.star-mode .timer-panel,
+        body.star-mode .edit-modal,
+        body.star-mode .dropdown-list {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border-color: #555;
+        }
+        body.star-mode .mode-toggle,
+        body.star-mode .edit-button {
+            background-color: #333;
+            color: #aaa;
+        }
+        body.star-mode .dot {
+            background-color: #aaa;
+        }
+        body.star-mode .dot:hover {
+            background-color: #fff;
+        }
+
 body.colorful-mode {
     background: linear-gradient(135deg, #990099, #009999, #999900);
     color: #fff;
