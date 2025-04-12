@@ -65,7 +65,7 @@ body.colorful-mode .dot:hover {
     top: var(--mode-toggle-hidden-top);
     left: 50%;
     transform: translateX(-50%);
-    width: 120px;
+    width: 200px; /* Litt bredere enn 180px for ekstra plass */
     padding: 10px;
     background-color: #333;
     border-radius: 5px;
@@ -73,6 +73,10 @@ body.colorful-mode .dot:hover {
     visibility: hidden;
     transition: all 0.3s ease;
     z-index: 999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box; /* Sørger for at padding inkluderes i bredden */
 }
 .edit-button {
     position: absolute;
@@ -117,11 +121,13 @@ body.colorful-mode .edit-button {
 }
 .mode-labels {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around; /* Endret fra space-between for jevnere fordeling */
     font-size: 0.8rem;
     color: #aaa;
     margin-top: 5px;
     gap: 2px;
+    width: 100%; /* Matcher sliderens bredde */
+    text-align: center;
 }
 body.light-mode .mode-labels,
 body.colorful-mode .mode-labels {
@@ -130,7 +136,7 @@ body.colorful-mode .mode-labels {
 #mode-slider {
     appearance: none;
     -webkit-appearance: none;
-    width: 100%;
+    width: 100%; /* Tar opp hele tilgjengelige bredden i mode-toggle */
     height: 10px;
     background: linear-gradient(to right, #ddd 0%, #ddd 25%, #555 25%, #555 50%, #1B2735 50%, #1B2735 75%, #ff00ff 75%, #00ffff 87.5%, #ffff00 100%);
     border-radius: 5px;
@@ -569,10 +575,10 @@ body.light-mode .event-box:hover {
             }
 
             @keyframes animStar {
-                0% {
+                from {
                     transform: translateY(0px);
                 }
-                100% {
+                to {
                     transform: translateY(-2000px);
                 }
             }
@@ -580,52 +586,52 @@ body.light-mode .event-box:hover {
             #stars {
                 width: 1px;
                 height: 1px;
+                background: transparent;
                 animation: animStar 50s linear infinite;
+                box-shadow: var(--after-shadow);
             }
             #stars:after {
-                box-shadow: var(--after-shadow);
                 content: " ";
                 position: absolute;
-                top: 0; /* Endret fra 2000px for å starte rett etter */
+                top: 2000px;
                 width: 1px;
                 height: 1px;
                 background: transparent;
-                animation: animStar 50s linear infinite;
-                animation-delay: -25s; /* Halvparten av animasjonstiden for å overlappe */
+                box-shadow: var(--after-shadow);
             }
             
             #stars2 {
                 width: 2px;
                 height: 2px;
+                background: transparent;
                 animation: animStar 100s linear infinite;
+                box-shadow: var(--after-shadow);
             }
             #stars2:after {
-                box-shadow: var(--after-shadow);
                 content: " ";
                 position: absolute;
-                top: 0;
+                top: 2000px;
                 width: 2px;
                 height: 2px;
                 background: transparent;
-                animation: animStar 100s linear infinite;
-                animation-delay: -50s;
+                box-shadow: var(--after-shadow);
             }
             
             #stars3 {
                 width: 3px;
                 height: 3px;
+                background: transparent;
                 animation: animStar 150s linear infinite;
+                box-shadow: var(--after-shadow);
             }
             #stars3:after {
-                box-shadow: var(--after-shadow);
                 content: " ";
                 position: absolute;
-                top: 0;
+                top: 2000px;
                 width: 3px;
                 height: 3px;
                 background: transparent;
-                animation: animStar 150s linear infinite;
-                animation-delay: -75s;
+                box-shadow: var(--after-shadow);
             }
 
         /* Simulert multiple-box-shadow uten SASS */
@@ -658,7 +664,6 @@ body.light-mode .event-box:hover {
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-fill-color: transparent;
         }
 
         /* Tidslinje i Stjerne-modus */
