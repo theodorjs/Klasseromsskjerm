@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-title" content="KlasseSkjerm">
 </head>
 
-<body>
+<body class="star-mode ui-dark">
     <div class="noise-bg"></div>
     <div id="stars"></div>
     <div id="stars2"></div>
@@ -25,18 +25,18 @@
                 <div class="toolbox-main" id="toolbox-main">🧰</div>
                 <div class="toolbox-items">
                     <div class="toolbox-item theme-switch-tool" id="tool-mode" aria-label="Tema">
-                        <div class="theme-switch-control mode-3" id="theme-switch-control" role="tablist" aria-label="Velg tema">
-                            <div class="theme-switch-thumb mode-3" id="theme-switch-thumb" aria-hidden="true">
-                                <span class="theme-switch-thumb-icon" id="theme-switch-thumb-icon">🌈</span>
+                        <div class="theme-switch-control mode-2" id="theme-switch-control" role="tablist" aria-label="Velg tema">
+                            <div class="theme-switch-thumb mode-2" id="theme-switch-thumb" aria-hidden="true">
+                                <span class="theme-switch-thumb-icon" id="theme-switch-thumb-icon">✦</span>
                             </div>
-                            <button type="button" class="theme-step active" data-mode="3" aria-label="Fargerik modus">🌈</button>
+                            <button type="button" class="theme-step" data-mode="3" aria-label="Fargerik modus">🌈</button>
                             <button type="button" class="theme-step" data-mode="0" aria-label="Lys modus">☀</button>
                             <button type="button" class="theme-step" data-mode="1" aria-label="Mørk modus">☾</button>
-                            <button type="button" class="theme-step" data-mode="2" aria-label="Stjernemodus">✦</button>
+                            <button type="button" class="theme-step active" data-mode="2" aria-label="Stjernemodus">✦</button>
                         </div>
                         <div class="mode-toggle" id="mode-toggle" aria-hidden="true">
                             <div class="slider-track">
-                                <input type="range" min="0" max="3" value="3" class="slider" id="mode-slider">
+                                <input type="range" min="0" max="3" value="2" class="slider" id="mode-slider">
                             </div>
                         </div>
                     </div>
@@ -462,6 +462,29 @@
             classes = { "7. og 8.": cloneDefaultClass() };
             classes["7. og 8."].name = "7. og 8.";
             localStorage.setItem('klasseromData', JSON.stringify(classes));
+        }
+
+        // Migrer gammel standardklasse "9A" til ny standard "7. og 8."
+        // Kun når den ser ut som den opprinnelige defaulten: eneste klasse i lagret data.
+        const classNamesAfterLoad = Object.keys(classes);
+        if (classNamesAfterLoad.length === 1 && classNamesAfterLoad[0] === "9A") {
+            classes["7. og 8."] = classes["9A"];
+            classes["7. og 8."].name = "7. og 8.";
+            delete classes["9A"];
+            localStorage.setItem('klasseromData', JSON.stringify(classes));
+            const storedCurrentClassName = localStorage.getItem('currentClassName');
+            if (!storedCurrentClassName || storedCurrentClassName === "9A") {
+                localStorage.setItem('currentClassName', "7. og 8.");
+            }
+            try {
+                const savedActiveTimelineClasses = JSON.parse(localStorage.getItem('activeTimelineClassNames') || '[]');
+                if (Array.isArray(savedActiveTimelineClasses)) {
+                    const migratedTimelineClasses = savedActiveTimelineClasses.map((name) =>
+                        name === "9A" ? "7. og 8." : name
+                    );
+                    localStorage.setItem('activeTimelineClassNames', JSON.stringify(migratedTimelineClasses));
+                }
+            } catch (e) { }
         }
 
         function normalizeSubjectLabel(rawLabel) {
@@ -3657,7 +3680,7 @@
         }
 
         function initApp() {
-            const savedMode = localStorage.getItem('preferredMode') || '3';
+            const savedMode = localStorage.getItem('preferredMode') || '2';
             setThemeMode(savedMode);
 
             // Add Event Listener for Slider
