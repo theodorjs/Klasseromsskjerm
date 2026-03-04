@@ -750,6 +750,9 @@ body.ui-dark .class-card.active {
     -webkit-mask:
         linear-gradient(#fff 0 0) content-box,
         linear-gradient(#fff 0 0);
+    mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
@@ -3497,8 +3500,6 @@ body.ui-dark .event-box.break {
     color: #000;
 }
 
-body.ui-dark .event-box.active {}
-
 /* Andre elementer i Stjerne-modus */
 body.ui-dark .date-time {
     color: #aaa;
@@ -3564,8 +3565,6 @@ body.colorful-mode .event-box.break {
     background-color: #fff;
     color: #000;
 }
-
-body.colorful-mode .event-box.active {}
 
 /* Light window edges: subtle 3D bevel without white glow */
 body.ui-light .mode-toggle,
