@@ -123,6 +123,10 @@ body.under-the-hood-active #under-the-hood {
     pointer-events: auto;
 }
 
+body.under-the-hood-active .toolbox-container {
+    display: none;
+}
+
 .noise-bg {
     position: absolute;
     top: 0;
