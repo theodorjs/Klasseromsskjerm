@@ -366,6 +366,22 @@
 
     <script>
         // Standardmal for en klasse slik at vi kan re-bruke den (og unngå undefined defaultClasses)
+        const SCHOOL_DAY_FRAMES = [
+            { key: 'lesson-1', type: 'lesson', start: '08:30', end: '09:30', label: '1. time' },
+            { key: 'pause-1', type: 'break', start: '09:30', end: '09:40', activity: 'Pause', label: 'Lillefri' },
+            { key: 'lesson-2', type: 'lesson', start: '09:40', end: '10:40', label: '2. time' },
+            { key: 'mat', type: 'break', start: '10:40', end: '11:00', activity: 'Mat', label: 'Lunsj' },
+            { key: 'storefri', type: 'break', start: '11:00', end: '11:25', activity: 'Storefri', label: 'Storefri' },
+            { key: 'lesson-3', type: 'lesson', start: '11:25', end: '12:25', label: '3. time' },
+            { key: 'pause-2', type: 'break', start: '12:25', end: '12:35', activity: 'Pause', label: 'Lillefri' },
+            { key: 'lesson-4', type: 'lesson', start: '12:35', end: '13:35', label: '4. time' },
+            { key: 'lesson-5', type: 'lesson', start: '13:35', end: '14:35', label: '5. time' }
+        ];
+
+        const SCHOOL_MAIN_TIMES = SCHOOL_DAY_FRAMES
+            .filter(frame => frame.type === 'lesson')
+            .map(frame => ({ start: frame.start, end: frame.end }));
+
         const defaultClassTemplate = {
             teacher: "Mathias",
             schedule: {
@@ -403,13 +419,7 @@
                     { time: "12:35", activity: "Samfunnsfag 7.-8.", end: "13:35" }
                 ]
             },
-            mainTimes: [
-                { start: "08:30", end: "09:30" },
-                { start: "09:40", end: "10:40" },
-                { start: "11:25", end: "12:25" },
-                { start: "12:35", end: "13:35" },
-                { start: "13:35", end: "14:35" }
-            ],
+            mainTimes: JSON.parse(JSON.stringify(SCHOOL_MAIN_TIMES)),
             breaks: {
                 "Mandag": [
                     { time: "09:30", end: "09:40", activity: "Pause" },
@@ -525,7 +535,165 @@
                 .replace(/\s+/g, ' ')
                 .trim();
             if (!cleaned) return '';
-            return cleaned.replace(/(\d+)\.?\s*-\s*(\d+)\./g, '$1.-$2.');
+            return cleaned
+                .replace(/(\d+)\.?\s*-\s*(\d+)\.?(?=\s|$)/g, '$1.-$2.')
+                .replace(/(\s\d+)\.(?=\s|$)/g, '$1.');
+        }
+
+        function stripGradeSuffix(rawLabel) {
+            const normalized = normalizeSubjectLabel(rawLabel);
+            if (!normalized) return '';
+            return normalized
+                .replace(/\s+\d+\.-\d+\.?$/, '')
+                .replace(/\s+\d+\.?$/, '')
+                .trim();
+        }
+
+        function extractGradesFromName(className) {
+            const matches = String(className || '').match(/\d+/g) || [];
+            return [...new Set(matches)].slice(0, 2);
+        }
+
+        function getDefaultMultiGradeLabels(className) {
+            const grades = extractGradesFromName(className);
+            if (grades.length === 2) return [`${grades[0]}.`, `${grades[1]}.`];
+            if (grades.length === 1) return [`${grades[0]}.`, ''];
+            return ['A.', 'B.'];
+        }
+
+        function parseActivitySubjectSegment(rawSegment) {
+            const normalized = normalizeSubjectLabel(rawSegment);
+            if (!normalized) return { subject: '', grades: [] };
+            const sharedMatch = normalized.match(/^(.*?)(?:\s+(\d+)\.-(\d+)\.?)$/);
+            if (sharedMatch) {
+                return {
+                    subject: sharedMatch[1].trim(),
+                    grades: [sharedMatch[2], sharedMatch[3]]
+                };
+            }
+            const singleMatch = normalized.match(/^(.*?)(?:\s+(\d+)\.?)$/);
+            if (singleMatch) {
+                return {
+                    subject: singleMatch[1].trim(),
+                    grades: [singleMatch[2]]
+                };
+            }
+            return {
+                subject: normalized,
+                grades: []
+            };
+        }
+
+        function getActivitySubjectParts(activityLabel) {
+            return String(activityLabel || '')
+                .split('/')
+                .map(segment => parseActivitySubjectSegment(segment))
+                .filter(segment => segment.subject);
+        }
+
+        function getEditorSubjectOptions() {
+            const options = new Set();
+            Object.values(subjectMap).forEach((subject) => {
+                const full = canonicalizeSubjectName(subject.full);
+                if (!full || ["Pause", "Mat", "Storefri"].includes(full)) return;
+                options.add(full);
+            });
+            Object.values(classes).forEach((classData) => {
+                Object.values(classData.schedule || {}).forEach((entries) => {
+                    (entries || []).forEach((entry) => {
+                        getActivitySubjectParts(entry.activity).forEach((segment) => {
+                            const canonical = canonicalizeSubjectName(segment.subject);
+                            if (canonical && !["Pause", "Mat", "Storefri"].includes(canonical)) {
+                                options.add(canonical);
+                            }
+                        });
+                    });
+                });
+            });
+            return Array.from(options).sort((a, b) => a.localeCompare(b, 'no'));
+        }
+
+        function canonicalizeSubjectName(rawLabel) {
+            const normalized = stripGradeSuffix(rawLabel);
+            if (!normalized) return '';
+            const upper = normalized.toUpperCase();
+            const aliasMap = {
+                "KUNST OG HÅNDTVERK": "Kunst og håndverk",
+                "GYM": "Kroppsøving",
+                "FYSAK": "Fys.ak."
+            };
+            if (aliasMap[upper]) return aliasMap[upper];
+            const subjectInfo = Object.values(subjectMap).find(subject =>
+                subject.full.toUpperCase() === upper || subject.short.toUpperCase() === upper
+            );
+            return subjectInfo ? subjectInfo.full : normalized;
+        }
+
+        function parseEditorActivityFields(activityLabel, labels) {
+            const [leftLabel, rightLabel] = labels.map(label => String(label || '').replace(/\./g, ''));
+            const segments = getActivitySubjectParts(activityLabel);
+            if (!segments.length) return { left: '', right: '' };
+
+            if (segments.length === 1) {
+                const segment = segments[0];
+                if (segment.grades.length === 2 && segment.grades.includes(leftLabel) && segment.grades.includes(rightLabel)) {
+                    const canonical = canonicalizeSubjectName(segment.subject);
+                    return { left: canonical, right: canonical };
+                }
+                if (segment.grades.length === 1) {
+                    const canonical = canonicalizeSubjectName(segment.subject);
+                    if (segment.grades[0] === leftLabel) return { left: canonical, right: '' };
+                    if (segment.grades[0] === rightLabel) return { left: '', right: canonical };
+                }
+                const canonical = canonicalizeSubjectName(segment.subject);
+                if (leftLabel && !rightLabel) return { left: canonical, right: '' };
+                if (!leftLabel && rightLabel) return { left: '', right: canonical };
+                return { left: canonical, right: canonical };
+            }
+
+            let left = '';
+            let right = '';
+            segments.forEach((segment) => {
+                const canonical = canonicalizeSubjectName(segment.subject);
+                if (segment.grades.includes(leftLabel)) left = canonical;
+                if (segment.grades.includes(rightLabel)) right = canonical;
+            });
+            return { left, right };
+        }
+
+        function buildStoredActivityFromEditorFields(leftValue, rightValue, labels) {
+            const left = canonicalizeSubjectName(leftValue);
+            const right = canonicalizeSubjectName(rightValue);
+            if (!left && !right) return '';
+            if (left && !right) return left;
+            if (!left && right) return right;
+            if (left.toLowerCase() === right.toLowerCase()) return left;
+            return `${left} ${labels[0]} / ${right} ${labels[1]}`;
+        }
+
+        function getClassMultiGradeLabels(classData = currentClass) {
+            const extractedGrades = extractGradesFromName(classData?.name || currentClassName);
+            if (extractedGrades.length === 1 && classData?.multiGradeMode !== true) {
+                return [`${extractedGrades[0]}.`, ''];
+            }
+            const labels = Array.isArray(classData?.multiGradeLabels) && classData.multiGradeLabels.length === 2
+                ? classData.multiGradeLabels
+                : getDefaultMultiGradeLabels(classData?.name || currentClassName);
+            return labels.map((label) => String(label || '').trim());
+        }
+
+        function isClassMultiGrade(classData = currentClass) {
+            if (typeof classData?.multiGradeMode === 'boolean') return classData.multiGradeMode;
+            return extractGradesFromName(classData?.name || currentClassName).length === 2;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
         function normalizeSubjectKeyMap(map, mergeArrays = false) {
@@ -564,6 +732,11 @@
                 .slice(0, 3);
         }
 
+        function isFixedBreakActivity(activityLabel) {
+            const normalized = normalizeSubjectLabel(activityLabel);
+            return ["Pause", "Mat", "Storefri"].includes(normalized);
+        }
+
         function normalizeStoredTimeValue(rawValue) {
             if (rawValue === null || rawValue === undefined) return '';
             const value = String(rawValue).trim();
@@ -585,7 +758,8 @@
                     return {
                         ...entry,
                         time: normalizeStoredTimeValue(entry.time),
-                        end: normalizeStoredTimeValue(entry.end)
+                        end: normalizeStoredTimeValue(entry.end),
+                        activity: normalizeSubjectLabel(entry.activity)
                     };
                 })
                 .filter((entry) => entry && entry.time && entry.end);
@@ -602,6 +776,11 @@
                     return { start, end };
                 })
                 .filter(Boolean);
+        }
+
+        function sortEntriesByStart(entries) {
+            return [...(Array.isArray(entries) ? entries : [])]
+                .sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
         }
 
         function ensureClassData(classData) {
@@ -623,10 +802,13 @@
             classData.templates = normalizeSubjectKeyMap(classData.templates || {}, true);
             classData.customCountdowns = normalizeCountdownEntries(classData.customCountdowns || []);
             classData.countdownsVisible = classData.countdownsVisible !== false;
+            if (typeof classData.multiGradeMode !== 'boolean') {
+                classData.multiGradeMode = extractGradesFromName(classData.name || '').length === 2;
+            }
+            classData.multiGradeLabels = getClassMultiGradeLabels(classData);
         }
 
         Object.values(classes).forEach(ensureClassData);
-        localStorage.setItem('klasseromData', JSON.stringify(classes));
 
         let currentClassName = localStorage.getItem('currentClassName') || Object.keys(classes)[0];
         let currentClass = classes[currentClassName];
@@ -662,6 +844,7 @@
         saveActiveTimelineClassNames();
 
         function saveClasses() {
+            Object.values(classes).forEach(ensureClassData);
             localStorage.setItem('klasseromData', JSON.stringify(classes));
         }
 
@@ -794,8 +977,14 @@
         }
 
         function getMinutesFromTime(timeStr) {
-            if (!timeStr || typeof timeStr !== 'string') return 0;
-            const parts = timeStr.trim().split(/[:.]/).map(Number);
+            if (timeStr === null || timeStr === undefined) return 0;
+            const raw = String(timeStr).trim();
+            if (!raw) return 0;
+            if (/^\d{1,4}$/.test(raw)) {
+                const minutes = parseInt(raw, 10);
+                return Number.isFinite(minutes) ? minutes : 0;
+            }
+            const parts = raw.split(/[:.]/).map(Number);
             if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return 0;
             return parts[0] * 60 + parts[1];
         }
@@ -1143,6 +1332,8 @@
                             const activityColors = activities.map(a => {
                                 const trimmed = a.trim();
                                 if (subjectColors[trimmed]) return subjectColors[trimmed];
+                                const baseSubject = stripGradeSuffix(trimmed);
+                                if (baseSubject && subjectColors[baseSubject]) return subjectColors[baseSubject];
                                 return getSubjectDefaultColor(trimmed);
                             }).filter(c => c && c !== "#ffffff");
 
@@ -1325,15 +1516,21 @@
                 schoolStartCountdownText = formatDurationSmart(firstClassTime - currentMinutes);
                 container.innerHTML = `<div class="main-start-label">Skoledagen begynner om</div><div id="current-activity" class="bold"></div><div class="thin countdown" id="countdown-container"></div>`;
             } else {
-                const displayStr = displayStates.length > 1
-                    ? displayStates.map(state => {
-                        const activityLabel = state.currentActivity === "FRI"
-                            ? "Fri"
-                            : formatExpandedActivityDisplay(state.currentActivity);
-                        return `${getClassInlineLabel(state.className)}: ${activityLabel}`;
-                    }).join(', ')
-                    : formatExpandedActivityDisplay(currentActivity);
-                container.innerHTML = `<div class="thin">Akkurat nå:</div><div id="current-activity" class="bold">${displayStr}</div><div class="thin countdown" id="countdown-container"></div>`;
+                const shouldUseMultiLine = displayStates.length > 1 || isClassMultiGrade(primaryState.classData);
+                if (shouldUseMultiLine) {
+                    const activityLines = (displayStates.length > 1 ? displayStates : [primaryState])
+                        .flatMap(state => buildCurrentActivityLinesForState(state));
+                    container.innerHTML = `
+                        <div class="thin">Akkurat nå:</div>
+                        <div id="current-activity" class="current-activity-stack">
+                            ${activityLines.map(line => `<div class="current-activity-line">${escapeHtml(line)}</div>`).join('')}
+                        </div>
+                        <div class="thin countdown" id="countdown-container"></div>
+                    `;
+                } else {
+                    const displayStr = formatExpandedActivityDisplay(currentActivity);
+                    container.innerHTML = `<div class="thin">Akkurat nå:</div><div id="current-activity" class="bold">${displayStr}</div><div class="thin countdown" id="countdown-container"></div>`;
+                }
             }
 
             // Countdown logic
@@ -1763,11 +1960,8 @@
         }
 
         function getSubjectInfoFromActivityLabel(activityLabel) {
-            const normalizedLabel = normalizeSubjectLabel(activityLabel);
-            if (!normalizedLabel) return null;
-            const match = normalizedLabel.match(/^(\D+)/);
-            if (!match) return null;
-            const subjectPart = match[1].trim().toUpperCase();
+            const subjectPart = canonicalizeSubjectName(activityLabel).toUpperCase();
+            if (!subjectPart) return null;
             return Object.values(subjectMap).find(s =>
                 s.full.toUpperCase() === subjectPart || s.short.toUpperCase() === subjectPart
             ) || null;
@@ -1787,13 +1981,17 @@
         }
 
         function formatExpandedActivityLabel(activityLabel) {
-            const label = normalizeSubjectLabel(activityLabel);
-            if (!label) return 'Fri';
-            const subjectInfo = getSubjectInfoFromActivityLabel(label);
-            if (!subjectInfo) return label;
-            const match = label.match(/^(\D+)/);
-            const classNumber = match ? label.replace(match[1], '').trim() : '';
-            return `${subjectInfo.full}${classNumber ? ` ${classNumber}` : ''}`.trim();
+            const parsed = parseActivitySubjectSegment(activityLabel);
+            if (!parsed.subject) return 'Fri';
+            const subjectInfo = getSubjectInfoFromActivityLabel(parsed.subject);
+            const baseLabel = subjectInfo ? subjectInfo.full : parsed.subject;
+            if (parsed.grades.length === 2) {
+                return `${baseLabel} ${parsed.grades[0]}.-${parsed.grades[1]}.`;
+            }
+            if (parsed.grades.length === 1) {
+                return `${baseLabel} ${parsed.grades[0]}.`;
+            }
+            return baseLabel;
         }
 
         function formatExpandedActivityDisplay(activityText) {
@@ -1805,12 +2003,34 @@
                 .trim();
         }
 
+        function buildCurrentActivityLinesForState(state) {
+            if (!state) return [];
+            if (state.currentActivity === "FRI") {
+                return [`${getClassInlineLabel(state.className)}: Fri`];
+            }
+
+            const labels = getClassMultiGradeLabels(state.classData);
+            if (isClassMultiGrade(state.classData)) {
+                const fields = parseEditorActivityFields(state.currentActivity, labels);
+                const leftActivity = fields.left || fields.right || stripGradeSuffix(state.currentActivity);
+                const rightActivity = fields.right || fields.left || stripGradeSuffix(state.currentActivity);
+                const lines = [];
+                if (labels[0]) lines.push(`${labels[0]} ${formatExpandedActivityLabel(leftActivity)}`.trim());
+                if (labels[1]) lines.push(`${labels[1]} ${formatExpandedActivityLabel(rightActivity)}`.trim());
+                return lines.filter(Boolean);
+            }
+
+            return [`${getClassInlineLabel(state.className)}: ${formatExpandedActivityDisplay(state.currentActivity)}`];
+        }
+
         function getStoredSubjectEmoji(className, activityLabel) {
             const trimmed = normalizeSubjectLabel(activityLabel);
             if (!trimmed) return '❓';
             const classData = classes[className];
-            if (classData && classData.subjectEmojis && classData.subjectEmojis[trimmed]) {
-                return classData.subjectEmojis[trimmed];
+            const baseSubject = stripGradeSuffix(trimmed);
+            if (classData && classData.subjectEmojis) {
+                if (classData.subjectEmojis[trimmed]) return classData.subjectEmojis[trimmed];
+                if (baseSubject && classData.subjectEmojis[baseSubject]) return classData.subjectEmojis[baseSubject];
             }
             const subjectInfo = getSubjectInfoFromActivityLabel(trimmed);
             return subjectInfo?.emoji || '❓';
@@ -2106,101 +2326,316 @@
             renderEditor();
         }
 
-        function renderEditor() {
+        function buildScheduleEditorDraftFromClass() {
+            const days = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"];
+            const multiGradeMode = isClassMultiGrade(currentClass);
+            const labels = getClassMultiGradeLabels(currentClass);
+            const draft = {
+                multiGradeMode,
+                labels,
+                days: {}
+            };
+
+            days.forEach((day) => {
+                const scheduleEntries = sortEntriesByStart(currentClass.schedule[day] || []);
+                const lessonEntries = scheduleEntries.filter((entry) => !isFixedBreakActivity(entry.activity));
+                const breakEntries = sortEntriesByStart([
+                    ...(currentClass.breaks[day] || []),
+                    ...scheduleEntries.filter((entry) => isFixedBreakActivity(entry.activity))
+                ]);
+                let lessonIndex = 0;
+                const usedBreakIndexes = new Set();
+                draft.days[day] = {};
+
+                SCHOOL_DAY_FRAMES.forEach((frame) => {
+                    let entry = null;
+                    if (frame.type === 'lesson') {
+                        entry = lessonEntries[lessonIndex++] || null;
+                    } else {
+                        const matchIndex = breakEntries.findIndex((candidate, index) =>
+                            !usedBreakIndexes.has(index) &&
+                            normalizeSubjectLabel(candidate.activity) === frame.activity
+                        );
+                        if (matchIndex !== -1) {
+                            usedBreakIndexes.add(matchIndex);
+                            entry = breakEntries[matchIndex];
+                        }
+                    }
+                    const activity = frame.type === 'break' ? frame.activity : (entry?.activity || '');
+                    const hasOverride = !!entry && (
+                        normalizeStoredTimeValue(entry.time) !== frame.start ||
+                        normalizeStoredTimeValue(entry.end) !== frame.end
+                    );
+                    const splitFields = multiGradeMode ? parseEditorActivityFields(activity, labels) : { left: '', right: '' };
+                    draft.days[day][frame.key] = {
+                        single: frame.type === 'lesson' ? activity : frame.activity,
+                        left: splitFields.left,
+                        right: splitFields.right,
+                        overrideStart: hasOverride ? entry.time : '',
+                        overrideEnd: hasOverride ? entry.end : ''
+                    };
+                });
+            });
+
+            return draft;
+        }
+
+        function createEmptyScheduleEditorDraft(multiGradeMode = isClassMultiGrade(currentClass)) {
+            const labels = getClassMultiGradeLabels(currentClass);
+            const draft = {
+                multiGradeMode,
+                labels,
+                days: {}
+            };
+
+            ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"].forEach((day) => {
+                draft.days[day] = {};
+                SCHOOL_DAY_FRAMES.forEach((frame) => {
+                    draft.days[day][frame.key] = {
+                        single: frame.type === 'break' ? frame.activity : '',
+                        left: '',
+                        right: '',
+                        overrideStart: '',
+                        overrideEnd: ''
+                    };
+                });
+            });
+
+            return draft;
+        }
+
+        function renderScheduleEditorCell(day, frame, cellDraft, multiGradeMode, labels) {
+            const overrideActive = !!(cellDraft.overrideStart || cellDraft.overrideEnd);
+            const overrideButtonLabel = overrideActive ? 'Reset tid' : 'Bytt tid';
+            const overrideMarkup = `
+                <div class="schedule-override-panel ${overrideActive ? 'active' : ''}">
+                    <input type="text" class="schedule-time-input" data-role="override-start" value="${escapeHtml(cellDraft.overrideStart || '')}" placeholder="${frame.start}">
+                    <span>–</span>
+                    <input type="text" class="schedule-time-input" data-role="override-end" value="${escapeHtml(cellDraft.overrideEnd || '')}" placeholder="${frame.end}">
+                </div>
+            `;
+
+            if (frame.type === 'break') {
+                return `
+                    <div class="schedule-editor-card break" data-day="${day}" data-frame-key="${frame.key}" data-frame-type="${frame.type}">
+                        <div class="schedule-break-copy">
+                            <div class="schedule-break-title">${escapeHtml(frame.activity)}</div>
+                            <div class="schedule-break-subtitle">${escapeHtml(frame.label)}</div>
+                        </div>
+                        <button type="button" class="schedule-override-toggle ${overrideActive ? 'active' : ''}">${overrideButtonLabel}</button>
+                        ${overrideMarkup}
+                    </div>
+                `;
+            }
+
+            const singleValue = cellDraft.single || buildStoredActivityFromEditorFields(cellDraft.left, cellDraft.right, labels);
+            const splitFields = {
+                left: cellDraft.left || parseEditorActivityFields(singleValue, labels).left,
+                right: cellDraft.right || parseEditorActivityFields(singleValue, labels).right
+            };
+
+            const lessonFields = multiGradeMode
+                ? `
+                    <div class="schedule-split-fields">
+                        <label class="schedule-split-field">
+                            <span class="schedule-field-label">${escapeHtml(labels[0])}</span>
+                            <input type="text" list="schedule-subject-datalist" class="schedule-subject-input" data-role="left" value="${escapeHtml(splitFields.left)}" placeholder="Velg fag eller skriv" autocomplete="off">
+                        </label>
+                        <label class="schedule-split-field">
+                            <span class="schedule-field-label">${escapeHtml(labels[1])}</span>
+                            <input type="text" list="schedule-subject-datalist" class="schedule-subject-input" data-role="right" value="${escapeHtml(splitFields.right)}" placeholder="Velg fag eller skriv" autocomplete="off">
+                        </label>
+                    </div>
+                `
+                : `
+                    <div class="schedule-single-field">
+                        <input type="text" list="schedule-subject-datalist" class="schedule-subject-input schedule-single-input" data-role="single" value="${escapeHtml(singleValue)}" placeholder="Velg fag eller skriv fritt" autocomplete="off">
+                    </div>
+                `;
+
+            return `
+                <div class="schedule-editor-card lesson" data-day="${day}" data-frame-key="${frame.key}" data-frame-type="${frame.type}">
+                    ${lessonFields}
+                    <button type="button" class="schedule-override-toggle ${overrideActive ? 'active' : ''}">${overrideButtonLabel}</button>
+                    ${overrideMarkup}
+                </div>
+            `;
+        }
+
+        function syncScheduleOverrideButton(button, active) {
+            if (!button) return;
+            button.classList.toggle('active', active);
+            button.textContent = active ? 'Reset tid' : 'Bytt tid';
+        }
+
+        function collectScheduleEditorDraft() {
+            const days = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"];
+            const multiGradeToggle = document.getElementById('multi-grade-toggle');
+            const draft = {
+                multiGradeMode: !!multiGradeToggle?.checked,
+                labels: getClassMultiGradeLabels(currentClass),
+                days: {}
+            };
+
+            days.forEach((day) => {
+                draft.days[day] = {};
+                SCHOOL_DAY_FRAMES.forEach((frame) => {
+                    const card = document.querySelector(`.schedule-editor-card[data-day="${day}"][data-frame-key="${frame.key}"]`);
+                    if (!card) return;
+                    draft.days[day][frame.key] = {
+                        single: card.querySelector('[data-role="single"]')?.value.trim() || '',
+                        left: card.querySelector('[data-role="left"]')?.value.trim() || '',
+                        right: card.querySelector('[data-role="right"]')?.value.trim() || '',
+                        overrideStart: card.querySelector('[data-role="override-start"]')?.value.trim() || '',
+                        overrideEnd: card.querySelector('[data-role="override-end"]')?.value.trim() || ''
+                    };
+                });
+            });
+
+            return draft;
+        }
+
+        function attachScheduleEditorInteractions() {
+            document.querySelectorAll('.schedule-override-toggle').forEach((button) => {
+                syncScheduleOverrideButton(button, button.classList.contains('active'));
+                button.addEventListener('click', () => {
+                    const card = button.closest('.schedule-editor-card');
+                    const panel = card?.querySelector('.schedule-override-panel');
+                    if (!panel) return;
+                    const nextState = !panel.classList.contains('active');
+                    panel.classList.toggle('active', nextState);
+                    syncScheduleOverrideButton(button, nextState);
+                    if (!nextState) {
+                        panel.querySelectorAll('.schedule-time-input').forEach((input) => {
+                            input.value = '';
+                        });
+                    }
+                    updateScheduleEditorBackButtonState();
+                });
+            });
+
+            document.querySelectorAll('.schedule-subject-input, .schedule-time-input').forEach((input) => {
+                input.addEventListener('input', updateScheduleEditorBackButtonState);
+                input.addEventListener('change', updateScheduleEditorBackButtonState);
+            });
+
+            const multiGradeToggle = document.getElementById('multi-grade-toggle');
+            if (multiGradeToggle) {
+                multiGradeToggle.addEventListener('change', () => {
+                    const draft = collectScheduleEditorDraft();
+                    draft.multiGradeMode = multiGradeToggle.checked;
+                    renderEditor(draft);
+                });
+            }
+        }
+
+        function renderEditor(draft = null) {
             const container = document.getElementById('under-the-hood');
             const days = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"];
             const subjBtn = document.getElementById('subject-color-btn');
             if (subjBtn) subjBtn.style.display = 'none';
 
-            // Generate rows based on the day with most slots
-            let maxSlots = 0;
-            days.forEach(day => {
-                const combined = [...(currentClass.schedule[day] || []), ...(currentClass.breaks[day] || [])];
-                maxSlots = Math.max(maxSlots, combined.length);
-            });
+            const resolvedDraft = draft || buildScheduleEditorDraftFromClass();
+            const labels = resolvedDraft.labels || getClassMultiGradeLabels(currentClass);
+            const subjectOptions = getEditorSubjectOptions()
+                .map(subject => `<option value="${escapeHtml(subject)}"></option>`)
+                .join('');
 
-            let tableHtml = `<table class="editor-table"><thead><tr><th>Hovedtider</th>`;
-            days.forEach(day => tableHtml += `<th>${day}</th>`);
-            tableHtml += `</tr></thead><tbody>`;
+            let gridMarkup = `
+                <div class="schedule-grid-head schedule-grid-head-time">Tidsblokker</div>
+                ${days.map(day => `<div class="schedule-grid-head">${day}</div>`).join('')}
+            `;
 
-            for (let i = 0; i < maxSlots + 1; i++) {
-                tableHtml += `<tr><td class="editor-cell main-time-cell">
-                    <input type="text" placeholder="Start" class="main-start" data-index="${i}">
-                    <input type="text" placeholder="Slutt" class="main-end" data-index="${i}">
-                </td>`;
-
-                days.forEach(day => {
-                    tableHtml += `<td><div class="editor-cell" data-day="${day}" data-index="${i}">
-                        <input type="text" class="activity-input" placeholder="Aktivitet">
-                        <span class="time-override">Egen tid?</span>
-                    </div></td>`;
+            SCHOOL_DAY_FRAMES.forEach((frame) => {
+                gridMarkup += `
+                    <div class="schedule-frame-card ${frame.type}">
+                        <div class="schedule-frame-time">${frame.start}-${frame.end}</div>
+                        <div class="schedule-frame-label">${frame.type === 'lesson' ? frame.label : frame.activity}</div>
+                    </div>
+                `;
+                days.forEach((day) => {
+                    const cellDraft = resolvedDraft.days?.[day]?.[frame.key] || {
+                        single: frame.type === 'break' ? frame.activity : '',
+                        left: '',
+                        right: '',
+                        overrideStart: '',
+                        overrideEnd: ''
+                    };
+                    gridMarkup += renderScheduleEditorCell(day, frame, cellDraft, resolvedDraft.multiGradeMode, labels);
                 });
-                tableHtml += `</tr>`;
-            }
-            tableHtml += `</tbody></table>`;
+            });
 
             container.innerHTML = `
                 <div class="noise-bg"></div>
                 <div class="editor-container schedule-editor-container">
-                    <h2 style="margin-bottom: 20px; font-weight: 300; color: #eee;">Rediger timeplan: ${currentClassName}</h2>
-                    ${tableHtml}
-                    <div style="margin-top: 30px; text-align: center;">
+                    <div class="schedule-editor-header">
+                        <div>
+                            <h2 class="schedule-editor-title">Rediger timeplan: ${escapeHtml(currentClassName)}</h2>
+                            <p class="schedule-editor-subtitle">Skolens hovedtider ligger fast. Bruk "Bytt tid" kun når en blokk avviker.</p>
+                        </div>
+                        <div class="schedule-editor-header-tools">
+                            <label class="schedule-mode-switch">
+                                <input type="checkbox" id="multi-grade-toggle" ${resolvedDraft.multiGradeMode ? 'checked' : ''}>
+                                <span>Fådelt klasse</span>
+                            </label>
+                            <div class="schedule-grade-badges ${resolvedDraft.multiGradeMode ? '' : 'hidden'}" id="schedule-grade-badges">
+                                <span>${escapeHtml(labels[0])}</span>
+                                <span>${escapeHtml(labels[1])}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <datalist id="schedule-subject-datalist">${subjectOptions}</datalist>
+                    <div class="schedule-grid">${gridMarkup}</div>
+                    <div class="schedule-editor-footer">
+                        <button class="neumorphic-btn" onclick="clearScheduleEditorWeek()">Tøm uke</button>
                         <button class="neumorphic-btn" onclick="saveSchedule()">Lagre Alt</button>
                         <button class="neumorphic-btn" onclick="openSubjectColorPicker()">🎨 Fagfarger</button>
-                        <button class="neumorphic-btn" onclick="renderClassGrid()">Avbryt</button>
+                        <button class="neumorphic-btn" id="schedule-back-btn" onclick="renderClassGrid()">Tilbake</button>
                     </div>
                 </div>
             `;
 
-            // Populate data
-            populateEditorData(maxSlots);
-
-            // Auto-fill logic
-            container.querySelectorAll('.main-end').forEach((input, index) => {
-                input.addEventListener('input', () => {
-                    const nextStart = container.querySelector(`.main-start[data-index="${index + 1}"]`);
-                    if (nextStart) {
-                        nextStart.value = input.value;
-                    }
-                });
-            });
+            attachScheduleEditorInteractions();
+            updateScheduleEditorBackButtonState();
         }
 
-        function populateEditorData(maxSlots) {
-            const days = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"];
+        function clearScheduleEditorWeek() {
+            const ok = confirm("Tømme alle undervisningsblokker i editoren og gå tilbake til faste pauser?");
+            if (!ok) return;
+            const draft = createEmptyScheduleEditorDraft(!!document.getElementById('multi-grade-toggle')?.checked);
+            renderEditor(draft);
+        }
 
-            // Initializing mainTimes if missing
-            if (!currentClass.mainTimes) {
-                currentClass.mainTimes = (currentClass.schedule["Mandag"] || []).map(e => ({ start: e.time, end: e.end }));
-            }
-
-            // Fill Main Times
-            currentClass.mainTimes.forEach((mt, i) => {
-                const startInput = document.querySelector(`.main-start[data-index="${i}"]`);
-                const endInput = document.querySelector(`.main-end[data-index="${i}"]`);
-                if (startInput) startInput.value = mt.start;
-                if (endInput) endInput.value = mt.end;
-            });
-
-            // Fill Activities
-            days.forEach(day => {
-                const combined = [...(currentClass.schedule[day] || []), ...(currentClass.breaks[day] || [])]
-                    .sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
-
-                combined.forEach((entry, i) => {
-                    const cell = document.querySelector(`.editor-cell[data-day="${day}"][data-index="${i}"]`);
-                    if (cell) {
-                        const input = cell.querySelector('.activity-input');
-                        input.value = entry.activity;
-
-                        // Check for time override
-                        const mainTime = currentClass.mainTimes[i];
-                        if (mainTime && (entry.time !== mainTime.start || entry.end !== mainTime.end)) {
-                            showOverrideInputs(cell, entry.time, entry.end);
-                        }
-                    }
+        function normalizeScheduleEditorDraftForCompare(draft) {
+            if (!draft) return '';
+            const normalized = {
+                multiGradeMode: !!draft.multiGradeMode,
+                labels: (draft.labels || []).map((label) => String(label || '').trim()),
+                days: {}
+            };
+            ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"].forEach((day) => {
+                normalized.days[day] = {};
+                SCHOOL_DAY_FRAMES.forEach((frame) => {
+                    const cell = draft.days?.[day]?.[frame.key] || {};
+                    normalized.days[day][frame.key] = {
+                        single: canonicalizeSubjectName(cell.single || ''),
+                        left: canonicalizeSubjectName(cell.left || ''),
+                        right: canonicalizeSubjectName(cell.right || ''),
+                        overrideStart: normalizeStoredTimeValue(cell.overrideStart || ''),
+                        overrideEnd: normalizeStoredTimeValue(cell.overrideEnd || '')
+                    };
                 });
             });
+            return JSON.stringify(normalized);
+        }
+
+        function updateScheduleEditorBackButtonState() {
+            const backButton = document.getElementById('schedule-back-btn');
+            if (!backButton) return;
+            const currentDraft = collectScheduleEditorDraft();
+            const baselineDraft = buildScheduleEditorDraftFromClass();
+            const isDirty = normalizeScheduleEditorDraftForCompare(currentDraft) !== normalizeScheduleEditorDraftForCompare(baselineDraft);
+            backButton.textContent = isDirty ? 'Avbryt' : 'Tilbake';
         }
 
         // --- Fagfarger (Subject Colors) ---
@@ -2215,10 +2650,12 @@
                 combined.forEach(entry => {
                     const activity = entry.activity;
                     if (!activity) return;
-                    // Split sammenslåtte fag (e.g. "Norsk 7. / Matte 8.")
-                    const parts = activity.split('/').map(p => p.trim());
-                    parts.forEach(p => {
-                        const normalized = normalizeSubjectLabel(p);
+                    if (["Pause", "Mat", "Storefri"].includes(activity)) {
+                        subjects.add(activity);
+                        return;
+                    }
+                    getActivitySubjectParts(activity).forEach(segment => {
+                        const normalized = canonicalizeSubjectName(segment.subject);
                         if (normalized) subjects.add(normalized);
                     });
                 });
@@ -2256,15 +2693,8 @@
         }
 
         function getSubjectDefaultColor(subject) {
-            // Check if we have a match in subjectMap for emoji/full name
-            const normalizedSubject = normalizeSubjectLabel(subject);
-            const match = normalizedSubject.match(/^(\D+)/);
-            if (match) {
-                const subjectPart = match[1].trim().toUpperCase();
-                const subjectInfo = Object.values(subjectMap).find(s =>
-                    s.full.toUpperCase() === subjectPart || s.short.toUpperCase() === subjectPart);
-                if (subjectInfo && colorMap[subjectInfo.full]) return colorMap[subjectInfo.full];
-            }
+            const subjectInfo = getSubjectInfoFromActivityLabel(subject);
+            if (subjectInfo && colorMap[subjectInfo.full]) return colorMap[subjectInfo.full];
             return "#ffffff"; // Default
         }
 
@@ -2388,7 +2818,9 @@
             "KRLE": { full: "KRLE", short: "KRLE", emoji: "❤️" },
             "Naturfag": { full: "Naturfag", short: "Natur", emoji: "🔬" },
             "Fysak": { full: "Fysak", short: "Fys", emoji: "🤸‍♂️" },
+            "Fys.ak.": { full: "Fys.ak.", short: "Fys.ak.", emoji: "🤸‍♂️" },
             "Gym": { full: "Gym", short: "Gym", emoji: "🏃‍♀️" },
+            "Kroppsøving": { full: "Kroppsøving", short: "Kroppsøving", emoji: "🏃‍♀️" },
             "Musikk": { full: "Musikk", short: "Musikk", emoji: "🎶" },
             "Engelsk": { full: "Engelsk", short: "En", emoji: "🇬🇧" },
             "Språkfag": { full: "Språkfag", short: "Språk", emoji: "🗣️" },
@@ -2413,6 +2845,7 @@
             "Matematikk": "#1384CF",
             "Musikk": "#C63398",
             "Engelsk": "#FF772E",
+            "Kroppsøving": "#00CC00",
             "Språkfag": "#F08A24",
             "Samfunnsfag": "#E59C1F",
             "Folkhelse & livsmestring": "#CC3399",
@@ -2422,6 +2855,7 @@
             "Kunst og håndverk": "#9933FF",
             "Gym": "#00CC00",
             "Fysak": "#76D3A9",
+            "Fys.ak.": "#76D3A9",
             "Mat og helse": "#FF3300",
             "Kunst og håndtverk": "#9933FF",
             "Pause": "#545454",
@@ -2464,69 +2898,45 @@
             localStorage.setItem(migrationKey, 'true');
         })();
 
-        function showOverrideInputs(cell, start = "", end = "") {
-            const btn = cell.querySelector('.time-override');
-            if (btn) btn.remove();
-
-            const div = document.createElement('div');
-            div.className = 'override-inputs';
-            div.style.display = 'flex';
-            div.style.gap = '5px';
-            div.style.marginTop = '5px';
-            div.innerHTML = `
-                <input type="text" value="${start}" placeholder="Start" style="font-size: 0.7rem; padding: 4px;">
-                <input type="text" value="${end}" placeholder="Slutt" style="font-size: 0.7rem; padding: 4px;">
-            `;
-            cell.appendChild(div);
-        }
-
         function saveSchedule() {
             const days = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"];
-            const newMainTimes = [];
+            const draft = collectScheduleEditorDraft();
+            currentClass.multiGradeMode = draft.multiGradeMode;
+            currentClass.multiGradeLabels = draft.labels;
+            currentClass.mainTimes = JSON.parse(JSON.stringify(SCHOOL_MAIN_TIMES));
 
-            // Read Main Times
-            document.querySelectorAll('.main-start').forEach((input, i) => {
-                const start = input.value;
-                const end = document.querySelector(`.main-end[data-index="${i}"]`).value;
-                if (start && end) newMainTimes.push({ start, end });
-            });
-            currentClass.mainTimes = newMainTimes;
-
-            // Read Schedule for each day
             days.forEach(day => {
                 const newSchedule = [];
                 const newBreaks = [];
 
-                for (let i = 0; i < 20; i++) { // Max potential slots
-                    const cell = document.querySelector(`.editor-cell[data-day="${day}"][data-index="${i}"]`);
-                    if (!cell) continue;
+                SCHOOL_DAY_FRAMES.forEach((frame) => {
+                    const frameDraft = draft.days?.[day]?.[frame.key] || {};
+                    const start = normalizeStoredTimeValue(frameDraft.overrideStart || frame.start);
+                    const end = normalizeStoredTimeValue(frameDraft.overrideEnd || frame.end);
 
-                    const activity = cell.querySelector('.activity-input').value.trim();
-                    if (!activity) continue;
-
-                    let start, end;
-                    const override = cell.querySelector('.override-inputs');
-                    if (override) {
-                        const inputs = override.querySelectorAll('input');
-                        start = inputs[0].value;
-                        end = inputs[1].value;
-                    } else if (newMainTimes[i]) {
-                        start = newMainTimes[i].start;
-                        end = newMainTimes[i].end;
+                    if (frame.type === 'break') {
+                        newBreaks.push({
+                            time: start || frame.start,
+                            end: end || frame.end,
+                            activity: frame.activity,
+                            type: 'break'
+                        });
+                        return;
                     }
 
-                    if (start && end) {
-                        const entry = { time: start, activity, end };
-                        if (activity.toLowerCase() === "pause" || activity.toLowerCase() === "mat" || activity.toLowerCase() === "storefri") {
-                            entry.type = "break";
-                            newBreaks.push(entry);
-                        } else {
-                            newSchedule.push(entry);
-                        }
-                    }
-                }
-                currentClass.schedule[day] = newSchedule;
-                currentClass.breaks[day] = newBreaks;
+                    const activity = draft.multiGradeMode
+                        ? buildStoredActivityFromEditorFields(frameDraft.left, frameDraft.right, draft.labels)
+                        : canonicalizeSubjectName(frameDraft.single);
+                    if (!activity) return;
+                    newSchedule.push({
+                        time: start || frame.start,
+                        end: end || frame.end,
+                        activity: normalizeSubjectLabel(activity)
+                    });
+                });
+
+                currentClass.schedule[day] = sortEntriesByStart(newSchedule);
+                currentClass.breaks[day] = sortEntriesByStart(newBreaks);
             });
 
             saveClasses();
@@ -3163,6 +3573,8 @@
             if (name && !classes[name]) {
                 classes[name] = cloneDefaultClass(); // Deep copy default
                 classes[name].name = name;
+                classes[name].multiGradeMode = extractGradesFromName(name).length === 2;
+                classes[name].multiGradeLabels = getDefaultMultiGradeLabels(name);
                 ensureClassData(classes[name]);
                 saveClasses();
                 selectClass(name);
