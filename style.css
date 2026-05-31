@@ -131,6 +131,10 @@ body.under-the-hood-active .countdown-stack {
     display: none;
 }
 
+body.under-the-hood-active .top-status-bar {
+    display: none !important;
+}
+
 body.under-the-hood-active .date-time {
     display: none !important;
 }
@@ -204,6 +208,46 @@ body.under-the-hood-active .date-time {
     transition: all 0.3s ease;
 }
 
+.toolbox-fullscreen {
+    position: absolute;
+    top: 0;
+    left: 72px;
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 20px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: var(--shadow-light), var(--shadow-dark);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-12px) scale(0.9);
+    transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.toolbox-container.active .toolbox-fullscreen {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0) scale(1);
+}
+
+.toolbox-fullscreen:hover {
+    transform: translateX(0) scale(1.05);
+}
+
+.toolbox-fullscreen:active {
+    transform: translateX(0) scale(0.95);
+    box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
+}
+
+.toolbox-fullscreen.is-fullscreen {
+    border-color: rgba(49, 227, 255, 0.62);
+}
+
 .toolbox-main:active {
     box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
     transform: scale(0.95);
@@ -264,6 +308,7 @@ body.under-the-hood-active .date-time {
 }
 
 body.ui-light .toolbox-main,
+body.ui-light .toolbox-fullscreen,
 body.ui-light .toolbox-item {
     background: rgba(248, 252, 255, 0.78);
     backdrop-filter: blur(6px);
@@ -278,18 +323,21 @@ body.ui-light .toolbox-item .label {
 }
 
 body.ui-light .toolbox-main:hover,
+body.ui-light .toolbox-fullscreen:hover,
 body.ui-light .toolbox-item:hover {
     border-color: rgba(0, 0, 0, 0.72);
     transform: scale(1.05);
 }
 
 body.ui-light .toolbox-main:active,
+body.ui-light .toolbox-fullscreen:active,
 body.ui-light .toolbox-item:active {
     transform: scale(0.95) rotateZ(1.2deg);
     box-shadow: 8px 11px 20px rgba(0, 0, 0, 0.14);
 }
 
 body.ui-dark .toolbox-main,
+body.ui-dark .toolbox-fullscreen,
 body.ui-dark .toolbox-item {
     background: rgba(43, 58, 80, 0.5);
     backdrop-filter: blur(8px);
@@ -306,6 +354,7 @@ body.ui-dark .toolbox-item .label {
 }
 
 body.ui-dark .toolbox-main:hover,
+body.ui-dark .toolbox-fullscreen:hover,
 body.ui-dark .toolbox-item:hover {
     border-color: rgba(255, 255, 255, 0.24);
     box-shadow:
@@ -314,6 +363,7 @@ body.ui-dark .toolbox-item:hover {
 }
 
 body.ui-dark .toolbox-main:active,
+body.ui-dark .toolbox-fullscreen:active,
 body.ui-dark .toolbox-item:active {
     box-shadow:
         8px 11px 20px rgba(0, 0, 0, 0.24),
@@ -329,6 +379,7 @@ body.colorful-mode {
 
 /* Colorful mode uses the same glass language as date/time, timeline and "Akkurat na". */
 body.colorful-mode .toolbox-main,
+body.colorful-mode .toolbox-fullscreen,
 body.colorful-mode .toolbox-item {
     background: rgba(236, 246, 255, 0.22);
     backdrop-filter: blur(8px);
@@ -343,33 +394,66 @@ body.colorful-mode .toolbox-item .label {
 }
 
 body.colorful-mode .toolbox-main:active,
+body.colorful-mode .toolbox-fullscreen:active,
 body.colorful-mode .toolbox-item:active {
     transform: scale(0.95) rotateZ(1.2deg);
     box-shadow: 8px 11px 20px rgba(0, 0, 0, 0.16);
 }
 
-.date-time {
+.top-status-bar {
     position: fixed;
     top: 25px;
+    left: 35px;
     right: 35px;
+    height: 54px;
+    z-index: 5000;
+    pointer-events: none;
+}
+
+.date-time,
+.week-number {
     background: rgba(255, 255, 255, 0.1);
-    /* Glassmorphism */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 12px 25px;
     border-radius: 20px;
     box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+    color: var(--text-color);
+    height: 54px;
+}
+
+.date-time {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0 25px;
     font-size: 1.4rem;
     font-weight: 600;
-    color: var(--text-color);
+    line-height: 1;
     white-space: nowrap;
     display: flex !important;
     align-items: center;
     gap: 0;
     overflow: visible;
-    z-index: 5000;
+    pointer-events: auto;
     cursor: default;
+}
+
+.week-number {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 132px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
+    white-space: nowrap;
+    pointer-events: none;
 }
 
 #day-display,
@@ -503,6 +587,7 @@ body.ui-light .reset-button {
 }
 
 body.light-mode .date-time,
+body.light-mode .week-number,
 body.light-mode #main-container {
     background: rgba(255, 255, 255, 0.18);
     border: 1px solid rgba(255, 255, 255, 0.5);
@@ -2148,7 +2233,65 @@ body.ui-light #color-detail-modal {
     font-size: 1rem;
 }
 
+@media (max-width: 1280px) {
+    .top-status-bar {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .week-number {
+        position: static;
+        transform: none;
+        flex: 0 0 132px;
+        width: 132px;
+    }
+
+    .date-time {
+        position: static;
+        flex: 0 1 auto;
+        min-width: 0;
+        overflow: hidden;
+    }
+}
+
 @media (max-width: 768px) {
+    .top-status-bar {
+        top: 18px;
+        left: 18px;
+        right: 18px;
+        height: 42px;
+        gap: 8px;
+    }
+
+    .date-time,
+    .week-number {
+        height: 42px;
+        border-radius: 22px;
+        font-size: 1rem;
+    }
+
+    .week-number {
+        position: static;
+        transform: none;
+        flex: 0 0 108px;
+        width: 108px;
+    }
+
+    .date-time {
+        position: static;
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: calc(100% - 116px);
+        padding: 0 14px;
+        overflow: hidden;
+    }
+
+    #day-display,
+    #date-display {
+        margin-right: 8px;
+    }
+
     .event-box {
         font-size: clamp(0.7rem, 1.5vw, 0.92rem);
         padding: 0 clamp(4px, 1vw, 8px);
@@ -2168,6 +2311,34 @@ body.ui-light #color-detail-modal {
 }
 
 @media (max-width: 480px) {
+    .top-status-bar {
+        left: 12px;
+        right: 12px;
+        gap: 6px;
+    }
+
+    .date-time,
+    .week-number {
+        height: 40px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+    }
+
+    .week-number {
+        flex-basis: 86px;
+        width: 86px;
+    }
+
+    .date-time {
+        max-width: calc(100% - 92px);
+        padding: 0 8px;
+    }
+
+    #day-display,
+    #date-display {
+        margin-right: 6px;
+    }
+
     .event-box {
         font-size: clamp(0.58rem, 1.2vw, 0.72rem);
         padding: 0 clamp(3px, 0.8vw, 5px);
@@ -3809,6 +3980,10 @@ body.ui-dark .date-time {
     color: #aaa;
 }
 
+body.ui-dark .week-number {
+    color: #aaa;
+}
+
 body.ui-dark .edit-modal,
 body.ui-dark .dropdown-list {
     background-color: rgba(0, 0, 0, 0.7);
@@ -3854,6 +4029,7 @@ body.colorful-mode .countdown {
 
 body.colorful-mode .date-time,
 body.colorful-mode .date-time span,
+body.colorful-mode .week-number,
 body.colorful-mode .timeline-empty {
     color: #fff;
 }

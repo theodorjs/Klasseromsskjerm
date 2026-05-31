@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klasseromsskjerm</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="theme-color" content="#1C2735">
+    <meta name="mobile-web-app-capable" content="yes">
     <!-- iOS Fullscreen support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,6 +28,7 @@
             style="display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 5vh;">
             <div class="toolbox-container" id="toolbox-container">
                 <div class="toolbox-main" id="toolbox-main">🧰</div>
+                <button class="toolbox-fullscreen" id="tool-fullscreen" type="button" aria-label="Fullskjerm" title="Fullskjerm">⛶</button>
                 <div class="toolbox-items">
                     <div class="toolbox-item theme-switch-tool" id="tool-mode" aria-label="Tema">
                         <div class="theme-switch-control mode-2" id="theme-switch-control" role="tablist" aria-label="Velg tema">
@@ -129,12 +135,15 @@
 
 
 
-    <div class="date-time">
-        <span id="day-display" data-changed="false"></span>
-        <span id="date-display"></span>
-        <span id="hour-display" data-changed="false"></span>:<span id="minute-display" data-changed="false"></span>
-        <span id="sim-indicator" class="sim-indicator" style="display:none;">Simulert tid</span>
-        <button id="sim-reset-btn" class="sim-reset-btn" style="display:none;">Tilbakestill</button>
+    <div class="top-status-bar">
+        <div class="week-number" id="week-number" aria-live="polite">Uke</div>
+        <div class="date-time">
+            <span id="day-display" data-changed="false"></span>
+            <span id="date-display"></span>
+            <span id="hour-display" data-changed="false"></span>:<span id="minute-display" data-changed="false"></span>
+            <span id="sim-indicator" class="sim-indicator" style="display:none;">Simulert tid</span>
+            <button id="sim-reset-btn" class="sim-reset-btn" style="display:none;">Tilbakestill</button>
+        </div>
     </div>
     <div class="countdown-stack" id="countdown-stack" aria-live="polite"></div>
     <div class="timer-panel" id="timer-panel">
@@ -885,6 +894,7 @@
         // Initialize Tools and UI Elements
         const toolboxContainer = document.getElementById('toolbox-container');
         const toolboxMain = document.getElementById('toolbox-main');
+        const toolFullscreen = document.getElementById('tool-fullscreen');
         const toolTimer = document.getElementById('tool-timer');
         const toolCountdown = document.getElementById('tool-countdown');
         const toolAgenda = document.getElementById('tool-agenda');
@@ -1209,6 +1219,31 @@
                 realOsloTime;
 
             return { osloTime: currentOsloTime, currentDay, realDay, realOsloTime };
+        }
+
+        function getOsloDateParts(date = new Date()) {
+            const parts = new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Europe/Oslo',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).formatToParts(date);
+
+            const partMap = Object.fromEntries(parts.map(part => [part.type, part.value]));
+            return {
+                year: Number(partMap.year),
+                month: Number(partMap.month),
+                day: Number(partMap.day)
+            };
+        }
+
+        function getIsoWeekNumberForOslo(date = new Date()) {
+            const { year, month, day } = getOsloDateParts(date);
+            const utcDate = new Date(Date.UTC(year, month - 1, day));
+            const weekday = utcDate.getUTCDay() || 7;
+            utcDate.setUTCDate(utcDate.getUTCDate() + 4 - weekday);
+            const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
+            return Math.ceil((((utcDate - yearStart) / 86400000) + 1) / 7);
         }
 
         let lastTimelineState = null;
@@ -1591,6 +1626,11 @@
             const dateElement = document.getElementById("date-display");
             const hourDisplay = document.getElementById("hour-display");
             const minuteDisplay = document.getElementById("minute-display");
+            const weekNumber = document.getElementById("week-number");
+
+            if (weekNumber) {
+                weekNumber.textContent = `Uke ${getIsoWeekNumberForOslo(now)}`;
+            }
 
             if (dayDisplay && dateElement && hourDisplay && minuteDisplay) {
                 // Populer dag hvis den ikke er endret manuelt
@@ -1599,7 +1639,7 @@
                 }
 
                 // Populer dato (alltid sanntid)
-                const options = { day: 'numeric', month: 'long' };
+                const options = { day: 'numeric', month: 'long', timeZone: 'Europe/Oslo' };
                 dateElement.textContent = now.toLocaleDateString('no-NO', options);
 
                 // Populer klokke hvis den ikke er endret manuelt
@@ -1895,6 +1935,42 @@
             if (toolboxTimer) clearTimeout(toolboxTimer);
         }
 
+        function getFullscreenElement() {
+            return document.fullscreenElement || document.webkitFullscreenElement || null;
+        }
+
+        function updateFullscreenButton() {
+            if (!toolFullscreen) return;
+            const isFullscreen = Boolean(getFullscreenElement());
+            toolFullscreen.textContent = isFullscreen ? '⛶' : '⛶';
+            toolFullscreen.setAttribute('aria-label', isFullscreen ? 'Avslutt fullskjerm' : 'Fullskjerm');
+            toolFullscreen.title = isFullscreen ? 'Avslutt fullskjerm' : 'Fullskjerm';
+            toolFullscreen.classList.toggle('is-fullscreen', isFullscreen);
+        }
+
+        async function toggleFullscreen() {
+            const root = document.documentElement;
+            try {
+                if (getFullscreenElement()) {
+                    if (document.exitFullscreen) {
+                        await document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                } else if (root.requestFullscreen) {
+                    await root.requestFullscreen();
+                } else if (root.webkitRequestFullscreen) {
+                    root.webkitRequestFullscreen();
+                } else {
+                    alert('Fullskjerm støttes ikke her. På iPad: legg siden til på Hjem-skjermen og åpne den derfra.');
+                }
+            } catch (error) {
+                console.warn('Kunne ikke endre fullskjerm:', error);
+            } finally {
+                updateFullscreenButton();
+            }
+        }
+
         function resetToolboxTimer() {
             if (toolboxTimer) clearTimeout(toolboxTimer);
             if (toolboxContainer.classList.contains('active')) {
@@ -1907,6 +1983,18 @@
             toolboxMain.classList.toggle('active');
             if (isActive) resetToolboxTimer();
         });
+
+        if (toolFullscreen) {
+            toolFullscreen.addEventListener('mousedown', (e) => e.stopPropagation());
+            toolFullscreen.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleFullscreen();
+                resetToolboxTimer();
+            });
+            document.addEventListener('fullscreenchange', updateFullscreenButton);
+            document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+            updateFullscreenButton();
+        }
 
         // Auto-close on distance or movement
         window.addEventListener('mousemove', (e) => {
