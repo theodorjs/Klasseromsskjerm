@@ -319,11 +319,16 @@
         <h2 id="countdown-modal-title" style="margin-top: 0; font-size: 1.2rem;">Ny nedtelling</h2>
         <div class="activity-form-row">
             <label class="activity-form-label" for="countdown-title-input">Tittel</label>
-            <input type="text" id="countdown-title-input" placeholder="Tittel">
+            <input type="text" id="countdown-title-input" placeholder="Tittel" required>
         </div>
         <div class="activity-form-row">
             <label class="activity-form-label" for="countdown-date-input">Dato</label>
-            <input type="date" id="countdown-date-input">
+            <input type="date" id="countdown-date-input" required>
+        </div>
+        <div class="activity-form-row">
+            <label class="activity-form-label" for="countdown-time-input">Klokkeslett</label>
+            <input type="text" id="countdown-time-input" placeholder="08:30" inputmode="numeric" maxlength="5"
+                pattern="([01][0-9]|2[0-3]):[0-5][0-9]" title="Bruk 24-timersformat, for eksempel 08:30" required>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <button id="countdown-save">Lagre</button>
@@ -723,6 +728,30 @@
             return normalized;
         }
 
+        function isValidCountdownTime(value) {
+            if (!/^\d{2}:\d{2}$/.test(String(value || ''))) return false;
+            const [hours, minutes] = String(value).split(':').map(Number);
+            return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+        }
+
+        function normalizeCountdownTimeEntry(value) {
+            const rawValue = String(value || '').trim();
+            if (/^\d{1,2}:\d{2}$/.test(rawValue)) {
+                const [hours, minutes] = rawValue.split(':');
+                return `${hours.padStart(2, '0')}:${minutes}`;
+            }
+            if (/^\d{3,4}$/.test(rawValue)) {
+                const padded = rawValue.padStart(4, '0');
+                return `${padded.slice(0, 2)}:${padded.slice(2)}`;
+            }
+            return rawValue;
+        }
+
+        function getSafeCountdownTime(value) {
+            const time = normalizeCountdownTimeEntry(value);
+            return isValidCountdownTime(time) ? time : '00:00';
+        }
+
         function normalizeCountdownEntries(list) {
             if (!Array.isArray(list)) return [];
             return list
@@ -730,11 +759,13 @@
                     if (!item || typeof item !== 'object') return null;
                     const title = String(item.title || '').trim();
                     const targetDate = String(item.targetDate || '').trim();
+                    const targetTime = getSafeCountdownTime(item.targetTime);
                     if (!title || !/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) return null;
                     return {
                         id: item.id || `countdown-${Date.now()}-${index}`,
                         title,
-                        targetDate
+                        targetDate,
+                        targetTime
                     };
                 })
                 .filter(Boolean)
@@ -967,6 +998,7 @@
         const countdownModalTitle = document.getElementById('countdown-modal-title');
         const countdownTitleInput = document.getElementById('countdown-title-input');
         const countdownDateInput = document.getElementById('countdown-date-input');
+        const countdownTimeInput = document.getElementById('countdown-time-input');
         const countdownSaveBtn = document.getElementById('countdown-save');
         const countdownDeleteBtn = document.getElementById('countdown-delete');
         const countdownCancelBtn = document.getElementById('countdown-cancel');
@@ -1019,14 +1051,38 @@
             return currentClass && Array.isArray(currentClass.customCountdowns) ? currentClass.customCountdowns : [];
         }
 
-        function getDaysRemaining(targetDate) {
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(String(targetDate || ''))) return 0;
-            const today = new Date();
-            const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        function getCountdownRemainingDisplay(targetDate, targetTime = '00:00') {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(String(targetDate || ''))) {
+                return { value: 0, unit: 'DAGER' };
+            }
+
+            const now = new Date();
             const [year, month, day] = String(targetDate).split('-').map(Number);
-            const target = new Date(year, month - 1, day);
-            const diff = target.getTime() - todayStart.getTime();
-            return Math.max(0, Math.round(diff / 86400000));
+            const safeTargetTime = getSafeCountdownTime(targetTime);
+            const [hours, minutes] = safeTargetTime.split(':').map(Number);
+            const target = new Date(year, month - 1, day, hours, minutes);
+            const diff = target.getTime() - now.getTime();
+
+            if (diff <= 0) {
+                return { value: 0, unit: 'MINUTTER' };
+            }
+
+            const minuteMs = 60000;
+            const hourMs = 60 * minuteMs;
+            const dayMs = 24 * hourMs;
+
+            if (diff < hourMs) {
+                const minutes = Math.max(1, Math.floor(diff / minuteMs));
+                return { value: minutes, unit: minutes === 1 ? 'MINUTT' : 'MINUTTER' };
+            }
+
+            if (diff < dayMs) {
+                const hours = Math.max(1, Math.floor(diff / hourMs));
+                return { value: hours, unit: hours === 1 ? 'TIME' : 'TIMER' };
+            }
+
+            const days = Math.ceil(diff / dayMs);
+            return { value: days, unit: days === 1 ? 'DAG' : 'DAGER' };
         }
 
         function positionCountdownStack() {
@@ -1071,14 +1127,15 @@
 
             if (shouldShow) {
                 countdowns.forEach((item, index) => {
+                    const countdownDisplay = getCountdownRemainingDisplay(item.targetDate, item.targetTime);
                     const card = document.createElement('button');
                     card.type = 'button';
                     card.className = 'countdown-card';
                     card.dataset.index = String(index);
                     card.innerHTML = `
                         <span class="countdown-card-title">${item.title}</span>
-                        <span class="countdown-card-number">${getDaysRemaining(item.targetDate)}</span>
-                        <span class="countdown-card-unit">DAGER</span>
+                        <span class="countdown-card-number">${countdownDisplay.value}</span>
+                        <span class="countdown-card-unit">${countdownDisplay.unit}</span>
                     `;
                     card.addEventListener('click', () => openCountdownModal(index));
                     countdownStack.appendChild(card);
@@ -1101,6 +1158,9 @@
             }
             if (countdownDateInput) {
                 countdownDateInput.value = existingItem ? existingItem.targetDate : '';
+            }
+            if (countdownTimeInput) {
+                countdownTimeInput.value = existingItem ? (existingItem.targetTime || '00:00') : '';
             }
             if (countdownDeleteBtn) {
                 countdownDeleteBtn.style.display = existingItem ? 'inline-flex' : 'none';
@@ -3414,7 +3474,14 @@
             countdownSaveBtn.addEventListener('click', () => {
                 const title = String(countdownTitleInput?.value || '').trim();
                 const targetDate = String(countdownDateInput?.value || '').trim();
-                if (!title || !targetDate) return;
+                const targetTime = normalizeCountdownTimeEntry(countdownTimeInput?.value);
+                if (countdownTimeInput) countdownTimeInput.value = targetTime;
+                if (!title || !targetDate || !isValidCountdownTime(targetTime)) {
+                    if (!title) countdownTitleInput?.reportValidity();
+                    else if (!targetDate) countdownDateInput?.reportValidity();
+                    else countdownTimeInput?.reportValidity();
+                    return;
+                }
 
                 const countdowns = getCurrentClassCountdowns();
                 const payload = {
@@ -3422,7 +3489,8 @@
                         ? countdowns[editingCountdownIndex].id
                         : `countdown-${Date.now()}`,
                     title,
-                    targetDate
+                    targetDate,
+                    targetTime
                 };
 
                 if (editingCountdownIndex !== null && countdowns[editingCountdownIndex]) {
