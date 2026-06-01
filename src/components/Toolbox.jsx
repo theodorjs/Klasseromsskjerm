@@ -76,12 +76,26 @@ export default function Toolbox({
     if (!open) return;
     function handleMouseMove(e) {
       if (timePickerOpen) { resetTimer(); return; }
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const padding = 200;
+      const container = containerRef.current;
+      if (!container) return;
+
+      // Mål både 🧰-knappen OG den nedhengende lista
+      const btnRect   = container.getBoundingClientRect();
+      const itemsEl   = container.querySelector('.toolbox-items');
+      const itemsRect = itemsEl?.getBoundingClientRect();
+
+      // Slå sammen til ett felles rektangel
+      const left   = Math.min(btnRect.left,   itemsRect ? itemsRect.left   : btnRect.left);
+      const right  = Math.max(btnRect.right,  itemsRect ? itemsRect.right  : btnRect.right);
+      const top    = Math.min(btnRect.top,    itemsRect ? itemsRect.top    : btnRect.top);
+      const bottom = Math.max(btnRect.bottom, itemsRect ? itemsRect.bottom : btnRect.bottom);
+
+      const padding = 80;
       if (
-        e.clientX < rect.left - padding || e.clientX > rect.right + padding ||
-        e.clientY < rect.top - padding || e.clientY > rect.bottom + padding
+        e.clientX < left  - padding ||
+        e.clientX > right + padding ||
+        e.clientY < top   - padding ||
+        e.clientY > bottom + padding
       ) {
         closeToolbox();
       } else {

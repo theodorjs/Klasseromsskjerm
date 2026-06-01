@@ -740,6 +740,13 @@ body.under-the-hood-active #under-the-hood {
     opacity: 1;
 }
 
+/* Dag-knapp: synlig valgt dag i mørk modus */
+body.ui-dark .day-btn.selected {
+    background: linear-gradient(135deg, rgba(49, 227, 255, 0.92), rgba(91, 66, 243, 0.92)) !important;
+    color: #fff !important;
+    box-shadow: 0 0 0 2px rgba(49, 227, 255, 0.5), var(--shadow-dark);
+}
+
 /* Neumorphic Buttons & Cards */
 .neumorphic-btn {
     background: var(--bg-color);

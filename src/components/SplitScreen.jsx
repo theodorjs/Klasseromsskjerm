@@ -25,7 +25,7 @@ export default function SplitScreen({
 
   function renderClassGrid() {
     return (
-      <div style={{ width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div className="noise-bg"></div>
         <h1 className="class-tool-title">Velg klasse</h1>
         <div className="class-grid" id="class-grid">

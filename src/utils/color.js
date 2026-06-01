@@ -100,10 +100,23 @@ export function computeTimerGradientColors(baseHexColor) {
 
 export function getSubjectDefaultColor(subject) {
   if (!subject) return '#ffffff';
-  const upper = String(subject).toUpperCase();
+
+  // Direkte treff
+  if (colorMap[subject]) return colorMap[subject];
+
+  // Strip trinnsuffiks («Norsk 7.-8.» → «Norsk», «Kunst og håndverk 7.» → «Kunst og håndverk»)
+  const stripped = String(subject)
+    .replace(/\s+\d+\.-\d+\.?$/, '')
+    .replace(/\s+\d+\.?$/, '')
+    .trim();
+
+  if (stripped && colorMap[stripped]) return colorMap[stripped];
+
+  // Slå opp via subjectMap (for å håndtere kortformer o.l.)
+  const lookup = (stripped || subject).toUpperCase();
   const subjectInfo = Object.values(subjectMap).find(s =>
-    s.full.toUpperCase() === upper || s.short.toUpperCase() === upper
+    s.full.toUpperCase() === lookup || s.short.toUpperCase() === lookup
   );
-  const name = subjectInfo ? subjectInfo.full : subject;
+  const name = subjectInfo ? subjectInfo.full : (stripped || subject);
   return colorMap[name] || '#ffffff';
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { isClassMultiGrade } from '../utils/schedule.js';
 import { getMinutesFromTime } from '../utils/time.js';
+import { colorMap } from '../data/constants.js';
 
 /* ─── Konstanter ─────────────────────────────────────────── */
 
@@ -30,18 +31,18 @@ const FRAME0 = [
 ];
 
 const SUBJ0 = [
-  {id:1,  name:"Norsk",            emoji:"📝",color:"#3D8EE8"},
-  {id:2,  name:"Matematikk",       emoji:"🔢",color:"#E53935"},
-  {id:3,  name:"Engelsk",          emoji:"🌍",color:"#43A047"},
-  {id:4,  name:"Naturfag",         emoji:"🔬",color:"#00ACC1"},
-  {id:5,  name:"Samfunnsfag",      emoji:"🗺️",color:"#FB8C00"},
-  {id:6,  name:"KRLE",             emoji:"✨",color:"#8E24AA"},
-  {id:7,  name:"Kunst og håndverk",emoji:"🎨",color:"#C62828"},
-  {id:8,  name:"Musikk",           emoji:"🎵",color:"#1E88E5"},
-  {id:9,  name:"Kroppsøving",      emoji:"⚽",color:"#00897B"},
-  {id:10, name:"Valgfag",          emoji:"🎯",color:"#546E7A"},
-  {id:11, name:"Leksehjelp",       emoji:"📚",color:"#6D4C41"},
-  {id:12, name:"Språkfag",         emoji:"💬",color:"#1565C0"},
+  {id:1,  name:"Norsk",            emoji:"📝", color: colorMap["Norsk"]             ?? "#EE4C17"},
+  {id:2,  name:"Matematikk",       emoji:"🔢", color: colorMap["Matematikk"]        ?? "#1384CF"},
+  {id:3,  name:"Engelsk",          emoji:"🌍", color: colorMap["Engelsk"]           ?? "#FF772E"},
+  {id:4,  name:"Naturfag",         emoji:"🔬", color: colorMap["Naturfag"]          ?? "#1A963B"},
+  {id:5,  name:"Samfunnsfag",      emoji:"🗺️", color: colorMap["Samfunnsfag"]       ?? "#E59C1F"},
+  {id:6,  name:"KRLE",             emoji:"✨", color: colorMap["KRLE"]              ?? "#AA3AB8"},
+  {id:7,  name:"Kunst og håndverk",emoji:"🎨", color: colorMap["Kunst og håndverk"] ?? "#9933FF"},
+  {id:8,  name:"Musikk",           emoji:"🎵", color: colorMap["Musikk"]            ?? "#C63398"},
+  {id:9,  name:"Kroppsøving",      emoji:"⚽", color: colorMap["Kroppsøving"]       ?? "#00CC00"},
+  {id:10, name:"Valgfag",          emoji:"🎯", color: colorMap["Valgfag"]           ?? "#7E2EAA"},
+  {id:11, name:"Leksehjelp",       emoji:"📚", color: colorMap["Leksehjelp"]        ?? "#0A8F7A"},
+  {id:12, name:"Språkfag",         emoji:"💬", color: colorMap["Språkfag"]          ?? "#F08A24"},
 ];
 
 const blankSched = fr => {
@@ -208,6 +209,7 @@ export default function ScheduleEditor({
   currentClassName,
   onSave,
   onBack,
+  themeMode = 2,  // 0=lys, 1=mørk, 2=stjerne, 3=fargerik
 }) {
   const [subj,   setSubj]   = useState(SUBJ0);
   const [sched,  setSched]  = useState(() => blankSched(FRAME0));
@@ -444,7 +446,7 @@ export default function ScheduleEditor({
 
   /* ── Render ── */
   return (
-    <div style={{ background: "linear-gradient(160deg,#1a2535,#0f1820)", minHeight: "100vh", padding: "14px", fontFamily: "system-ui,sans-serif", color: "white", boxSizing: "border-box" }}>
+    <div style={{ minHeight: "100vh", padding: "14px", fontFamily: "system-ui,sans-serif", boxSizing: "border-box", background: "linear-gradient(160deg,#1a2535,#0f1820)", color: "white" }}>
 
       {/* HEADER – rad 1: klassenavn + knapper */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px", flexWrap: "wrap", gap: "8px" }}>
