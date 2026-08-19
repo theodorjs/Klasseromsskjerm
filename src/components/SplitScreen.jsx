@@ -58,15 +58,23 @@ export default function SplitScreen({
         </div>
         <div style={{ marginTop: 50 }}>
           <button className="neumorphic-btn" onClick={onClose}>Tilbake</button>
-          <button className="neumorphic-btn" onClick={() => {
+          {editPermission && <button className="neumorphic-btn" onClick={() => {
             const name = prompt("Navn på ny klasse:");
             if (name) {
               if (classes[name]) { alert("En klasse med dette navnet finnes allerede."); return; }
               onAddNewClass(name);
               onSelectClass(name);
             }
-          }}>+ Ny klasse</button>
-          {currentClassName && classes[currentClassName] && (
+          }}>+ Ny klasse</button>}
+          {!editPermission && (
+            <p style={{
+              marginTop: 18, fontSize: '0.85rem', opacity: 0.75,
+              maxWidth: 460, textAlign: 'center',
+            }}>
+              🔒 Logg inn med «Lås opp» i verktøykassen for å endre timeplan, fag og klasser.
+            </p>
+          )}
+          {editPermission && currentClassName && classes[currentClassName] && (
             <>
               <button className="neumorphic-btn" id="rename-class-btn" onClick={() => {
                 const oldName = currentClassName;
@@ -97,7 +105,7 @@ export default function SplitScreen({
   return (
     <div id="under-the-hood" className="noise-bg">
       {view === 'classGrid' && renderClassGrid()}
-      {view === 'scheduleEditor' && (
+      {view === 'scheduleEditor' && editPermission && (
         <ScheduleEditor
           currentClass={currentClass}
           currentClassName={currentClassName}
@@ -107,11 +115,11 @@ export default function SplitScreen({
           onBack={() => setView('classGrid')}
         />
       )}
-      {view === 'subjectColors' && (
+      {view === 'subjectColors' && editPermission && (
         <SubjectColorPicker
           currentClass={currentClass}
           onPickColor={(subject) => onOpenColorModal(subject)}
-          onBack={() => setView(scheduleEditorDraft ? 'scheduleEditor' : 'classGrid')}
+          onBack={() => setView('classGrid')}
           onGeneratePalette={onGeneratePalette}
         />
       )}

@@ -568,13 +568,22 @@ export function useAppState() {
           .sort((a, b) => a.time.localeCompare(b.time));
       });
 
-      // Oppdater fagfarger og emojier
-      if (!cd.subjectColors) cd.subjectColors = {};
-      if (!cd.subjectEmojis) cd.subjectEmojis = {};
-      Object.entries(subjectUpdates || {}).forEach(([name, { color, emoji }]) => {
-        if (color) cd.subjectColors[name] = color;
-        if (emoji) cd.subjectEmojis[name] = emoji;
+      // Fagfarger og emojier: editorens palett er fasit for dette fag-settet,
+      // slik at fag som er slettet i editoren ikke dukker opp igjen.
+      // Pausefag (Pause/Mat/Storefri) ligger utenfor paletten og maa bevares.
+      const BREAK_SUBJECTS = ["Pause", "Mat", "Storefri"];
+      const keptColors = {};
+      const keptEmojis = {};
+      BREAK_SUBJECTS.forEach(name => {
+        if (cd.subjectColors?.[name]) keptColors[name] = cd.subjectColors[name];
+        if (cd.subjectEmojis?.[name]) keptEmojis[name] = cd.subjectEmojis[name];
       });
+      Object.entries(subjectUpdates || {}).forEach(([name, { color, emoji }]) => {
+        if (color) keptColors[name] = color;
+        if (emoji) keptEmojis[name] = emoji;
+      });
+      cd.subjectColors = keptColors;
+      cd.subjectEmojis = keptEmojis;
 
       Object.values(newClasses).forEach(ensureClassData);
       localStorage.setItem('klasseromData', JSON.stringify(newClasses));

@@ -7,7 +7,18 @@ import { colorMap } from '../data/constants.js';
 
 const DAYS_S = ["Man.","Tir.","Ons.","Tor.","Fre."];
 const DAYS   = ["Mandag","Tirsdag","Onsdag","Torsdag","Fredag"];
-const isSplit = v => v !== null && typeof v === "object";
+// Celleverdier i editoren:
+//   null                                  - tom
+//   number                                - ett fag
+//   {a, b}                                - fadelt: delt per trinn
+//   {type:'week', even, odd}              - veksler mellom partalls-/oddetallsuker
+//   {type:'parallel', ids:[...]}          - flere fag samtidig (pa tvers av trinn)
+const isObj      = v => v !== null && typeof v === "object";
+const isSplit    = v => isObj(v) && !v.type;
+const isWeekAlt  = v => isObj(v) && v.type === "week";
+const isParallel = v => isObj(v) && v.type === "parallel";
+
+const BREAK_NAMES = ["Pause", "Mat", "Storefri"];
 
 /** Trekker ut to tall fra klassenavn som «5. og 6. trinn» eller «5 og 6» */
 const parseClassParts = name => {
@@ -63,24 +74,65 @@ function stripGrade(name) {
     .trim();
 }
 
+/**
+ * Samler fagpaletten fra alle kjente kilder, slik at egendefinerte fag
+ * overlever en runde med lagring + ny apning av editoren.
+ */
+function collectSubjects(currentClass, baseSubj) {
+  const byKey = new Map();
+  let nextId = 1;
+
+  const add = (rawName, color, emoji) => {
+    const name = String(rawName || '').trim();
+    if (!name) return;
+    if (BREAK_NAMES.includes(name)) return;
+    const key = name.toLowerCase();
+    const existing = byKey.get(key);
+    if (existing) {
+      if (color) existing.color = color;
+      if (emoji) existing.emoji = emoji;
+      return;
+    }
+    byKey.set(key, {
+      id: nextId++,
+      name,
+      emoji: emoji || '📚',
+      color: color || '#4A90E2',
+    });
+  };
+
+  const savedColors = currentClass?.subjectColors || {};
+  const savedEmojis = currentClass?.subjectEmojis || {};
+
+  // a) Standardfag (med eventuelle lagrede overstyringer)
+  baseSubj.forEach(sub => add(sub.name, savedColors[sub.name] || sub.color, savedEmojis[sub.name] || sub.emoji));
+
+  // b) Egendefinerte fag som er lagret med farge/emoji
+  Object.keys(savedColors).forEach(name => add(name, savedColors[name], savedEmojis[name]));
+  Object.keys(savedEmojis).forEach(name => add(name, savedColors[name], savedEmojis[name]));
+
+  // c) Fag som faktisk star i timeplanen (siste sikkerhetsnett)
+  DAYS.forEach(day => {
+    (currentClass?.schedule?.[day] || []).forEach(entry => {
+      String(entry?.activity || '')
+        .split('/')
+        .forEach(part => add(stripGrade(part.trim()), savedColors[stripGrade(part.trim())], savedEmojis[stripGrade(part.trim())]));
+    });
+  });
+
+  return [...byKey.values()];
+}
+
 function buildEditorStateFromClass(currentClass, currentClassName, baseSubj) {
   const isMg = isClassMultiGrade(currentClass);
   const lessonFrames = FRAME0.filter(f => f.type === "lesson");
-
-  // Berik fag-lista med eventuelle lagrede farger/emojier
-  const subj = baseSubj.map(s => ({
-    ...s,
-    color: currentClass?.subjectColors?.[s.name] || s.color,
-    emoji: currentClass?.subjectEmojis?.[s.name] || s.emoji,
-  }));
+  const subj = collectSubjects(currentClass, baseSubj);
 
   /** Finn fag-ID ved navn (ignorer stor/liten + trinn-suffiks) */
   const findId = (rawName) => {
+    const raw  = String(rawName || '').trim().toLowerCase();
     const base = stripGrade(rawName).toLowerCase();
-    const found = subj.find(s =>
-      s.name.toLowerCase() === base ||
-      s.name.toLowerCase() === rawName.toLowerCase()
-    );
+    const found = subj.find(sub => sub.name.toLowerCase() === base || sub.name.toLowerCase() === raw);
     return found?.id ?? null;
   };
 
@@ -89,13 +141,44 @@ function buildEditorStateFromClass(currentClass, currentClassName, baseSubj) {
     const entries = [...(currentClass?.schedule?.[day] || [])]
       .sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
 
-    entries.forEach((entry, i) => {
+    // Grupper pa starttid, slik at partall/oddetall-par havner i samme celle
+    const byTime = new Map();
+    entries.forEach(entry => {
+      const key = entry.time;
+      if (!byTime.has(key)) byTime.set(key, []);
+      byTime.get(key).push(entry);
+    });
+
+    [...byTime.values()].forEach((group, i) => {
       if (i >= lessonFrames.length) return;
       const fid = lessonFrames[i].id;
-      const act = entry.activity || '';
+
+      // Ukeveksling: to oppforinger pa samme tid med ulik weekParity
+      const even = group.find(e => e.weekParity === 'partall');
+      const odd  = group.find(e => e.weekParity === 'oddetall');
+      if (even || odd) {
+        sched[day][fid] = {
+          type: 'week',
+          even: even ? findId(even.activity) : null,
+          odd:  odd  ? findId(odd.activity)  : null,
+        };
+        return;
+      }
+
+      const entry = group[0];
+      const act = entry?.activity || '';
+
+      // Parallelle fag (flagget ved lagring)
+      if (entry?.parallel) {
+        sched[day][fid] = {
+          type: 'parallel',
+          ids: act.split('/').map(part => findId(part.trim())).filter(Boolean),
+        };
+        return;
+      }
 
       if (act.includes('/') && isMg) {
-        const [rawA, rawB] = act.split('/').map(s => s.trim());
+        const [rawA, rawB] = act.split('/').map(part => part.trim());
         sched[day][fid] = { a: findId(rawA), b: findId(rawB) };
       } else {
         sched[day][fid] = findId(act);
@@ -115,6 +198,7 @@ function buildEditorStateFromClass(currentClass, currentClassName, baseSubj) {
 function buildClassDataFromEditorState(subjects, sched, frames) {
   const schedule = {};
   const breaks   = {};
+  const nameOf   = id => subjects.find(sub => sub.id === id)?.name || null;
 
   DAYS.forEach(day => {
     schedule[day] = [];
@@ -134,22 +218,40 @@ function buildClassDataFromEditorState(subjects, sched, frames) {
 
       const raw = sched[day]?.[frame.id];
       if (raw === null || raw === undefined) return;
+      const base = { time: frame.start, end: frame.end };
 
-      let activity;
-      if (isSplit(raw)) {
-        const sA = raw.a ? subjects.find(s => s.id === raw.a) : null;
-        const sB = raw.b ? subjects.find(s => s.id === raw.b) : null;
-        if (!sA?.name && !sB?.name) return;
-        activity = sA?.name && sB?.name
-          ? `${sA.name} / ${sB.name}`
-          : (sA?.name || sB?.name);
-      } else {
-        const found = subjects.find(s => s.id === raw);
-        if (!found) return;
-        activity = found.name;
+      // Ukeveksling -> to oppforinger med hver sin weekParity
+      if (isWeekAlt(raw)) {
+        const evenName = nameOf(raw.even);
+        const oddName  = nameOf(raw.odd);
+        if (evenName) schedule[day].push({ ...base, activity: evenName, weekParity: 'partall' });
+        if (oddName)  schedule[day].push({ ...base, activity: oddName,  weekParity: 'oddetall' });
+        return;
       }
 
-      schedule[day].push({ time: frame.start, end: frame.end, activity });
+      // Parallelle fag -> en oppforing med flagg
+      if (isParallel(raw)) {
+        const names = (raw.ids || []).map(nameOf).filter(Boolean);
+        if (!names.length) return;
+        schedule[day].push({ ...base, activity: names.join(' / '), parallel: true });
+        return;
+      }
+
+      // Fadelt (delt per trinn)
+      if (isSplit(raw)) {
+        const nameA = nameOf(raw.a);
+        const nameB = nameOf(raw.b);
+        if (!nameA && !nameB) return;
+        schedule[day].push({
+          ...base,
+          activity: nameA && nameB ? `${nameA} / ${nameB}` : (nameA || nameB),
+        });
+        return;
+      }
+
+      const single = nameOf(raw);
+      if (!single) return;
+      schedule[day].push({ ...base, activity: single });
     });
   });
 
@@ -247,62 +349,104 @@ export default function ScheduleEditor({
   const acSub = active ? gs(active) : null;
   const acCol = acSub?.color || "rgba(255,255,255,0.4)";
 
+  /** Les fag-ID i en gitt "plass" i cella (slot = 'a'|'b'|'even'|'odd'|tall) */
+  const slotValue = (raw, slot) => {
+    if (slot === null) return isObj(raw) ? null : raw;
+    if (isParallel(raw)) return raw.ids?.[slot] ?? null;
+    if (isObj(raw)) return raw[slot] ?? null;
+    return null;
+  };
+
+  /** Sett fag-ID i en gitt plass */
+  const withSlot = (raw, slot, value) => {
+    if (isParallel(raw)) {
+      const ids = [...(raw.ids || [])];
+      ids[slot] = value;
+      return { ...raw, ids };
+    }
+    return { ...raw, [slot]: value };
+  };
+
+  const setCell = (day, lid, value) =>
+    setSched(p => ({ ...p, [day]: { ...p[day], [lid]: value } }));
+
   /* ── Tegn i celle ── */
-  const paint = (day, lid, half = null) => {
+  const paint = (day, lid, slot = null) => {
     setSched(p => {
       const raw = p[day][lid];
       let v;
       if (erase) {
-        v = isSplit(raw) && half ? { ...raw, [half]: null } : null;
+        v = (isObj(raw) && slot !== null) ? withSlot(raw, slot, null) : null;
       } else if (active !== null) {
-        if (isSplit(raw) && half) v = { ...raw, [half]: active };
-        else if (!isSplit(raw) && half === null) v = active;
+        if (isObj(raw) && slot !== null) v = withSlot(raw, slot, active);
+        else if (!isObj(raw) && slot === null) v = active;
         else return p;
       } else return p;
       return { ...p, [day]: { ...p[day], [lid]: v } };
     });
   };
 
+  /* ── Konverter celletype ── */
   const splitCell = (day, lid) => {
     const v = sched[day][lid];
-    if (!isSplit(v)) setSched(p => ({ ...p, [day]: { ...p[day], [lid]: { a: v, b: null } } }));
+    if (!isObj(v)) setCell(day, lid, { a: v, b: null });
+  };
+  const makeWeekAlt = (day, lid) => {
+    const v = sched[day][lid];
+    if (!isObj(v)) setCell(day, lid, { type: 'week', even: v, odd: null });
+  };
+  const makeParallel = (day, lid) => {
+    const v = sched[day][lid];
+    if (!isObj(v)) setCell(day, lid, { type: 'parallel', ids: v ? [v, null] : [null, null] });
   };
   const mergeCell = (day, lid) => {
     const v = sched[day][lid];
-    if (isSplit(v)) setSched(p => ({ ...p, [day]: { ...p[day], [lid]: v.a } }));
+    if (!isObj(v)) return;
+    if (isParallel(v))     setCell(day, lid, v.ids?.find(Boolean) ?? null);
+    else if (isWeekAlt(v)) setCell(day, lid, v.even ?? v.odd ?? null);
+    else                   setCell(day, lid, v.a ?? v.b ?? null);
+  };
+  const addParallelSlot = (day, lid) => {
+    const v = sched[day][lid];
+    if (isParallel(v)) setCell(day, lid, { ...v, ids: [...(v.ids || []), null] });
+  };
+  const removeParallelSlot = (day, lid, idx) => {
+    const v = sched[day][lid];
+    if (!isParallel(v)) return;
+    const ids = (v.ids || []).filter((_, i) => i !== idx);
+    setCell(day, lid, ids.length >= 2 ? { ...v, ids } : (ids[0] ?? null));
   };
 
   /* ── Forhåndsvisning ved hover ── */
-  const disp = (day, lid, half = null) => {
+  const disp = (day, lid, slot = null) => {
     const raw = sched[day]?.[lid];
     const isH =
       hover?.day === day &&
       hover?.lid === lid &&
-      (half === null || hover?.half === half);
+      (slot === null ? hover?.slot == null : hover?.slot === slot);
     if (isH && !erase && active !== null) {
-      if (isSplit(raw) && half) return gs(active);
-      if (!isSplit(raw) && half === null) return gs(active);
+      if (isObj(raw) && slot !== null) return gs(active);
+      if (!isObj(raw) && slot === null) return gs(active);
     }
-    if (isSplit(raw)) return half ? (raw[half] ? gs(raw[half]) : null) : null;
-    return raw ? gs(raw) : null;
+    const id = slotValue(raw, slot);
+    return id ? gs(id) : null;
   };
 
-  /* ── Render delt celle-halvdel ── */
-  const renderHalf = (day, lid, half) => {
-    const sub = disp(day, lid, half);
-    const erH = erase && hover?.day === day && hover?.lid === lid && hover?.half === half;
-    const prH = !erase && active !== null && hover?.day === day && hover?.lid === lid && hover?.half === half;
+  /* ── Render én plass i en delt/veksel/parallell-celle ── */
+  const renderSlot = (day, lid, slot, label) => {
+    const sub = disp(day, lid, slot);
+    const erH = erase && hover?.day === day && hover?.lid === lid && hover?.slot === slot;
+    const prH = !erase && active !== null && hover?.day === day && hover?.lid === lid && hover?.slot === slot;
     const col = sub?.color;
     const cr  = active !== null || erase ? "pointer" : "default";
-    const lbl = parts ? parts[half === "a" ? 0 : 1] : null;
     return (
       <div
-        key={half}
-        onClick={() => paint(day, lid, half)}
-        onMouseEnter={() => setHover({ day, lid, half })}
+        key={slot}
+        onClick={() => paint(day, lid, slot)}
+        onMouseEnter={() => setHover({ day, lid, slot })}
         onMouseLeave={() => setHover(null)}
         style={{
-          flex: 1,
+          flex: 1, minWidth: 0,
           background: erH
             ? "rgba(231,76,60,0.18)"
             : col ? col + (prH ? "40" : "1a")
@@ -315,9 +459,9 @@ export default function ScheduleEditor({
           opacity: erH ? 0.45 : 1, overflow: "hidden",
         }}
       >
-        {lbl && (
+        {label && (
           <span style={{ fontSize: "0.52rem", color: "rgba(255,255,255,0.38)", fontWeight: "800", letterSpacing: "0.02em", lineHeight: 1, marginBottom: "3px" }}>
-            {lbl}
+            {label}
           </span>
         )}
         {erH
@@ -340,11 +484,17 @@ export default function ScheduleEditor({
     const prH = !erase && active !== null && hover?.day === day && hover?.lid === lid;
     const col = sub?.color;
     const cr  = active !== null || erase ? "pointer" : "default";
-    const showSplit = !erase && hover?.day === day && hover?.lid === lid;
+    const showTools = !erase && hover?.day === day && hover?.lid === lid;
+    const toolBtn = {
+      background: "rgba(255,255,255,0.15)", backdropFilter: "blur(4px)",
+      border: "1px solid rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.85)",
+      borderRadius: "5px", fontSize: "0.7rem", padding: "2px 5px",
+      cursor: "pointer", lineHeight: 1.3, fontWeight: "600",
+    };
     return (
       <div
         style={{ position: "relative" }}
-        onMouseEnter={() => setHover({ day, lid, half: null })}
+        onMouseEnter={() => setHover({ day, lid, slot: null })}
         onMouseLeave={() => setHover(null)}
       >
         <div
@@ -372,25 +522,94 @@ export default function ScheduleEditor({
               : <div style={{ color: "rgba(255,255,255,0.12)", fontSize: "1.1rem" }}>+</div>
           }
         </div>
-        {showSplit && isMg && (
-          <button
-            onClick={e => { e.stopPropagation(); splitCell(day, lid); }}
-            title={parts ? `Del for ${parts[0]} og ${parts[1]}` : "Del cellen i to"}
-            style={{
-              position: "absolute", top: "4px", right: "4px",
-              background: "rgba(255,255,255,0.15)", backdropFilter: "blur(4px)",
-              border: "1px solid rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.85)",
-              borderRadius: "5px", fontSize: "0.72rem", padding: "2px 5px",
-              cursor: "pointer", zIndex: 5, lineHeight: 1.4,
-              display: "flex", alignItems: "center", gap: "3px", fontWeight: "600",
-            }}
-          >
-            ◫
-          </button>
+        {showTools && (
+          <div style={{ position: "absolute", top: "4px", right: "4px", display: "flex", gap: "3px", zIndex: 5 }}>
+            {isMg && (
+              <button
+                onClick={e => { e.stopPropagation(); splitCell(day, lid); }}
+                title={parts ? `Del for ${parts[0]} og ${parts[1]}` : "Del cellen i to"}
+                style={toolBtn}
+              >◫</button>
+            )}
+            <button
+              onClick={e => { e.stopPropagation(); makeWeekAlt(day, lid); }}
+              title="Veksle mellom partalls- og oddetallsuker"
+              style={toolBtn}
+            >🗓</button>
+            <button
+              onClick={e => { e.stopPropagation(); makeParallel(day, lid); }}
+              title="Flere fag samtidig (parallelt, på tvers av trinn)"
+              style={toolBtn}
+            >⇉</button>
+          </div>
         )}
       </div>
     );
   };
+
+  /* ── Render sammensatt celle (fådelt / ukeveksling / parallell) ── */
+  const renderComposite = (day, lid, raw) => {
+    const smallBtn = {
+      background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.22)",
+      color: "rgba(255,255,255,0.7)", borderRadius: "4px", fontSize: "0.58rem",
+      padding: "1px 5px", cursor: "pointer", lineHeight: 1.5, fontWeight: "700",
+    };
+
+    let slots;
+    let badge = null;
+    if (isWeekAlt(raw)) {
+      slots = [renderSlot(day, lid, 'even', 'Partall'), renderSlot(day, lid, 'odd', 'Oddetall')];
+      badge = "Uke";
+    } else if (isParallel(raw)) {
+      const count = (raw.ids || []).length;
+      slots = (raw.ids || []).map((_, i) => (
+        <div key={i} style={{ position: "relative", flex: 1, minWidth: 0, display: "flex" }}>
+          {renderSlot(day, lid, i, `Valg ${i + 1}`)}
+          {count > 2 && (
+            <button
+              onClick={e => { e.stopPropagation(); removeParallelSlot(day, lid, i); }}
+              title="Fjern dette valget"
+              style={{
+                position: "absolute", bottom: "2px", right: "2px", zIndex: 6,
+                background: "rgba(231,76,60,0.22)", border: "none",
+                color: "rgba(255,255,255,0.75)", borderRadius: "4px",
+                fontSize: "0.55rem", padding: "0 4px", cursor: "pointer", lineHeight: 1.6,
+              }}
+            >✕</button>
+          )}
+        </div>
+      ));
+      badge = "Parallelt";
+    } else {
+      slots = [
+        renderSlot(day, lid, 'a', parts ? parts[0] : 'A'),
+        renderSlot(day, lid, 'b', parts ? parts[1] : 'B'),
+      ];
+    }
+
+    return (
+      <div style={{ position: "relative" }}>
+        <div style={{ position: "absolute", top: "3px", right: "3px", zIndex: 5, display: "flex", gap: "3px" }}>
+          {isParallel(raw) && (
+            <button onClick={() => addParallelSlot(day, lid)} title="Legg til fag i parallellen" style={smallBtn}>+</button>
+          )}
+          <button onClick={() => mergeCell(day, lid)} title="Slå sammen" style={smallBtn}>⊟</button>
+        </div>
+        {badge && (
+          <span style={{
+            position: "absolute", top: "3px", left: "4px", zIndex: 5,
+            fontSize: "0.5rem", fontWeight: "800", letterSpacing: "0.04em",
+            color: "rgba(255,255,255,0.42)", textTransform: "uppercase",
+            pointerEvents: "none",
+          }}>{badge}</span>
+        )}
+        <div style={{ display: "flex", flexDirection: "row", gap: "2px" }}>
+          {slots}
+        </div>
+      </div>
+    );
+  };
+
 
   /* ── Frame-editor (tidspunkter) ── */
   const fUpd = (id, k, v) => setFEdit(p => p.map(r => r.id === id ? { ...r, [k]: v } : r));
@@ -550,23 +769,12 @@ export default function ScheduleEditor({
                     <div style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.57rem" }}>{row.start}–{row.end}</div>
                   </td>
                   {DAYS.map(day => {
-                    const raw   = sched[day]?.[row.id];
-                    const split = isSplit(raw);
+                    const raw = sched[day]?.[row.id];
                     return (
                       <td key={day} style={{ padding: "2px" }}>
-                        {split
-                          ? <div style={{ position: "relative" }}>
-                              <button
-                                onClick={() => mergeCell(day, row.id)}
-                                title="Slå sammen"
-                                style={{ position: "absolute", top: "3px", right: "3px", zIndex: 5, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.22)", color: "rgba(255,255,255,0.7)", borderRadius: "4px", fontSize: "0.6rem", padding: "1px 5px", cursor: "pointer", lineHeight: 1.5, fontWeight: "700" }}>⊟</button>
-                              <div style={{ display: "flex", flexDirection: "row", gap: "2px" }}>
-                                {renderHalf(day, row.id, "a")}
-                                {renderHalf(day, row.id, "b")}
-                              </div>
-                            </div>
-                          : renderSingle(day, row.id)
-                        }
+                        {isObj(raw)
+                          ? renderComposite(day, row.id, raw)
+                          : renderSingle(day, row.id)}
                       </td>
                     );
                   })}

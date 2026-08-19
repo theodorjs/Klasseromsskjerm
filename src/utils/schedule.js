@@ -1,5 +1,5 @@
 import { SCHOOL_DAY_FRAMES, SCHOOL_MAIN_TIMES, subjectMap } from '../data/constants.js';
-import { getMinutesFromTime, formatMinutesAsTime } from './time.js';
+import { getMinutesFromTime, formatMinutesAsTime, getIsoWeekNumberForOslo } from './time.js';
 
 export function normalizeSubjectLabel(rawLabel) {
   const cleaned = String(rawLabel || '')
@@ -328,16 +328,23 @@ export function getTempScheduleValue(className, day, time, fallbackValue, tempSc
   return fallbackValue;
 }
 
-export function getClassScheduleState(className, currentDay, currentMinutes, classes, tempScheduleChanges) {
+export function getClassScheduleState(className, currentDay, currentMinutes, classes, tempScheduleChanges, weekNumber = null) {
   const classData = classes[className];
   if (!classData || !classData.schedule) return null;
   ensureClassData(classData);
 
+  // Ukeparitet: en økt kan gjelde bare partalls- eller oddetallsuker.
+  const activeWeek = Number.isFinite(weekNumber) ? weekNumber : getIsoWeekNumberForOslo();
+  const weekParityNow = activeWeek % 2 === 0 ? 'partall' : 'oddetall';
+  const matchesWeek = (entry) => !entry?.weekParity || entry.weekParity === weekParityNow;
+
   const todaySchedule = [...(classData.schedule[currentDay] || [])]
+    .filter(matchesWeek)
     .sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
   const breakSchedule = [...(classData.breaks?.[currentDay] || [])]
     .sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
   const mondaySchedule = [...(classData.schedule["Mandag"] || [])]
+    .filter(matchesWeek)
     .sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
   const schoolDayStart = getMinutesFromTime("08:30");
   const fallbackSchoolDayDuration = ["Mandag", "Torsdag", "Fredag"].includes(currentDay) ? 360 : 305;
@@ -438,6 +445,15 @@ export function buildCurrentActivityLinesForState(state) {
   if (!state) return [];
   if (state.currentActivity === "FRI") {
     return [`${getClassInlineLabel(state.className)}: Fri`];
+  }
+
+  // Parallelle fag gjelder elever på tvers av trinn - vis dem som egne linjer
+  // uten trinn-etikett, i stedet for a dele dem per klasse.
+  if (state.activeEvent?.parallel) {
+    return String(state.currentActivity)
+      .split('/')
+      .map(part => formatExpandedActivityLabel(part.trim()))
+      .filter(Boolean);
   }
 
   const labels = getClassMultiGradeLabels(state.classData, state.className);
