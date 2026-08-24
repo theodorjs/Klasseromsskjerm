@@ -80,6 +80,51 @@ function loadClasses() {
     }
   }
 
+  // ── Reparasjon: fadelte okter lagret uten trinn-suffiks ──────────────
+  // En tidligere versjon av timeplaneditoren lagret delte okter som
+  // "Kroppsoving / Matematikk" uten a si hvilket trinn som har hva.
+  // Hovedskjermen trenger suffikset ("Kroppsoving 8. / Matematikk 9."),
+  // og viste ellers hele strengen pa begge linjer.
+  // Samtidig kunne trinn-etikettene henge igjen fra et gammelt klassenavn.
+  (function repairMultiGradeSchedules() {
+    const hasGradeSuffix = (part) => /\s\d+\.?$/.test(String(part || '').trim());
+    let didRepair = false;
+
+    Object.entries(classes).forEach(([className, cd]) => {
+      if (!cd || !cd.schedule) return;
+
+      const grades = extractGradesFromName(cd.name || className);
+      if (grades.length !== 2) return;          // kun fadelte klasser
+      const labels = getDefaultMultiGradeLabels(cd.name || className);
+
+      // 1) Trinn-etiketter som henger igjen fra et gammelt klassenavn
+      const current = Array.isArray(cd.multiGradeLabels) ? cd.multiGradeLabels : [];
+      if (current[0] !== labels[0] || current[1] !== labels[1]) {
+        cd.multiGradeLabels = labels;
+        cd.multiGradeMode = true;
+        didRepair = true;
+      }
+
+      // 2) Delte okter uten trinn-suffiks
+      Object.keys(cd.schedule).forEach(day => {
+        (cd.schedule[day] || []).forEach(entry => {
+          if (!entry || entry.parallel) return;              // parallelle fag skal IKKE ha suffiks
+          const act = String(entry.activity || '');
+          if (!act.includes('/')) return;
+          const parts = act.split('/').map(x => x.trim()).filter(Boolean);
+          if (parts.length !== 2) return;
+          if (parts.some(hasGradeSuffix)) return;            // allerede riktig
+          entry.activity = `${parts[0]} ${labels[0]} / ${parts[1]} ${labels[1]}`;
+          didRepair = true;
+        });
+      });
+    });
+
+    if (didRepair) {
+      localStorage.setItem('klasseromData', JSON.stringify(classes));
+    }
+  })();
+
   Object.values(classes).forEach(ensureClassData);
 
   // Apply lower grade standard colors (one-time migration)
