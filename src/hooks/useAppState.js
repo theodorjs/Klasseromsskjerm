@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import {
   cloneDefaultClass,
+  DEFAULT_CLASS_NAME,
   SCHOOL_MAIN_TIMES,
   LOWER_GRADE_STANDARD_COLORS,
   SCHOOL_DAY_FRAMES
@@ -32,9 +33,10 @@ function loadClasses() {
   }
 
   if (!classes || Object.keys(classes).length === 0) {
-    classes = { "7. og 8.": cloneDefaultClass() };
-    classes["7. og 8."].name = "7. og 8.";
+    classes = { [DEFAULT_CLASS_NAME]: cloneDefaultClass() };
+    classes[DEFAULT_CLASS_NAME].name = DEFAULT_CLASS_NAME;
     localStorage.setItem('klasseromData', JSON.stringify(classes));
+    localStorage.setItem('currentClassName', DEFAULT_CLASS_NAME);
   }
 
   // Migration: 9A -> 7. og 8.
@@ -277,6 +279,16 @@ export function useAppState() {
       newClasses[newName] = newClasses[oldName];
       newClasses[newName].name = newName;
       delete newClasses[oldName];
+
+      // Trinn-etikettene folger klassenavnet, ellers viser hovedskjermen
+      // fortsatt gamle trinn (f.eks. "7." / "8." etter bytte til "8. og 9.").
+      const renamedGrades = extractGradesFromName(newName);
+      if (renamedGrades.length === 2) {
+        newClasses[newName].multiGradeLabels = getDefaultMultiGradeLabels(newName);
+        newClasses[newName].multiGradeMode = true;
+      } else if (renamedGrades.length <= 1) {
+        newClasses[newName].multiGradeLabels = getDefaultMultiGradeLabels(newName);
+      }
 
       const oldShiftKey = `paletteShiftIndex:${oldName}`;
       const newShiftKey = `paletteShiftIndex:${newName}`;
@@ -558,6 +570,7 @@ export function useAppState() {
 
       const cd = newClasses[className];
       cd.multiGradeMode = !!isMg;
+      if (isMg) cd.multiGradeLabels = getDefaultMultiGradeLabels(className);
 
       // Oppdater timeplan
       const days = ["Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag"];

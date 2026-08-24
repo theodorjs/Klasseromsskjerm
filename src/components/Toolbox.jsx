@@ -209,7 +209,7 @@ export default function Toolbox({
           onOpenClass();
         }}>
           <span className="icon">🏫</span>
-          <span className="label">Klasse</span>
+          <span className="label">Klasse og timeplan</span>
         </div>
 
         {/* Calendar / Time Picker */}

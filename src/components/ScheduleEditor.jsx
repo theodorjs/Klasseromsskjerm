@@ -195,7 +195,7 @@ function buildEditorStateFromClass(currentClass, currentClassName, baseSubj) {
  * Returnerer { schedule, breaks } klare til å lagres i klassedata.
  * b2-blokken (Lunsj & Storefri) splittes tilbake til «Mat» + «Storefri».
  */
-function buildClassDataFromEditorState(subjects, sched, frames) {
+function buildClassDataFromEditorState(subjects, sched, frames, gradeLabels = null) {
   const schedule = {};
   const breaks   = {};
   const nameOf   = id => subjects.find(sub => sub.id === id)?.name || null;
@@ -237,15 +237,23 @@ function buildClassDataFromEditorState(subjects, sched, frames) {
         return;
       }
 
-      // Fadelt (delt per trinn)
+      // Fadelt (delt per trinn). Trinn-suffikset ("Norsk 8.") er det
+      // hovedskjermen bruker for a vite hvilket trinn som har hvilket fag.
       if (isSplit(raw)) {
         const nameA = nameOf(raw.a);
         const nameB = nameOf(raw.b);
         if (!nameA && !nameB) return;
-        schedule[day].push({
-          ...base,
-          activity: nameA && nameB ? `${nameA} / ${nameB}` : (nameA || nameB),
-        });
+        const [labelA, labelB] = gradeLabels || [];
+        const tag = (name, label) => (name && label ? `${name} ${label}` : name);
+        let activity;
+        if (nameA && nameB) {
+          activity = labelA && labelB
+            ? `${tag(nameA, labelA)} / ${tag(nameB, labelB)}`
+            : `${nameA} / ${nameB}`;
+        } else {
+          activity = nameA ? tag(nameA, labelA) : tag(nameB, labelB);
+        }
+        schedule[day].push({ ...base, activity });
         return;
       }
 
@@ -655,7 +663,7 @@ export default function ScheduleEditor({
 
   /* ── Lagre til app-state ── */
   const handleSave = () => {
-    const { schedule, breaks } = buildClassDataFromEditorState(subj, sched, frame);
+    const { schedule, breaks } = buildClassDataFromEditorState(subj, sched, frame, isMg ? parts : null);
     const subjectUpdates = {};
     subj.forEach(s => { subjectUpdates[s.name] = { color: s.color, emoji: s.emoji }; });
     onSave(schedule, breaks, subjectUpdates, cn, isMg);

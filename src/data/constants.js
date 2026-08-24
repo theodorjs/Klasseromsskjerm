@@ -14,82 +14,114 @@ export const SCHOOL_MAIN_TIMES = SCHOOL_DAY_FRAMES
   .filter(frame => frame.type === 'lesson')
   .map(frame => ({ start: frame.start, end: frame.end }));
 
+const STANDARD_BREAKS = [
+  { time: "09:30", end: "09:40", activity: "Pause" },
+  { time: "10:40", end: "11:00", activity: "Mat" },
+  { time: "11:00", end: "11:25", activity: "Storefri" },
+  { time: "12:25", end: "12:35", activity: "Pause" }
+];
+
+const cloneBreaks = () => JSON.parse(JSON.stringify(STANDARD_BREAKS));
+
+/**
+ * Standardtimeplan for «8. og 9.» (fådelt klasse).
+ * Delte økter lagres med trinn-suffiks ("Kroppsøving 8. / Matematikk 9.").
+ * Ukeveksling: to oppføringer på samme tid med weekParity.
+ * Parallelle fag: én oppføring med parallel-flagg.
+ */
 export const defaultClassTemplate = {
   teacher: "Mathias",
+  name: "8. og 9.",
+  multiGradeMode: true,
+  multiGradeLabels: ["8.", "9."],
   schedule: {
     "Mandag": [
-      { time: "08:30", activity: "Kunst og håndverk 7. / Naturfag 8.", end: "09:30" },
-      { time: "09:40", activity: "Kunst og håndverk 7. / Kroppsøving 8.", end: "10:40" },
-      { time: "11:25", activity: "Norsk 7.-8.", end: "12:25" },
-      { time: "12:35", activity: "KRLE 7.-8.", end: "13:35" },
-      { time: "13:35", activity: "Engelsk 7.-8.", end: "14:35" }
+      { time: "08:30", end: "09:30", activity: "Norsk" },
+      { time: "09:40", end: "10:40", activity: "Kroppsøving 8. / Matematikk 9." },
+      { time: "11:25", end: "12:25", activity: "Samfunnsfag" },
+      { time: "12:35", end: "13:35", activity: "Engelsk" },
+      { time: "13:35", end: "14:35", activity: "Engelsk" }
     ],
     "Tirsdag": [
-      { time: "08:30", activity: "Kroppsøving 7. / Matematikk 8.", end: "09:30" },
-      { time: "09:40", activity: "Norsk 7.-8.", end: "10:40" },
-      { time: "11:25", activity: "Engelsk 7.-8.", end: "12:25" },
-      { time: "12:35", activity: "Matematikk 7. / Kroppsøving 8.", end: "13:35" },
-      { time: "13:35", activity: "Leksehjelp", end: "14:35" }
+      { time: "08:30", end: "09:30", activity: "Naturfag" },
+      { time: "09:40", end: "10:40", activity: "Matematikk 8. / Kroppsøving 9." },
+      { time: "11:25", end: "12:25", activity: "Kroppsøving 8. / Matematikk 9." },
+      { time: "12:35", end: "13:35", activity: "Norsk" },
+      { time: "13:35", end: "14:35", activity: "Leksehjelp" }
     ],
     "Onsdag": [
-      { time: "08:30", activity: "Musikk 7.-8.", end: "09:30" },
-      { time: "09:40", activity: "Musikk 7. / Matematikk 8.", end: "10:40" },
-      { time: "11:25", activity: "Naturfag 7.-8.", end: "12:25" },
-      { time: "12:35", activity: "Valgfag 8.", end: "13:35" },
-      { time: "13:35", activity: "Valgfag 8.", end: "14:35" }
+      { time: "08:30", end: "09:30", activity: "Kunst og håndverk 8. / Mat og helse 9." },
+      { time: "09:40", end: "10:40", activity: "Kunst og håndverk 8. / Mat og helse 9." },
+      { time: "11:25", end: "12:25", activity: "Musikk" },
+      { time: "12:35", end: "13:35", activity: "Valgfag" },
+      { time: "13:35", end: "14:35", activity: "Valgfag" }
     ],
     "Torsdag": [
-      { time: "08:30", activity: "Matematikk 7. / Matematikk 8.", end: "09:30" },
-      { time: "09:40", activity: "Norsk 7.-8.", end: "10:40" },
-      { time: "11:25", activity: "Norsk 7. / Kunst og håndverk 8.", end: "12:25" },
-      { time: "12:35", activity: "Naturfag 7. / Kunst og håndverk 8.", end: "13:35" }
+      { time: "08:30", end: "09:30", activity: "Matematikk" },
+      { time: "09:40", end: "10:40", activity: "KRLE", weekParity: "partall" },
+      { time: "09:40", end: "10:40", activity: "Utdanningsvalg", weekParity: "oddetall" },
+      { time: "11:25", end: "12:25", activity: "Samfunnsfag" },
+      { time: "12:35", end: "13:35", activity: "Norsk" },
+      { time: "13:35", end: "14:35", activity: "Norsk" }
     ],
     "Fredag": [
-      { time: "08:30", activity: "Matematikk 7. / Språkfag 8.", end: "09:30" },
-      { time: "09:40", activity: "Kroppsøving 7. / Språkfag 8.", end: "10:40" },
-      { time: "11:25", activity: "Samfunnsfag 7.-8.", end: "12:25" },
-      { time: "12:35", activity: "Samfunnsfag 7.-8.", end: "13:35" }
+      { time: "08:30", end: "09:30", activity: "Språkfag / Arbeidslivsfag", parallel: true },
+      { time: "09:40", end: "10:40", activity: "Språkfag / Arbeidslivsfag", parallel: true },
+      { time: "11:25", end: "12:25", activity: "KRLE" },
+      { time: "12:35", end: "13:35", activity: "Matematikk 8. / Kroppsøving 9." },
+      { time: "13:35", end: "14:35", activity: "Naturfag" }
     ]
   },
   mainTimes: JSON.parse(JSON.stringify(SCHOOL_MAIN_TIMES)),
   breaks: {
-    "Mandag": [
-      { time: "09:30", end: "09:40", activity: "Pause" },
-      { time: "10:40", end: "11:00", activity: "Mat" },
-      { time: "11:00", end: "11:25", activity: "Storefri" },
-      { time: "12:25", end: "12:35", activity: "Pause" }
-    ],
-    "Tirsdag": [
-      { time: "09:30", end: "09:40", activity: "Pause" },
-      { time: "10:40", end: "11:00", activity: "Mat" },
-      { time: "11:00", end: "11:25", activity: "Storefri" },
-      { time: "12:25", end: "12:35", activity: "Pause" }
-    ],
-    "Onsdag": [
-      { time: "09:30", end: "09:40", activity: "Pause" },
-      { time: "10:40", end: "11:00", activity: "Mat" },
-      { time: "11:00", end: "11:25", activity: "Storefri" },
-      { time: "12:25", end: "12:35", activity: "Pause" }
-    ],
-    "Torsdag": [
-      { time: "09:30", end: "09:40", activity: "Pause" },
-      { time: "10:40", end: "11:00", activity: "Mat" },
-      { time: "11:00", end: "11:25", activity: "Storefri" },
-      { time: "12:25", end: "12:35", activity: "Pause" }
-    ],
-    "Fredag": [
-      { time: "09:30", end: "09:40", activity: "Pause" },
-      { time: "10:40", end: "11:00", activity: "Mat" },
-      { time: "11:00", end: "11:25", activity: "Storefri" },
-      { time: "12:25", end: "12:35", activity: "Pause" }
-    ]
+    "Mandag": cloneBreaks(),
+    "Tirsdag": cloneBreaks(),
+    "Onsdag": cloneBreaks(),
+    "Torsdag": cloneBreaks(),
+    "Fredag": cloneBreaks()
   },
   agendas: {},
   templates: {},
-  subjectColors: {},
+  subjectColors: {
+    "Norsk": "#EE4C17",
+    "Matematikk": "#1384CF",
+    "Engelsk": "#FF772E",
+    "Naturfag": "#1A963B",
+    "Samfunnsfag": "#E59C1F",
+    "KRLE": "#AA3AB8",
+    "Kunst og håndverk": "#9933FF",
+    "Musikk": "#C63398",
+    "Kroppsøving": "#00CC00",
+    "Valgfag": "#7E2EAA",
+    "Leksehjelp": "#0A8F7A",
+    "Språkfag": "#F08A24",
+    "Mat og helse": "#FF3300",
+    "Utdanningsvalg": "#3B7EA6",
+    "Arbeidslivsfag": "#5E35B1"
+  },
+  subjectEmojis: {
+    "Norsk": "📝",
+    "Matematikk": "🔢",
+    "Engelsk": "🌍",
+    "Naturfag": "🔬",
+    "Samfunnsfag": "🗺️",
+    "KRLE": "✨",
+    "Kunst og håndverk": "🎨",
+    "Musikk": "🎵",
+    "Kroppsøving": "⚽",
+    "Valgfag": "🎯",
+    "Leksehjelp": "📚",
+    "Språkfag": "💬",
+    "Mat og helse": "🍳",
+    "Utdanningsvalg": "🧭",
+    "Arbeidslivsfag": "🛠️"
+  },
   customCountdowns: [],
   countdownsVisible: true
 };
+
+/** Navnet nye installasjoner starter med */
+export const DEFAULT_CLASS_NAME = "8. og 9.";
 
 export const defaultClasses = { Standard: defaultClassTemplate };
 
@@ -146,7 +178,8 @@ export const colorMap = {
   "Kunst og håndtverk": "#9933FF",
   "Pause": "#545454",
   "Mat": "#262626",
-  "Storefri": "#2E2E2E"
+  "Storefri": "#2E2E2E",
+  "Arbeidslivsfag": "#5E35B1"
 };
 
 export const LOWER_GRADE_STANDARD_COLORS = {
