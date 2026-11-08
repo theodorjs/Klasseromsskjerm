@@ -1,0 +1,15 @@
+# Avhengigheter: gjenskapes med «npm ci» fra package-lock.json
+node_modules/
+
+# Bygget utgave: GitHub Actions bygger selv fra kildekoden (.github/workflows/deploy.yml)
+dist/
+
+# macOS-filer
+.DS_Store
+
+# Logger og lokale redigeringsinnstillinger
+npm-debug.log*
+*.log
+.vscode/
+.idea/
+.claude/settings.local.json
