@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Info from './Info.jsx';
+import Dialog from './Dialog.jsx';
 import { isClassMultiGrade } from '../utils/schedule.js';
 import { getMinutesFromTime } from '../utils/time.js';
 import { getSubject } from '../data/subjects.js';
@@ -280,16 +281,6 @@ function buildClassDataFromEditorState(subjects, sched, frames, gradeLabels = nu
   return { schedule, breaks };
 }
 
-/* ─── Overlay-modal (instrumentpanel) ───────────────────── */
-
-const Overlay = ({ onClose, children, title }) => (
-  <div className="se-overlay" onClick={onClose}>
-    <div className="se-modal" role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}>
-      {children}
-    </div>
-  </div>
-);
-
 /* ─── Hoved-komponent ────────────────────────────────────── */
 
 /**
@@ -321,6 +312,7 @@ export default function ScheduleEditor({
   const [fEdit,  setFEdit]  = useState(null);
   const [newSj,  setNewSj]  = useState({ name: "", emoji: "📚", color: "#4A90E2" });
   const [newCn,  setNewCn]  = useState("");
+  const [hjelp,  setHjelp]  = useState(false);
 
   /* ── Initialiser fra eksisterende klassedata ── */
   useEffect(() => {
@@ -648,6 +640,9 @@ export default function ScheduleEditor({
           )}
         </div>
         <div className="se-header-right">
+          <button type="button" className="k-btn k-btn--hjelp k-btn--liten" onClick={() => setHjelp(true)} aria-haspopup="dialog">
+            ? Slik bruker du timeplanen
+          </button>
           <button type="button" className={`k-btn k-btn--ny k-btn--fylt${saved ? ' is-saved' : ''}`} onClick={handleSave}>
             {saved ? "✓ Lagret" : "Lagre timeplanen"}
           </button>
@@ -720,6 +715,7 @@ export default function ScheduleEditor({
 
         {/* Fagpaletten */}
         <aside className="se-side">
+          <Info felt id="se-hint">{hint}</Info>
           <h3 className="k-group-title">Fag</h3>
           <div className="se-palette">
             {subj.map(s => (
@@ -739,18 +735,35 @@ export default function ScheduleEditor({
             ))}
             <button type="button" className="se-chip se-chip-new" onClick={() => setModal("newSubj")}>+ Nytt fag</button>
           </div>
-          <Info felt>{hint}</Info>
+        </aside>
+      </div>
+
+      {/* SLIK BRUKER DU TIMEPLANEN */}
+      {hjelp && (
+        <Dialog onClose={() => setHjelp(false)} title="Slik bruker du timeplanen" bred>
+          <ol className="hjelp-steg">
+            <li>Velg et fag i lista til høyre, eller lag et nytt med «+ Nytt fag».</li>
+            <li>Trykk på øktene der faget skal stå. Trykk på faget igjen når du er ferdig med det.</li>
+            <li>Skal et fag bort? Slå på «Fjern fag» og trykk på økta.</li>
+            <li>Trykk «Lagre timeplanen» til slutt. Fram til da er ingenting endret på skjermen.</li>
+          </ol>
+          <h3 className="hjelp-tittel">Symbolene på en økt</h3>
+          <Info>Symbolene vises når du holder over eller trykker på en fylt økt uten at et fag er valgt.</Info>
           <dl className="se-legend">
-            <div><dt>◫</dt><dd>Del økta per trinn (fådelt)</dd></div>
-            <div><dt>🗓</dt><dd>Partalls- og oddetallsuker</dd></div>
-            <div><dt>⇉</dt><dd>Flere fag samtidig</dd></div>
+            <div><dt>◫</dt><dd>Del økta per trinn (fådelt klasse)</dd></div>
+            <div><dt>🗓</dt><dd>Ulike fag i partalls- og oddetallsuker</dd></div>
+            <div><dt>⇉</dt><dd>Flere fag samtidig (parallell)</dd></div>
             <div><dt>⊟</dt><dd>Slå sammen igjen</dd></div>
             <div><dt>+</dt><dd>Ett fag til i parallellen</dd></div>
             <div><dt>✕</dt><dd>Fjern et valg</dd></div>
           </dl>
-          <Info>Fagfarger og emoji brukes også på tidslinjen og hovedskjermen.</Info>
-        </aside>
-      </div>
+          <h3 className="hjelp-tittel">Farger</h3>
+          <Info>Fagfarger og emoji brukes også på tidslinjen, hovedskjermen og nedtellingsskiva. Trykk ✎ ved et fag for å endre dem.</Info>
+          <div className="k-dialog-actions">
+            <button type="button" className="k-btn k-btn--tilbake" onClick={() => setHjelp(false)}>Lukk</button>
+          </div>
+        </Dialog>
+      )}
 
       {/* REDIGER FAG */}
       {editSj !== null && (() => {
@@ -758,8 +771,7 @@ export default function ScheduleEditor({
         if (!s) return null;
         const upd = (k, v) => setSubj(p => p.map(x => x.id === editSj ? { ...x, [k]: v } : x));
         return (
-          <Overlay onClose={() => setEditSj(null)} title={`Rediger ${s.name}`}>
-            <h3 className="se-modal-title">Rediger: {s.name}</h3>
+          <Dialog onClose={() => setEditSj(null)} title={`Rediger ${s.name}`}>
             <label className="se-field">
               <span>Fagnavn</span>
               <input className="se-input" value={s.name} onChange={e => upd("name", e.target.value)} placeholder="Fagnavn" />
@@ -781,14 +793,13 @@ export default function ScheduleEditor({
               <button type="button" className="k-btn k-btn--ny" onClick={() => setEditSj(null)}>Ferdig</button>
               <button type="button" className="k-btn k-btn--slett" onClick={() => { setSubj(p => p.filter(x => x.id !== editSj)); setEditSj(null); }}>Slett fag</button>
             </div>
-          </Overlay>
+          </Dialog>
         );
       })()}
 
       {/* NYTT FAG */}
       {modal === "newSubj" && (
-        <Overlay onClose={() => setModal(null)} title="Nytt fag">
-          <h3 className="se-modal-title">Nytt fag</h3>
+        <Dialog onClose={() => setModal(null)} title="Nytt fag">
           <label className="se-field">
             <span>Fagnavn</span>
             <input className="se-input" autoFocus placeholder="Fagnavn" value={newSj.name} onChange={e => setNewSj(p => ({ ...p, name: e.target.value }))} />
@@ -823,13 +834,12 @@ export default function ScheduleEditor({
             >Legg til</button>
             <button type="button" className="k-btn" onClick={() => setModal(null)}>Avbryt</button>
           </div>
-        </Overlay>
+        </Dialog>
       )}
 
       {/* NY VANLIG KLASSE */}
       {modal === "newClass" && (
-        <Overlay onClose={() => setModal(null)} title="Ny klasse">
-          <h3 className="se-modal-title">Ny klasse</h3>
+        <Dialog onClose={() => setModal(null)} title="Ny klasse">
           <Info>Skriv trinn eller klassenavn, for eksempel «8A». Timeplanen starter tom.</Info>
           <label className="se-field">
             <span>Navn</span>
@@ -839,13 +849,12 @@ export default function ScheduleEditor({
             <button type="button" className="k-btn k-btn--ny" onClick={() => doCreateClass(false)}>Opprett</button>
             <button type="button" className="k-btn" onClick={() => setModal(null)}>Avbryt</button>
           </div>
-        </Overlay>
+        </Dialog>
       )}
 
       {/* NY FÅDELT KLASSE */}
       {modal === "newMgClass" && (
-        <Overlay onClose={() => setModal(null)} title="Ny fådelt klasse">
-          <h3 className="se-modal-title">Ny fådelt klasse</h3>
+        <Dialog onClose={() => setModal(null)} title="Ny fådelt klasse">
           <Info>Skriv begge trinnene i navnet, for eksempel «6. og 7.». Da kan hver time deles per trinn.</Info>
           <label className="se-field">
             <span>Navn</span>
@@ -869,13 +878,12 @@ export default function ScheduleEditor({
             <button type="button" className="k-btn k-btn--ny" onClick={() => doCreateClass(true)}>Opprett</button>
             <button type="button" className="k-btn" onClick={() => setModal(null)}>Avbryt</button>
           </div>
-        </Overlay>
+        </Dialog>
       )}
 
       {/* TIDER OG PAUSER */}
       {modal === "frame" && fEdit && (
-        <Overlay onClose={() => setModal(null)} title="Tider og pauser">
-          <h3 className="se-modal-title">Tider og pauser</h3>
+        <Dialog onClose={() => setModal(null)} title="Tider og pauser">
           <Info>T er time og P er pause. Endre navn og klokkeslett, eller legg til og fjern rader.</Info>
           <div className="se-frames">
             {fEdit.map(row => (
@@ -897,7 +905,7 @@ export default function ScheduleEditor({
             <button type="button" className="k-btn k-btn--ny" onClick={fSave}>Bruk tidene</button>
             <button type="button" className="k-btn" onClick={() => setModal(null)}>Avbryt</button>
           </div>
-        </Overlay>
+        </Dialog>
       )}
     </div>
   );

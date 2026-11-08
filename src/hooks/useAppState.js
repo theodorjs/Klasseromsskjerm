@@ -471,16 +471,19 @@ export function useAppState() {
   // Countdown actions
   const saveCountdown = useCallback((payload, editingIndex) => {
     setClassesState(prev => {
-      const newClasses = { ...prev };
-      const cd = newClasses[currentClassName];
-      if (!cd) return prev;
+      if (!prev[currentClassName]) return prev;
+      // Kopier før endring: React kan kjøre denne funksjonen to ganger (StrictMode),
+      // og da ville en push rett i forrige tilstand lagt til nedtellingen dobbelt.
+      const cd = { ...prev[currentClassName] };
+      const newClasses = { ...prev, [currentClassName]: cd };
       ensureClassData(cd);
-      if (!Array.isArray(cd.customCountdowns)) cd.customCountdowns = [];
-      if (editingIndex !== null && cd.customCountdowns[editingIndex]) {
-        cd.customCountdowns[editingIndex] = payload;
-      } else if (cd.customCountdowns.length < 3) {
-        cd.customCountdowns.push(payload);
+      const list = Array.isArray(cd.customCountdowns) ? [...cd.customCountdowns] : [];
+      if (editingIndex !== null && list[editingIndex]) {
+        list[editingIndex] = payload;
+      } else if (list.length < 3) {
+        list.push(payload);
       }
+      cd.customCountdowns = list;
       cd.countdownsVisible = true;
       safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
@@ -513,17 +516,18 @@ export function useAppState() {
   // Agenda actions
   const saveAgendaItem = useCallback((subject, payload, editingIndex) => {
     setClassesState(prev => {
-      const newClasses = { ...prev };
-      const cd = newClasses[currentClassName];
-      if (!cd) return prev;
-      if (!cd.agendas) cd.agendas = {};
-      if (!cd.agendas[subject]) cd.agendas[subject] = [];
-      if (editingIndex !== null && cd.agendas[subject][editingIndex] !== undefined) {
-        const existing = cd.agendas[subject][editingIndex];
-        cd.agendas[subject][editingIndex] = { ...existing, ...payload, completed: existing.completed };
+      if (!prev[currentClassName]) return prev;
+      // Kopier før endring (se saveCountdown): ellers dobbelt gjøremål i StrictMode
+      const cd = { ...prev[currentClassName] };
+      const newClasses = { ...prev, [currentClassName]: cd };
+      const list = [...((cd.agendas || {})[subject] || [])];
+      if (editingIndex !== null && list[editingIndex] !== undefined) {
+        const existing = list[editingIndex];
+        list[editingIndex] = { ...existing, ...payload, completed: existing.completed };
       } else {
-        cd.agendas[subject].push(payload);
+        list.push(payload);
       }
+      cd.agendas = { ...(cd.agendas || {}), [subject]: list };
       safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });

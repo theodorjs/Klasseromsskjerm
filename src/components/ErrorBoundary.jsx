@@ -60,12 +60,12 @@ export default class ErrorBoundary extends Component {
           Timeplanen din er trygt lagret på denne maskinen. Last inn siden på nytt for å fortsette.
         </p>
         <div className="error-fallback-actions">
-          <button type="button" className="neumorphic-btn" onClick={() => window.location.reload()}>
+          <button type="button" className="k-btn k-btn--ny k-btn--fylt" onClick={() => window.location.reload()}>
             Last inn på nytt
           </button>
           <button
             type="button"
-            className="neumorphic-btn"
+            className="k-btn k-btn--hjelp"
             onClick={() => this.setState({ backupDone: downloadBackup() })}
           >
             {this.state.backupDone ? '✓ Sikkerhetskopi lastet ned' : 'Last ned sikkerhetskopi'}

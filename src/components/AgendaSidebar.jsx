@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { normalizeSubjectLabel } from '../utils/schedule.js';
-import { getReadableAgendaTextColor } from '../utils/color.js';
-import { getSubjectDefaultColor } from '../utils/color.js';
+import { getReadableAgendaTextColor, getSubjectDefaultColor } from '../utils/color.js';
 
 function makeDraggablePanel(el, handle) {
   if (!el || !handle) return () => {};
@@ -90,18 +89,11 @@ export default function AgendaSidebar({
   const subjectColor = subject
     ? ((currentClass.subjectColors?.[subject]) || getSubjectDefaultColor(subject))
     : null;
-  const textColor = subjectColor && subjectColor !== '#ffffff' && subjectColor !== '#FFFFFF'
-    ? getReadableAgendaTextColor(subjectColor)
-    : null;
-  const isDarkText = textColor === '#5F5F5F';
-
-  const panelStyle = subjectColor && subjectColor !== '#ffffff' && subjectColor !== '#FFFFFF' ? {
-    '--agenda-panel-color': subjectColor,
-    '--agenda-panel-text': textColor,
-    '--agenda-card-bg': isDarkText ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.16)',
-    '--agenda-chip-bg': isDarkText ? 'rgba(255,255,255,0.54)' : 'rgba(255,255,255,0.18)',
-    '--agenda-chip-text': textColor,
-    '--agenda-border': isDarkText ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.24)',
+  // Fagfargen er båndet øverst og kanten på hvert gjøremål; selve panelet er instrument
+  const hasColor = subjectColor && subjectColor.toLowerCase() !== '#ffffff';
+  const panelStyle = hasColor ? {
+    '--fag': subjectColor,
+    '--fag-tekst': getReadableAgendaTextColor(subjectColor) === '#5F5F5F' ? '#1C2735' : '#F8FBFF',
   } : {};
 
   function handleDragStart(e, idx) {
@@ -126,21 +118,23 @@ export default function AgendaSidebar({
 
   return (
     <div
-      className={`agenda-sidebar${open ? ' active' : ''}`}
+      className={`k-panel agenda-sidebar${open ? ' active' : ''}`}
       id="agenda-sidebar"
       ref={sidebarRef}
       style={panelStyle}
+      role="dialog"
+      aria-label="Agenda"
     >
-      <div className="agenda-drag-handle" id="agenda-drag-handle" ref={handleRef}>
-        <div className="agenda-title-wrap">
-          <div className="agenda-title">Agenda</div>
-          <div className="agenda-subtitle" id="agenda-subtitle">
+      <div className="k-panel-head" id="agenda-drag-handle" ref={handleRef}>
+        <div className="k-panel-titles">
+          <div className="k-panel-title">Agenda</div>
+          <div className="k-panel-sub" id="agenda-subtitle">
             {subject ? `Gjøremål for ${subject}` : 'Velg et fag for å starte'}
           </div>
         </div>
         <button
           type="button"
-          className="agenda-close-btn"
+          className="k-close"
           id="agenda-close-btn"
           aria-label="Lukk agenda"
           onMouseDown={e => e.stopPropagation()}
@@ -151,10 +145,11 @@ export default function AgendaSidebar({
       <div className="agenda-header">
         <button
           type="button"
-          className={`agenda-add-btn${!subject ? ' is-disabled' : ''}`}
+          className="k-btn k-btn--ny k-btn--ikon"
           id="agenda-add-btn"
           aria-label="Legg til gjøremål"
-          disabled={!subject}
+          title={subject ? 'Legg til gjøremål' : 'Velg et fag først'}
+          disabled={!subject || !editPermission}
           onClick={() => { if (subject) onAddItem(subject); }}
         >+</button>
         <button
@@ -201,10 +196,12 @@ export default function AgendaSidebar({
 
       <div className="agenda-items" id="agenda-items">
         {!subject && (
-          <div className="agenda-empty-state">Velg et fag for å vise eller legge til gjøremål.</div>
+          <div className="agenda-empty-state">Velg et fag over for å vise eller legge til gjøremål.</div>
         )}
         {subject && items.length === 0 && (
-          <div className="agenda-empty-state">Ingen gjøremål for {subject} enda.</div>
+          <div className="agenda-empty-state">
+            {editPermission ? `Ingen gjøremål for ${subject} enda. Trykk + for å legge til.` : `Ingen gjøremål for ${subject} enda.`}
+          </div>
         )}
         {subject && items.map((item, index) => (
           <div
@@ -259,25 +256,31 @@ export default function AgendaSidebar({
       </div>
 
       {subject && (
-        <div id="agenda-footer" className="agenda-footer" style={{ display: 'flex' }}>
+        <div id="agenda-footer" className="agenda-footer">
           <button
             type="button"
-            className="agenda-footer-btn danger"
-            onClick={() => { if (confirm(`Tømme hele agendaen for ${subject}?`)) onClearAgenda(subject); }}
-          >Tøm alt</button>
-          <button
-            type="button"
-            className="agenda-footer-btn"
-            onClick={() => { onSaveTemplate(subject); alert(`Agenda lagret som mal for ${subject}`); }}
-          >Lagre mal</button>
+            className="k-btn k-btn--ny k-btn--liten"
+            title="Husk denne lista som mal for faget"
+            disabled={!editPermission || items.length === 0}
+            onClick={() => { onSaveTemplate(subject); alert(`Agendaen er lagret som mal for ${subject}.`); }}
+          >Lagre som mal</button>
           {hasTemplate && (
             <button
               type="button"
               id="agenda-load-template-btn"
-              className="agenda-footer-btn alt"
+              className="k-btn k-btn--rediger k-btn--liten"
+              title="Hent inn malen for faget"
+              disabled={!editPermission}
               onClick={() => onLoadTemplate(subject)}
-            >Last mal</button>
+            >Hent mal</button>
           )}
+          <button
+            type="button"
+            className="k-btn k-btn--slett k-btn--liten"
+            style={{ marginLeft: 'auto' }}
+            disabled={!editPermission || items.length === 0}
+            onClick={() => { if (confirm(`Tømme hele agendaen for ${subject}?`)) onClearAgenda(subject); }}
+          >Tøm alt</button>
         </div>
       )}
     </div>

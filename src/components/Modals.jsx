@@ -1,38 +1,88 @@
 import { useState, useEffect, useRef } from 'react';
-import { normalizeSubjectLabel, normalizeCountdownTimeEntry, isValidCountdownTime } from '../utils/schedule.js';
-import { normalizeHexColor } from '../utils/color.js';
+import Dialog from './Dialog.jsx';
+import Info from './Info.jsx';
+import { normalizeCountdownTimeEntry, isValidCountdownTime } from '../utils/schedule.js';
 
-// ─── Edit Activity Modal ─────────────────────────────────────────────────────
-export function EditModal({ open, displayActivity, hasTempActivity, onSave, onReset, onCancel }) {
-  const [value, setValue] = useState(displayActivity || '');
-  const inputRef = useRef(null);
+/* Hver dialog monteres bare mens den er åpen (se wrapper-funksjonene nederst):
+   da kan starttilstanden komme rett fra props, uten reset-effekter.
+   Alle småvinduene bruker samme Dialog og de samme knappene: grønn fylt knapp
+   for det ene du mest sannsynlig vil gjøre, blå for å gå tilbake, rød for å
+   slette. Emoji velges i et rutenett inne i dialogen, aldri i et løst vindu. */
 
-  useEffect(() => {
-    if (open) {
-      setValue(displayActivity || '');
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [open, displayActivity]);
-
+function EmojiVelger({ emojis, value, onPick, open, onToggle, id }) {
   return (
-    <div className={`edit-modal${open ? ' active' : ''}`} id="edit-modal">
-      <input
-        type="text"
-        id="edit-activity-input"
-        placeholder="Nytt aktivitetsnavn"
-        ref={inputRef}
-        value={value}
-        onChange={e => setValue(e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter') onSave(value); if (e.key === 'Escape') onCancel(); }}
-      />
-      <button id="save-activity" onClick={() => { if (value.trim()) onSave(value.trim()); }}>Lagre</button>
-      <button id="reset-activity" style={{ display: hasTempActivity ? 'block' : 'none' }} onClick={onReset}>Tilbakestill</button>
-      <button id="cancel-edit" onClick={onCancel}>Avbryt</button>
+    <div className="k-field">
+      <span>Emoji</span>
+      <div className="k-emoji-row">
+        <span className="k-emoji-preview" aria-hidden="true">{value || '·'}</span>
+        <button
+          type="button"
+          id={id}
+          className="k-btn k-btn--hjelp k-btn--liten"
+          aria-expanded={open}
+          onClick={onToggle}
+        >
+          {open ? 'Skjul emoji' : 'Velg emoji'}
+        </button>
+      </div>
+      {open && (
+        <div className="k-emoji-grid" role="listbox" aria-label="Emoji">
+          {emojis.map(em => (
+            <button
+              key={em}
+              type="button"
+              role="option"
+              aria-selected={em === value}
+              className={`k-emoji${em === value ? ' is-active' : ''}`}
+              onClick={() => onPick(em)}
+            >{em}</button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Activity Add/Edit Modal ─────────────────────────────────────────────────
+// ─── Endre én økt midlertidig (fra tidslinjen) ───────────────────────────────
+function EditModalInner({ displayActivity, hasTempActivity, onSave, onReset, onCancel }) {
+  const [value, setValue] = useState(displayActivity || '');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const id = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(id);
+  }, []);
+
+  const save = () => { if (value.trim()) onSave(value.trim()); };
+
+  return (
+    <Dialog onClose={onCancel} title="Endre denne økta" className="k-dialog--edit" >
+      <Info>Gjelder bare på denne skjermen, og bare til nettleseren lukkes. Timeplanen endres ikke.</Info>
+      <label className="k-field">
+        <span>Hva skjer i denne økta?</span>
+        <input
+          type="text"
+          id="edit-activity-input"
+          className="k-input k-input--stor"
+          placeholder="For eksempel «Prøve» eller «Tur»"
+          ref={inputRef}
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') save(); }}
+        />
+      </label>
+      <div className="k-dialog-actions">
+        <button type="button" id="save-activity" className="k-btn k-btn--rediger k-btn--fylt" onClick={save}>Bruk</button>
+        <button type="button" id="cancel-edit" className="k-btn k-btn--tilbake" onClick={onCancel}>Avbryt</button>
+        {hasTempActivity && (
+          <button type="button" id="reset-activity" className="k-btn k-btn--slett" onClick={onReset}>Tilbakestill</button>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
+// ─── Gjøremål i agendaen ─────────────────────────────────────────────────────
 const EMOJIS = [
   "📚","📖","📝","✏️","🧠","🏫","👩‍🏫","👨‍🏫","🎒","📓",
   "📐","📏","🔢","➗","🧮","🔬","🧪","🧬","🌍","🗺️",
@@ -41,22 +91,17 @@ const EMOJIS = [
   "🧘","🏃‍♂️","🏃‍♀️","⚽","🥪","🍎","🥛","☕","💼","🛠️"
 ];
 
-export function ActivityModal({ open, item, itemIndex, subject, onSave, onCancel }) {
-  const [name, setName] = useState('');
-  const [emoji, setEmoji] = useState('');
-  const [duration, setDuration] = useState('');
+function ActivityModalInner({ item, itemIndex, subject, onSave, onCancel }) {
+  const [name, setName] = useState(item?.name || '');
+  const [emoji, setEmoji] = useState(item?.emoji || '');
+  const [duration, setDuration] = useState(item?.duration || '');
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const nameRef = useRef(null);
 
   useEffect(() => {
-    if (open) {
-      setName(item?.name || '');
-      setEmoji(item?.emoji || '');
-      setDuration(item?.duration || '');
-      setEmojiPickerOpen(false);
-      setTimeout(() => { nameRef.current?.focus(); nameRef.current?.select(); }, 50);
-    }
-  }, [open, item]);
+    const id = setTimeout(() => { nameRef.current?.focus(); nameRef.current?.select(); }, 50);
+    return () => clearTimeout(id);
+  }, []);
 
   function handleSave() {
     if (name.trim() && subject) {
@@ -65,157 +110,146 @@ export function ActivityModal({ open, item, itemIndex, subject, onSave, onCancel
   }
 
   return (
-    <div className={`edit-modal${open ? ' active' : ''}`} id="activity-modal">
-      <h2 id="activity-modal-title" style={{ marginTop: 0, fontSize: '1.2rem' }}>
-        {item ? 'Rediger aktivitet' : 'Ny aktivitet'}
-      </h2>
-      <div className="activity-form-row">
-        <label className="activity-form-label" htmlFor="activity-name-input">Navn</label>
+    <Dialog onClose={onCancel} title={item ? 'Rediger gjøremål' : 'Nytt gjøremål'}>
+      {subject && <Info>Legges i agendaen for {subject}. Elevene ser den på skjermen når agendaen er åpen.</Info>}
+      <label className="k-field">
+        <span>Navn</span>
         <input
           type="text"
           id="activity-name-input"
-          placeholder="Navn (f.eks. Intro)"
+          className="k-input"
+          placeholder="For eksempel «Intro» eller «Oppgave 3»"
           ref={nameRef}
           value={name}
           onChange={e => setName(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') handleSave(); }}
         />
+      </label>
+      <div className="k-field-row">
+        <label className="k-field" style={{ flex: '0 0 150px' }}>
+          <span>Varighet (minutter)</span>
+          <input
+            type="number"
+            id="activity-duration-input"
+            className="k-input"
+            inputMode="numeric"
+            min="0"
+            placeholder="10"
+            value={duration}
+            onChange={e => setDuration(e.target.value)}
+          />
+        </label>
       </div>
-      <div className="activity-form-row activity-form-row-compact">
-        <label className="activity-form-label" htmlFor="activity-emoji-input">Emoji</label>
-        <input
-          type="text"
-          id="activity-emoji-input"
-          placeholder="Velg"
-          maxLength={2}
-          style={{ width: 84 }}
-          value={emoji}
-          onChange={e => setEmoji(e.target.value)}
-          onClick={e => { e.stopPropagation(); setEmojiPickerOpen(v => !v); }}
-          readOnly
-        />
-        {emojiPickerOpen && (
-          <div className="emoji-picker" style={{ position: 'fixed', zIndex: 9999 }}>
-            {EMOJIS.map(em => (
-              <div key={em} className="emoji-btn" onClick={e => { e.stopPropagation(); setEmoji(em); setEmojiPickerOpen(false); }}>{em}</div>
-            ))}
-          </div>
-        )}
+      <EmojiVelger
+        id="activity-emoji-input"
+        emojis={EMOJIS}
+        value={emoji}
+        open={emojiPickerOpen}
+        onToggle={() => setEmojiPickerOpen(v => !v)}
+        onPick={em => { setEmoji(em); setEmojiPickerOpen(false); }}
+      />
+      <div className="k-dialog-actions">
+        <button type="button" id="activity-save" className="k-btn k-btn--ny k-btn--fylt" onClick={handleSave} disabled={!name.trim()}>Lagre</button>
+        <button type="button" id="activity-cancel" className="k-btn k-btn--tilbake" onClick={onCancel}>Avbryt</button>
       </div>
-      <div className="activity-form-row">
-        <label className="activity-form-label" htmlFor="activity-duration-input">Varighet</label>
-        <input
-          type="number"
-          id="activity-duration-input"
-          placeholder="Varighet (minutter)"
-          value={duration}
-          onChange={e => setDuration(e.target.value)}
-        />
-      </div>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button id="activity-save" onClick={handleSave}>Lagre</button>
-        <button id="activity-cancel" onClick={onCancel}>Avbryt</button>
-      </div>
-    </div>
+    </Dialog>
   );
 }
 
-// ─── Countdown Modal ─────────────────────────────────────────────────────────
-export function CountdownModal({ open, editingIndex, existingItem, onSave, onDelete, onCancel }) {
-  const [title, setTitle] = useState('');
-  const [targetDate, setTargetDate] = useState('');
-  const [targetTime, setTargetTime] = useState('');
+// ─── Nedtelling til en dato ──────────────────────────────────────────────────
+function CountdownModalInner({ editingIndex, existingItem, onSave, onDelete, onCancel }) {
+  const [title, setTitle] = useState(existingItem?.title || '');
+  const [targetDate, setTargetDate] = useState(existingItem?.targetDate || '');
+  const [targetTime, setTargetTime] = useState(existingItem?.targetTime || '');
   const titleRef = useRef(null);
 
   useEffect(() => {
-    if (open) {
-      setTitle(existingItem?.title || '');
-      setTargetDate(existingItem?.targetDate || '');
-      setTargetTime(existingItem?.targetTime || '');
-      setTimeout(() => { titleRef.current?.focus(); titleRef.current?.select(); }, 50);
-    }
-  }, [open, existingItem]);
+    const id = setTimeout(() => { titleRef.current?.focus(); titleRef.current?.select(); }, 50);
+    return () => clearTimeout(id);
+  }, []);
+
+  const normalizedTime = normalizeCountdownTimeEntry(targetTime);
+  const canSave = !!title.trim() && !!targetDate && isValidCountdownTime(normalizedTime);
 
   function handleSave() {
-    const normalizedTime = normalizeCountdownTimeEntry(targetTime);
-    if (!title.trim() || !targetDate || !isValidCountdownTime(normalizedTime)) return;
-    const payload = {
+    if (!canSave) return;
+    onSave({
       id: existingItem?.id || `countdown-${Date.now()}`,
       title: title.trim(),
       targetDate,
-      targetTime: normalizedTime
-    };
-    onSave(payload, editingIndex);
+      targetTime: normalizedTime,
+    }, editingIndex);
   }
 
   return (
-    <div className={`edit-modal${open ? ' active' : ''}`} id="countdown-modal">
-      <h2 id="countdown-modal-title" style={{ marginTop: 0, fontSize: '1.2rem' }}>
-        {existingItem ? 'Rediger nedtelling' : 'Ny nedtelling'}
-      </h2>
-      <div className="activity-form-row">
-        <label className="activity-form-label" htmlFor="countdown-title-input">Tittel</label>
+    <Dialog onClose={onCancel} title={existingItem ? 'Rediger nedtelling' : 'Ny nedtelling'}>
+      <Info>Vises på hovedskjermen som «X dager til …». Hver klasse kan ha inntil tre.</Info>
+      <label className="k-field">
+        <span>Hva telles det ned til?</span>
         <input
           type="text"
           id="countdown-title-input"
-          placeholder="Tittel"
+          className="k-input"
+          placeholder="For eksempel «Juleferie» eller «Leirskole»"
           ref={titleRef}
           value={title}
           onChange={e => setTitle(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleSave(); }}
           required
         />
+      </label>
+      <div className="k-field-row">
+        <label className="k-field">
+          <span>Dato</span>
+          <input
+            type="date"
+            id="countdown-date-input"
+            className="k-input"
+            value={targetDate}
+            onChange={e => setTargetDate(e.target.value)}
+            required
+          />
+        </label>
+        <label className="k-field" style={{ flex: '0 0 120px' }}>
+          <span>Klokkeslett</span>
+          <input
+            type="text"
+            id="countdown-time-input"
+            className="k-input"
+            placeholder="08:30"
+            inputMode="numeric"
+            maxLength={5}
+            pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
+            title="Bruk 24-timersformat, for eksempel 08:30"
+            value={targetTime}
+            onChange={e => setTargetTime(e.target.value)}
+            required
+          />
+        </label>
       </div>
-      <div className="activity-form-row">
-        <label className="activity-form-label" htmlFor="countdown-date-input">Dato</label>
-        <input
-          type="date"
-          id="countdown-date-input"
-          value={targetDate}
-          onChange={e => setTargetDate(e.target.value)}
-          required
-        />
-      </div>
-      <div className="activity-form-row">
-        <label className="activity-form-label" htmlFor="countdown-time-input">Klokkeslett</label>
-        <input
-          type="text"
-          id="countdown-time-input"
-          placeholder="08:30"
-          inputMode="numeric"
-          maxLength={5}
-          pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
-          title="Bruk 24-timersformat, for eksempel 08:30"
-          value={targetTime}
-          onChange={e => setTargetTime(e.target.value)}
-          required
-        />
-      </div>
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <button id="countdown-save" onClick={handleSave}>Lagre</button>
+      <div className="k-dialog-actions">
+        <button type="button" id="countdown-save" className="k-btn k-btn--ny k-btn--fylt" onClick={handleSave} disabled={!canSave}>Lagre</button>
+        <button type="button" id="countdown-cancel" className="k-btn k-btn--tilbake" onClick={onCancel}>Avbryt</button>
         {existingItem && (
-          <button id="countdown-delete" onClick={() => onDelete(editingIndex)}>Slett</button>
+          <button type="button" id="countdown-delete" className="k-btn k-btn--slett" onClick={() => onDelete(editingIndex)}>Slett</button>
         )}
-        <button id="countdown-cancel" onClick={onCancel}>Avbryt</button>
       </div>
-    </div>
+    </Dialog>
   );
 }
 
-// ─── Login Modal ─────────────────────────────────────────────────────────────
+// ─── Lærer-innlogging ────────────────────────────────────────────────────────
 const TEACHER_PASSWORD = "tilfeldigpassord";
 
-export function LoginModal({ open, onSuccess, onCancel }) {
+function LoginModalInner({ onSuccess, onCancel }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (open) {
-      setPassword('');
-      setError(false);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [open]);
+    const id = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(id);
+  }, []);
 
   function handleLogin() {
     if (password === TEACHER_PASSWORD) {
@@ -229,44 +263,42 @@ export function LoginModal({ open, onSuccess, onCancel }) {
   }
 
   return (
-    <div className={`edit-modal${open ? ' active' : ''}`} id="login-modal">
-      <h2 style={{ marginTop: 0, fontSize: '1.2rem' }}>Lærer-innlogging</h2>
-      <div className="login-input-container">
+    <Dialog onClose={onCancel} title="Lås opp for læreren">
+      <Info>Passordet låser opp redigering av timeplan, agenda og nedtellinger på denne skjermen.</Info>
+      <label className="k-field">
+        <span>Passord</span>
         <input
           type="password"
           id="login-password-input"
+          className="k-input k-input--stor"
           placeholder="Passord"
+          autoComplete="current-password"
           ref={inputRef}
           value={password}
           onChange={e => setPassword(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') handleLogin(); }}
+          aria-invalid={error || undefined}
+          aria-describedby={error ? 'login-error' : undefined}
         />
+      </label>
+      {error && <p id="login-error" className="k-feil" role="alert">Feil passord. Prøv igjen.</p>}
+      <div className="k-dialog-actions">
+        <button type="button" id="login-submit" className="k-btn k-btn--ny k-btn--fylt" onClick={handleLogin}>Lås opp</button>
+        <button type="button" id="login-cancel" className="k-btn k-btn--tilbake" onClick={onCancel}>Avbryt</button>
       </div>
-      {error && <div id="login-error" style={{ color: '#f44336', fontSize: '0.8rem' }}>Feil passord</div>}
-      <button id="login-submit" className="neumorphic-btn" onClick={handleLogin}>Logg inn</button>
-      <button id="login-cancel" className="neumorphic-btn" onClick={onCancel}>Avbryt</button>
-    </div>
+    </Dialog>
   );
 }
 
-// ─── Color Detail Modal ───────────────────────────────────────────────────────
+// ─── Farge og emoji for et fag ───────────────────────────────────────────────
 const SUBJECT_EMOJIS = ["📖","🔢","🧬","🌍","🎨","🌮","🏃‍♂️","🎶","✝️","🇳🇴","🇬🇧","🧘","🥪","🍎","⏸️","🎭","🧩","💻","🎬","🌟","🪐","🧠","🚀","🛰️"];
 
-export function ColorDetailModal({ open, subject, currentColor, currentEmoji, onSave, onCancel }) {
+function ColorDetailModalInner({ subject, currentColor, currentEmoji, onSave, onCancel }) {
   const [color, setColor] = useState(currentColor || '#ffffff');
   const [hexValue, setHexValue] = useState((currentColor || '#ffffff').toUpperCase());
   const [emoji, setEmoji] = useState(currentEmoji || '🎨');
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      const c = currentColor || '#ffffff';
-      setColor(c);
-      setHexValue(c.toUpperCase());
-      setEmoji(currentEmoji || '🎨');
-      setEmojiPickerOpen(false);
-    }
-  }, [open, currentColor, currentEmoji]);
+  const [copied, setCopied] = useState(false);
 
   function handleColorChange(val) {
     setColor(val);
@@ -277,9 +309,7 @@ export function ColorDetailModal({ open, subject, currentColor, currentEmoji, on
     let v = val;
     if (v && !v.startsWith('#')) v = '#' + v;
     setHexValue(val);
-    if (/^#[0-9A-F]{6}$/i.test(v)) {
-      setColor(v.toUpperCase());
-    }
+    if (/^#[0-9A-F]{6}$/i.test(v)) setColor(v.toUpperCase());
   }
 
   async function handlePaste() {
@@ -296,84 +326,82 @@ export function ColorDetailModal({ open, subject, currentColor, currentEmoji, on
     }
   }
 
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(hexValue);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  }
+
   return (
-    <div className={`edit-modal${open ? ' active' : ''}`} id="color-detail-modal">
-      <h2 id="color-subject-title" style={{ marginTop: 0, fontSize: '1.2rem' }}>
-        Farge for: {subject}
-      </h2>
-      <div
-        id="color-preview-large"
-        style={{
-          width: 100, height: 100, borderRadius: '50%', margin: '0 auto 20px',
-          border: '4px solid white', boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-          backgroundColor: color
-        }}
-      ></div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 15, alignItems: 'center' }}>
-        <input
-          type="color"
-          id="subject-color-input"
-          value={color.startsWith('#') ? color : '#ffffff'}
-          style={{ width: '100%', height: 50, cursor: 'pointer', border: 'none', background: 'none' }}
-          onChange={e => handleColorChange(e.target.value)}
-        />
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 10, width: '100%', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div id="subject-emoji-preview" style={{ fontSize: '1.4rem', width: 32, textAlign: 'center' }}>{emoji}</div>
-            <button
-              id="subject-emoji-btn"
-              className="neumorphic-btn"
-              style={{ padding: '8px 10px', fontSize: '0.85rem' }}
-              onClick={e => { e.stopPropagation(); setEmojiPickerOpen(v => !v); }}
-            >🙂 Emoji</button>
-            {emojiPickerOpen && (
-              <div className="emoji-picker subject-emoji-picker" style={{ position: 'fixed', zIndex: 9999 }}>
-                {SUBJECT_EMOJIS.map(em => (
-                  <div
-                    key={em}
-                    className="emoji-btn"
-                    onClick={e => { e.stopPropagation(); setEmoji(em); setEmojiPickerOpen(false); }}
-                  >{em}</div>
-                ))}
-              </div>
-            )}
-          </div>
+    <Dialog onClose={onCancel} title={`Farge for ${subject}`}>
+      <div id="color-preview-large" className="k-color-preview" style={{ backgroundColor: color }} aria-hidden="true" />
+      <div className="k-field">
+        <span>Farge</span>
+        <div className="k-color-row">
+          <input
+            type="color"
+            id="subject-color-input"
+            className="k-color-input"
+            aria-label="Velg farge"
+            value={color.startsWith('#') ? color : '#ffffff'}
+            onChange={e => handleColorChange(e.target.value)}
+          />
           <input
             type="text"
             id="subject-hex-input"
+            className="k-input k-input--mono"
+            aria-label="Fargekode"
             placeholder="#FFFFFF"
-            style={{ textAlign: 'center', fontFamily: 'monospace' }}
             value={hexValue}
             onChange={e => handleHexChange(e.target.value)}
           />
-          <button
-            id="subject-color-copy"
-            className="neumorphic-btn"
-            style={{ padding: 10, fontSize: '0.8rem' }}
-            onClick={() => {
-              navigator.clipboard.writeText(hexValue);
-            }}
-          >📋 Kopier</button>
-          <button
-            id="subject-color-paste"
-            className="neumorphic-btn"
-            style={{ padding: 10, fontSize: '0.8rem' }}
-            onClick={handlePaste}
-          >📋 Lim inn</button>
+        </div>
+        <div className="k-chips">
+          <button type="button" id="subject-color-copy" className="k-btn k-btn--hjelp k-btn--liten" onClick={handleCopy}>
+            {copied ? '✓ Kopiert' : '📋 Kopier koden'}
+          </button>
+          <button type="button" id="subject-color-paste" className="k-btn k-btn--hjelp k-btn--liten" onClick={handlePaste}>
+            Lim inn kode
+          </button>
         </div>
       </div>
-
-      <div style={{ display: 'flex', gap: 10, marginTop: 25, justifyContent: 'center' }}>
-        <button
-          id="subject-color-save"
-          className="neumorphic-btn"
-          style={{ background: 'var(--accent-color)', color: 'white' }}
-          onClick={() => onSave(subject, color, emoji)}
-        >Lagre</button>
-        <button id="subject-color-cancel" className="neumorphic-btn" onClick={onCancel}>Avbryt</button>
+      <EmojiVelger
+        id="subject-emoji-btn"
+        emojis={SUBJECT_EMOJIS}
+        value={emoji}
+        open={emojiPickerOpen}
+        onToggle={() => setEmojiPickerOpen(v => !v)}
+        onPick={em => { setEmoji(em); setEmojiPickerOpen(false); }}
+      />
+      <Info>Fargen brukes på tidslinjen, hovedskjermen og nedtellingsskiva. Velg en som skiller seg fra de andre fagene.</Info>
+      <div className="k-dialog-actions">
+        <button type="button" id="subject-color-save" className="k-btn k-btn--ny k-btn--fylt" onClick={() => onSave(subject, color, emoji)}>Lagre</button>
+        <button type="button" id="subject-color-cancel" className="k-btn k-btn--tilbake" onClick={onCancel}>Avbryt</button>
       </div>
-    </div>
+    </Dialog>
   );
+}
+
+export function EditModal(props) {
+  return props.open ? <EditModalInner {...props} /> : null;
+}
+
+export function ActivityModal(props) {
+  return props.open ? <ActivityModalInner {...props} /> : null;
+}
+
+export function CountdownModal(props) {
+  return props.open ? <CountdownModalInner {...props} /> : null;
+}
+
+export function LoginModal(props) {
+  return props.open ? <LoginModalInner {...props} /> : null;
+}
+
+export function ColorDetailModal(props) {
+  return props.open ? <ColorDetailModalInner {...props} /> : null;
 }

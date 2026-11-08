@@ -31,6 +31,7 @@ function makeDraggablePanel(el, handle) {
   return () => { handle.onmousedown = null; };
 }
 
+/** Notat til klassen: stor tekst på et instrumentpanel som kan dras rundt og endres i størrelse. */
 export default function NotePanel({ open, onClose }) {
   const panelRef = useRef(null);
   const handleRef = useRef(null);
@@ -109,42 +110,37 @@ export default function NotePanel({ open, onClose }) {
     saveNote();
   }
 
+  const formatBtn = (command, label, children) => (
+    <button
+      type="button"
+      className="note-toolbar-btn"
+      data-command={command}
+      aria-label={label}
+      title={label}
+      onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
+      onClick={e => { e.preventDefault(); e.stopPropagation(); execFormat(command); }}
+    >{children}</button>
+  );
+
   return (
-    <div className={`note-panel${open ? ' active' : ''}`} id="note-panel" ref={panelRef}>
-      <div className="note-drag-handle" id="note-drag-handle" aria-hidden="true" ref={handleRef}></div>
-      <button
-        type="button"
-        className="note-close-btn"
-        id="note-close-btn"
-        aria-label="Lukk notat"
-        onMouseDown={e => e.stopPropagation()}
-        onClick={e => { e.stopPropagation(); onClose(); }}
-      >✕</button>
-      <div className="note-toolbar" id="note-toolbar" aria-hidden={open ? 'false' : 'true'}>
+    <div className={`k-panel note-panel${open ? ' active' : ''}`} id="note-panel" ref={panelRef} role="dialog" aria-label="Notat">
+      <div className="k-panel-head" id="note-drag-handle" ref={handleRef}>
+        <div className="k-panel-titles">
+          <div className="k-panel-title">Notat</div>
+        </div>
+        <div className="note-toolbar" id="note-toolbar" role="toolbar" aria-label="Formatering">
+          {formatBtn('bold', 'Fet skrift', <strong>B</strong>)}
+          {formatBtn('italic', 'Kursiv', <em>I</em>)}
+          {formatBtn('underline', 'Understrek', <u>U</u>)}
+        </div>
         <button
           type="button"
-          className="note-toolbar-btn"
-          data-command="bold"
-          aria-label="Fet skrift"
-          onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
-          onClick={e => { e.preventDefault(); e.stopPropagation(); execFormat('bold'); }}
-        ><strong>B</strong></button>
-        <button
-          type="button"
-          className="note-toolbar-btn"
-          data-command="italic"
-          aria-label="Kursiv"
-          onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
-          onClick={e => { e.preventDefault(); e.stopPropagation(); execFormat('italic'); }}
-        ><em>I</em></button>
-        <button
-          type="button"
-          className="note-toolbar-btn"
-          data-command="underline"
-          aria-label="Understrek"
-          onMouseDown={e => { e.preventDefault(); e.stopPropagation(); }}
-          onClick={e => { e.preventDefault(); e.stopPropagation(); execFormat('underline'); }}
-        ><u>U</u></button>
+          className="k-close"
+          id="note-close-btn"
+          aria-label="Lukk notat"
+          onMouseDown={e => e.stopPropagation()}
+          onClick={e => { e.stopPropagation(); onClose(); }}
+        >✕</button>
       </div>
       <div
         className="note-editor"
@@ -152,10 +148,10 @@ export default function NotePanel({ open, onClose }) {
         contentEditable="true"
         spellCheck={false}
         aria-label="Notat"
+        data-placeholder="Skriv her …"
         ref={editorRef}
         onInput={saveNote}
         onBlur={saveNote}
-        onFocus={() => {}}
         onMouseUp={saveSelection}
         onKeyUp={saveSelection}
         onKeyDown={handleKeyDown}

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
+import Dialog from './Dialog.jsx';
+import Info from './Info.jsx';
 import {
   buildSharePayload,
   encodeSharePayload,
@@ -72,17 +74,17 @@ export default function ShareModal({ open, classData, className, onClose }) {
     onClose();
   }
 
+  // Escape lukker først den store QR-koden; dialogen selv håndterer Escape ellers
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open || !bigQr) return undefined;
     function onKey(e) {
       if (e.key !== 'Escape') return;
-      if (bigQr) setBigQr(false);
-      else handleClose();
+      e.preventDefault();
+      setBigQr(false);
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, bigQr, onClose]);
+  }, [open, bigQr]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -119,62 +121,59 @@ export default function ShareModal({ open, classData, className, onClose }) {
 
   return (
     <>
-      {open && <div className="share-backdrop" onClick={handleClose} aria-hidden="true" />}
-      <div className={`edit-modal share-modal${open ? ' active' : ''}`} id="share-modal" role="dialog" aria-modal="true" aria-labelledby="share-modal-title">
-        <h2 id="share-modal-title" style={{ marginTop: 0, fontSize: '1.2rem' }}>
-          Del timeplanen for «{displayName}»
-        </h2>
-        <p className="modal-help">
-          Alle som åpner lenken – elever, kolleger eller en vikar – får timeplan, pauser og fagfarger
-          på sin egen skjerm med ett trykk. Lenken er et øyeblikksbilde: del den på nytt når du har
-          gjort endringer. Agenda, notater og nedtellinger deles ikke.
-        </p>
+      <Dialog open={open} onClose={handleClose} laast={bigQr} title={`Del timeplanen for «${displayName}»`} titleId="share-modal-title" className="share-modal">
+        <Info>
+          Alle som åpner lenken får timeplan, pauser og fagfarger på sin egen skjerm med ett trykk.
+          Lenken er et øyeblikksbilde: del den på nytt etter endringer. Agenda, notater og nedtellinger følger ikke med.
+        </Info>
 
-        {error && <p className="modal-error">{error}</p>}
+        {error && <p className="k-feil" role="alert">{error}</p>}
 
         {!error && url && !tooLongForQr && (
           <div className="share-qr-wrap">
             <div className="share-qr-frame">
               <canvas ref={canvasRef} className="share-qr" aria-label="QR-kode med delingslenke" />
             </div>
-            <button type="button" className="neumorphic-btn" onClick={() => setBigQr(true)}>
+            <button type="button" className="k-btn k-btn--hjelp k-btn--liten" onClick={() => setBigQr(true)}>
               ⤢ Vis stor på tavla
             </button>
           </div>
         )}
 
         {!error && url && (tooLongForQr || url.length > SHARE_URL_SOFT_LIMIT) && (
-          <p className="modal-note">
+          <p className="k-dialog-tekst is-dempet">
             Denne timeplanen gir en lang lenke. Kopier lenken og del den i Teams eller på e-post
-            {tooLongForQr ? ' – den er for lang for en QR-kode.' : '.'}
+            {tooLongForQr ? '. Den er for lang for en QR-kode.' : '.'}
           </p>
         )}
 
         {!error && (
-          <div className="share-url-row">
+          <label className="k-field">
+            <span>Lenke</span>
             <input
               ref={inputRef}
               type="text"
+              className="k-input k-input--mono"
               readOnly
               value={url}
               aria-label="Delingslenke"
               onFocus={e => e.target.select()}
             />
-          </div>
+          </label>
         )}
 
-        <div className="modal-actions">
+        <div className="k-dialog-actions">
           {!error && (
-            <button ref={copyBtnRef} type="button" className="neumorphic-btn primary" onClick={copyLink}>
+            <button ref={copyBtnRef} type="button" className="k-btn k-btn--ny k-btn--fylt" onClick={copyLink}>
               {copied ? '✓ Kopiert' : 'Kopier lenke'}
             </button>
           )}
           {!error && canShare && (
-            <button type="button" className="neumorphic-btn" onClick={shareLink}>Del …</button>
+            <button type="button" className="k-btn k-btn--hjelp" onClick={shareLink}>Del …</button>
           )}
-          <button type="button" className="neumorphic-btn" onClick={handleClose}>Lukk</button>
+          <button type="button" className="k-btn k-btn--tilbake" onClick={handleClose}>Lukk</button>
         </div>
-      </div>
+      </Dialog>
 
       {open && bigQr && url && (
         <div className="share-qr-big" onClick={() => setBigQr(false)} role="dialog" aria-label="Stor QR-kode">
