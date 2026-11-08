@@ -234,6 +234,11 @@ body.ui-light {
 body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
 
 .timer-panel.active { transform: translateX(-50%); }
+/* Flyttet med fingeren eller musa: fast posisjon i stedet for midtstilt */
+.timer-panel.is-moved, .timer-panel.is-moved.active { transform: none; }
+.tt-plate { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.tt-plate:active { cursor: grabbing; }
+.timer-panel.is-big .tt-plate { cursor: default; touch-action: auto; }
 
 /* Stor visning på tavla: skiva fyller skjermen */
 .timer-panel.is-big {
@@ -268,8 +273,20 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
 .timer-panel.is-big .tt-device { overflow: auto; }
 .timer-panel.is-big .tt-readout-time { font-size: clamp(3rem, 12vh, 7rem); }
 .timer-panel.is-big .tt-readout-status { font-size: 1.3rem; }
-.timer-panel.is-big .tt-controls { margin-top: 14px; }
-.timer-panel.is-big .tt-main-btn { min-height: 60px; font-size: 1.3rem; }
+/* Stor visning: knappene står små og midtstilt nederst, skiva får plassen */
+.timer-panel.is-big .tt-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    display: flex;
+    width: auto;
+    gap: 10px;
+    padding: 0;
+    margin: 0;
+}
+.timer-panel.is-big .tt-controls .k-btn { min-height: 44px; font-size: 1rem; padding: 8px 18px; }
+.timer-panel.is-big .tt-plate { padding-bottom: 80px; }
 
 .tt-device {
     position: relative;

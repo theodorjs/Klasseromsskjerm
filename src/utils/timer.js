@@ -7,6 +7,34 @@ import { normalizeHexColor } from './color.js';
 
 export const TIMER_SETTINGS_KEY = 'timerInnstillinger';
 export const TIMER_RUN_KEY = 'timerKjoring';
+export const TIMER_POSITION_KEY = 'timerPosisjon';
+
+/** Hvor læreren sist la nedtelleren, holdt innenfor skjermen. */
+export function loadTimerPosition() {
+  try {
+    const raw = safeGetItem(TIMER_POSITION_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed || !Number.isFinite(parsed.x) || !Number.isFinite(parsed.y)) return null;
+    return clampTimerPosition(parsed, 380, 200);
+  } catch {
+    return null;
+  }
+}
+
+export function saveTimerPosition(pos) {
+  if (!pos) safeRemoveItem(TIMER_POSITION_KEY);
+  else safeSetItem(TIMER_POSITION_KEY, JSON.stringify(pos));
+}
+
+/** Minst 60 px av panelet skal alltid være synlig, så det kan dras tilbake. */
+export function clampTimerPosition(pos, width, height) {
+  const vw = window.innerWidth || 1024;
+  const vh = window.innerHeight || 768;
+  return {
+    x: Math.min(Math.max(0, pos.x), Math.max(0, vw - Math.min(width, vw))),
+    y: Math.min(Math.max(0, pos.y), Math.max(0, vh - Math.min(height, 60))),
+  };
+}
 
 /** Klassisk TimeTimer-rød, brukt når ingen fagfarge finnes. */
 export const TIMER_CLASSIC_RED = '#E8412C';
@@ -14,7 +42,7 @@ export const TIMER_CLASSIC_RED = '#E8412C';
 export const TIMER_PRESETS_MIN = [1, 2, 3, 5, 10, 15, 20, 30, 45, 60];
 
 const DEFAULT_SETTINGS = {
-  mode: 'fit',          // 'fit' | 'fixed60'
+  mode: 'fixed60',      // 'fixed60' (som den fysiske) | 'fit' (hele skiva = valgt tid)
   sound: true,
   colorOverride: null,  // hex eller null = følg faget
   durationMs: 15 * 60 * 1000,
@@ -26,7 +54,7 @@ export function loadTimerSettings() {
     const parsed = raw ? JSON.parse(raw) : null;
     if (!parsed || typeof parsed !== 'object') return { ...DEFAULT_SETTINGS };
     return {
-      mode: parsed.mode === 'fixed60' ? 'fixed60' : 'fit',
+      mode: parsed.mode === 'fit' ? 'fit' : 'fixed60',
       sound: parsed.sound !== false,
       colorOverride: normalizeHexColor(parsed.colorOverride) || null,
       durationMs: clampDuration(parsed.durationMs),

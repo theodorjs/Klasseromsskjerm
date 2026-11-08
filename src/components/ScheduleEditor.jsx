@@ -615,10 +615,10 @@ export default function ScheduleEditor({
 
   /* ── Hjelpetekst som følger det læreren gjør ── */
   const hint = erase
-    ? 'Viskelæret er på: trykk på en celle for å tømme den.'
+    ? 'Trykk på en økt for å fjerne faget som står der. Trykk på «Fjern fag» igjen når du er ferdig.'
     : active
-      ? `Trykk på cellene som skal ha «${acSub?.name}». Trykk på faget igjen for å legge fra deg penselen.`
-      : 'Velg et fag, og trykk så på cellene. Trykk på en fylt celle uten fag valgt for å dele den.';
+      ? `Trykk på øktene der «${acSub?.name}» skal stå. Trykk på faget igjen når du er ferdig med det.`
+      : 'Velg et fag, og trykk på øktene der det skal stå. Trykk på en fylt økt uten fag valgt for å dele den.';
 
   const gridRows = ['auto', ...frame.map(r => (r.type === 'break' ? 'auto' : 'minmax(76px, 1fr)'))].join(' ');
 
@@ -672,16 +672,16 @@ export default function ScheduleEditor({
           </div>
         </section>
         <section className="se-group">
-          <h3 className="k-group-title">Male</h3>
+          <h3 className="k-group-title">Økter</h3>
           <div className="se-group-row">
             <button
               type="button"
               className={`k-btn k-btn--slett k-btn--liten${erase ? ' k-btn--fylt' : ''}`}
               aria-pressed={erase}
-              title="Viskelæret tømmer cellene du trykker på"
+              title="Slå på, og trykk så på øktene du vil tømme"
               onClick={() => { setErase(e => !e); setActive(null); setFocus(null); }}
             >
-              🧽 {erase ? "Viskelæret er på" : "Viskelær"}
+              🗑 {erase ? "Fjerner fag: trykk på økta" : "Fjern fag"}
             </button>
           </div>
         </section>
@@ -741,7 +741,7 @@ export default function ScheduleEditor({
           </div>
           <Info felt>{hint}</Info>
           <dl className="se-legend">
-            <div><dt>◫</dt><dd>Del per trinn (fådelt)</dd></div>
+            <div><dt>◫</dt><dd>Del økta per trinn (fådelt)</dd></div>
             <div><dt>🗓</dt><dd>Partalls- og oddetallsuker</dd></div>
             <div><dt>⇉</dt><dd>Flere fag samtidig</dd></div>
             <div><dt>⊟</dt><dd>Slå sammen igjen</dd></div>

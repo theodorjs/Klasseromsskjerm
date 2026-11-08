@@ -5,6 +5,7 @@ import {
   loadTimerSettings, saveTimerSettings,
   loadTimerRun, saveTimerRun,
   clampDuration, formatTimerReadout, formatDurationLabel,
+  loadTimerPosition, saveTimerPosition, clampTimerPosition,
   primeTimerAudio, playTimerChime,
   TIMER_PRESETS_MIN, TIMER_CLASSIC_RED, MAX_DURATION_MS,
 } from '../utils/timer.js';
@@ -31,6 +32,35 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
   const [now, setNow] = useState(() => Date.now());
   const [colorOpen, setColorOpen] = useState(false);
   const [big, setBig] = useState(false);
+  // Panelet kan dras rundt i lite format; plassen huskes per enhet
+  const [pos, setPos] = useState(loadTimerPosition);
+  const panelRef = useRef(null);
+  const dragRef = useRef(null);
+
+  useEffect(() => { saveTimerPosition(pos); }, [pos]);
+
+  function onHandlePointerDown(e) {
+    if (big || e.button > 0) return;
+    if (e.target.closest('button, input, label, a')) return;
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    dragRef.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top, moved: false };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  }
+  function onHandlePointerMove(e) {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const panel = panelRef.current;
+    const next = clampTimerPosition({ x: e.clientX - drag.dx, y: e.clientY - drag.dy }, panel.offsetWidth, panel.offsetHeight);
+    drag.moved = true;
+    setPos(next);
+  }
+  function onHandlePointerUp() {
+    dragRef.current = null;
+  }
+  function resetPosition() {
+    setPos(null);
+  }
   const closeBtnRef = useRef(null);
   const chimedRef = useRef(false);
 
@@ -185,11 +215,27 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
         </button>
       )}
 
-      <div className={`timer-panel${open ? ' active' : ''}${big ? ' is-big' : ''}`} id="timer-panel" role="dialog" aria-modal="false" aria-label="Nedteller">
+      <div
+        ref={panelRef}
+        className={`timer-panel${open ? ' active' : ''}${big ? ' is-big' : ''}${pos && !big ? ' is-moved' : ''}`}
+        id="timer-panel"
+        role="dialog"
+        aria-modal="false"
+        aria-label="Nedteller"
+        style={pos && !big ? { left: pos.x, top: pos.y } : undefined}
+      >
         <div className={`tt-device${done ? ' is-done' : ''}`}>
           <button ref={closeBtnRef} type="button" className="tt-close" id="timer-close-btn" aria-label={big ? 'Tilbake til liten visning' : 'Lukk nedteller'} onClick={() => { setColorOpen(false); if (big) setBig(false); else onClose(); }}>✕</button>
 
-          <div className="tt-plate">
+          <div
+            className="tt-plate"
+            onPointerDown={onHandlePointerDown}
+            onPointerMove={onHandlePointerMove}
+            onPointerUp={onHandlePointerUp}
+            onPointerCancel={onHandlePointerUp}
+            onDoubleClick={() => { if (!big) resetPosition(); }}
+            title={big ? undefined : 'Dra for å flytte nedtelleren. Dobbelttrykk for å legge den tilbake.'}
+          >
             <TimeTimerDial
               totalMs={totalMs}
               remainingMs={remainingMs}
