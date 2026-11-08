@@ -227,7 +227,23 @@ body.ui-light {
     min-height: 0;
     max-height: calc(100vh - 102px);
     overflow: visible;
-    z-index: 2900; /* under dialogene (3000+), så de aldri havner bak nedtelleren */
+    z-index: 6000; /* over klokka (5000), nedtellingene (4500), agenda og notat; under verktøykassa og dialogene */
+}
+
+/* iPad i liggende format (768–820 px høyt): kompakt nedteller, så alle knappene får plass uten scrolling */
+@media (max-height: 880px) {
+    .timer-panel:not(.is-big) { top: 84px; max-height: calc(100vh - 92px); }
+    .timer-panel:not(.is-big) .tt-device { padding: 14px 14px 12px; gap: 10px; }
+    .timer-panel:not(.is-big) .tt-dial { width: 224px; }
+    .timer-panel:not(.is-big) .tt-plate { gap: 4px; padding: 2px 0 2px; }
+    .timer-panel:not(.is-big) .tt-readout-time { font-size: 2.4rem; }
+    .timer-panel:not(.is-big) .tt-controls { margin-top: 2px; }
+    .timer-panel:not(.is-big) .tt-main-btn { min-height: 46px; font-size: 1rem; }
+    .timer-panel:not(.is-big) .tt-controls .k-btn { min-height: 40px; }
+    .timer-panel:not(.is-big) .tt-settings { gap: 8px; padding: 10px 12px 8px; }
+    .timer-panel:not(.is-big) .tt-preset { min-height: 34px; font-size: 0.9rem; }
+    .timer-panel:not(.is-big) .tt-step { width: 40px; height: 40px; }
+    .timer-panel:not(.is-big) .tt-stepper { grid-template-columns: 40px 1fr 40px; }
 }
 
 /* Nedtelleren er ikke synlig mens klassemenyen og editoren er åpne (den går videre i bakgrunnen) */
@@ -1425,7 +1441,7 @@ body.under-the-hood-active .timer-mini { display: none !important; }
     max-width: calc(100vw - 40px);
     max-height: calc(100vh - 130px);
     resize: both;
-    z-index: 3600;
+    z-index: 4600; /* over nedtellingskortene (4500) */
 }
 .note-toolbar { display: inline-flex; gap: 6px; margin-left: auto; cursor: default; }
 .note-toolbar-btn {
@@ -1471,7 +1487,7 @@ body.under-the-hood-active .timer-mini { display: none !important; }
     max-width: calc(100vw - 40px);
     max-height: calc(100vh - 120px);
     resize: both;
-    z-index: 4000;
+    z-index: 4700; /* over nedtellingskortene (4500) og notatet */
 }
 .agenda-sidebar .k-panel-head {
     background: var(--fag);

@@ -1,35 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { safeGetItem, safeSetItem, sanitizeNoteHtml } from '../utils/storage.js';
+import { makeDraggablePanel } from '../utils/drag.js';
 
 const NOTE_STORAGE_KEY = 'classroomNoteHtml';
 
-function makeDraggablePanel(el, handle) {
-  if (!el || !handle) return () => {};
-  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-  function dragMouseDown(e) {
-    const interactive = e.target.closest('input, button, select, textarea, label, [contenteditable]');
-    if (interactive) return;
-    const rect = el.getBoundingClientRect();
-    el.style.transform = 'none';
-    el.style.left = `${rect.left}px`;
-    el.style.top = `${rect.top}px`;
-    pos3 = e.clientX;
-    pos4 = e.clientY;
-    document.onmouseup = closeDrag;
-    document.onmousemove = drag;
-  }
-  function drag(e) {
-    e.preventDefault();
-    pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
-    pos3 = e.clientX; pos4 = e.clientY;
-    el.style.top = (el.offsetTop - pos2) + "px";
-    el.style.left = (el.offsetLeft - pos1) + "px";
-    el.style.right = 'auto';
-  }
-  function closeDrag() { document.onmouseup = null; document.onmousemove = null; }
-  handle.onmousedown = dragMouseDown;
-  return () => { handle.onmousedown = null; };
-}
 
 /** Notat til klassen: stor tekst på et instrumentpanel som kan dras rundt og endres i størrelse. */
 export default function NotePanel({ open, onClose }) {
