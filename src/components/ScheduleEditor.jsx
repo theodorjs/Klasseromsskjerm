@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Info from './Info.jsx';
 import { isClassMultiGrade } from '../utils/schedule.js';
 import { getMinutesFromTime } from '../utils/time.js';
 import { getSubject } from '../data/subjects.js';
@@ -19,6 +20,23 @@ const isWeekAlt  = v => isObj(v) && v.type === "week";
 const isParallel = v => isObj(v) && v.type === "parallel";
 
 const BREAK_NAMES = ["Pause", "Mat", "Storefri"];
+
+/** Kort fagnavn til trange delceller («Matte», «K&H»); egne fag beholder navnet sitt. */
+const shortName = name => getSubject(name)?.short || name;
+
+/**
+ * CSS-variabler for fagfargen. Tonene regnes ut her (hex + alfa) i stedet for
+ * color-mix() i CSS, så editoren også virker i eldre Safari på iPad.
+ */
+const fagVars = (color, cursor) => {
+  const hex = /^#[0-9a-f]{6}$/i.test(color || '') ? color : null;
+  return {
+    '--fag': hex || 'transparent',
+    '--fag-tint': hex ? `${hex}3a` : 'transparent',
+    '--fag-tint-sterk': hex ? `${hex}70` : 'transparent',
+    ...(cursor ? { cursor } : {}),
+  };
+};
 
 /** Trekker ut to tall fra klassenavn som «5. og 6. trinn» eller «5 og 6» */
 const parseClassParts = name => {
@@ -262,40 +280,11 @@ function buildClassDataFromEditorState(subjects, sched, frames, gradeLabels = nu
   return { schedule, breaks };
 }
 
-/* ─── Hjelpestiler ───────────────────────────────────────── */
+/* ─── Overlay-modal (instrumentpanel) ───────────────────── */
 
-const inp = (ex = {}) => ({
-  background: "rgba(255,255,255,0.08)",
-  border: "1px solid rgba(255,255,255,0.18)",
-  borderRadius: "8px",
-  padding: "7px 10px",
-  color: "white",
-  fontSize: "0.85rem",
-  boxSizing: "border-box",
-  outline: "none",
-  ...ex,
-});
-
-/* ─── Overlay-modal ──────────────────────────────────────── */
-
-const Overlay = ({ onClose, children }) => (
-  <div
-    onClick={onClose}
-    style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.78)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 300, padding: "16px",
-    }}
-  >
-    <div
-      onClick={e => e.stopPropagation()}
-      style={{
-        background: "#1c2a3a", borderRadius: "16px", padding: "22px",
-        width: "100%", maxWidth: "400px",
-        border: "1px solid rgba(255,255,255,0.12)",
-        maxHeight: "84vh", overflowY: "auto",
-      }}
-    >
+const Overlay = ({ onClose, children, title }) => (
+  <div className="se-overlay" onClick={onClose}>
+    <div className="se-modal" role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}>
       {children}
     </div>
   </div>
@@ -315,7 +304,6 @@ export default function ScheduleEditor({
   currentClassName,
   onSave,
   onBack,
-  themeMode = 2,  // 0=lys, 1=mørk, 2=stjerne, 3=fargerik
 }) {
   const [subj,   setSubj]   = useState(SUBJ0);
   const [sched,  setSched]  = useState(() => blankSched(FRAME0));
@@ -323,6 +311,7 @@ export default function ScheduleEditor({
   const [active, setActive] = useState(null);
   const [erase,  setErase]  = useState(false);
   const [hover,  setHover]  = useState(null);
+  const [focus,  setFocus]  = useState(null);   // celle valgt med trykk (iPad har ikke hover)
   const [cn,     setCn]     = useState(currentClassName || "");
   const [isMg,   setIsMg]   = useState(false);
   const [editCn, setEditCn] = useState(false);
@@ -351,7 +340,6 @@ export default function ScheduleEditor({
   const gs    = id => subj.find(s => s.id === id);
   const parts = isMg ? (parseClassParts(cn) || ["A", "B"]) : null;
   const acSub = active ? gs(active) : null;
-  const acCol = acSub?.color || "rgba(255,255,255,0.4)";
 
   /** Les fag-ID i en gitt "plass" i cella (slot = 'a'|'b'|'even'|'odd'|tall) */
   const slotValue = (raw, slot) => {
@@ -374,8 +362,15 @@ export default function ScheduleEditor({
   const setCell = (day, lid, value) =>
     setSched(p => ({ ...p, [day]: { ...p[day], [lid]: value } }));
 
+  const isFocused = (day, lid) => focus?.day === day && focus?.lid === lid;
+
   /* ── Tegn i celle ── */
   const paint = (day, lid, slot = null) => {
+    if (!erase && active === null) {
+      // Ingen pensel valgt: trykk velger cella, så verktøyene vises (også på iPad)
+      setFocus(f => (f?.day === day && f?.lid === lid ? null : { day, lid }));
+      return;
+    }
     setSched(p => {
       const raw = p[day][lid];
       let v;
@@ -436,46 +431,39 @@ export default function ScheduleEditor({
     return id ? gs(id) : null;
   };
 
+  const cellCursor = active !== null || erase ? "pointer" : "default";
+
   /* ── Render én plass i en delt/veksel/parallell-celle ── */
   const renderSlot = (day, lid, slot, label) => {
     const sub = disp(day, lid, slot);
     const erH = erase && hover?.day === day && hover?.lid === lid && hover?.slot === slot;
     const prH = !erase && active !== null && hover?.day === day && hover?.lid === lid && hover?.slot === slot;
-    const col = sub?.color;
-    const cr  = active !== null || erase ? "pointer" : "default";
+    const cls = ['se-slot'];
+    if (sub) cls.push('has-fag');
+    if (erH) cls.push('is-erase');
+    if (prH) cls.push('is-preview');
     return (
       <div
         key={slot}
+        className={cls.join(' ')}
+        style={fagVars(sub?.color, cellCursor)}
+        role="button"
+        tabIndex={0}
+        aria-label={`${day} ${frame.find(f => f.id === lid)?.label || ''}${label ? `, ${label}` : ''}: ${sub ? sub.name : 'tom'}`}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); paint(day, lid, slot); } }}
         onClick={() => paint(day, lid, slot)}
         onMouseEnter={() => setHover({ day, lid, slot })}
         onMouseLeave={() => setHover(null)}
-        style={{
-          flex: 1, minWidth: 0,
-          background: erH
-            ? "rgba(231,76,60,0.18)"
-            : col ? col + (prH ? "40" : "1a")
-            : prH ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
-          border: prH && !erH ? `1px solid ${acCol}55` : "1px solid transparent",
-          borderLeft: `3px solid ${erH ? "#E74C3C" : col ? col + (prH ? "" : "cc") : prH ? acCol : "rgba(255,255,255,0.08)"}`,
-          borderRadius: "6px", padding: "4px 2px", minHeight: "58px", cursor: cr,
-          transition: "all 0.1s", display: "flex", flexDirection: "column",
-          justifyContent: "center", alignItems: "center", textAlign: "center",
-          opacity: erH ? 0.45 : 1, overflow: "hidden",
-        }}
       >
-        {label && (
-          <span style={{ fontSize: "0.52rem", color: "rgba(255,255,255,0.38)", fontWeight: "800", letterSpacing: "0.02em", lineHeight: 1, marginBottom: "3px" }}>
-            {label}
-          </span>
-        )}
+        {label && <span className="se-slot-label">{label}</span>}
         {erH
-          ? <span style={{ fontSize: "0.85rem" }}>🗑</span>
+          ? <span className="se-cell-emoji">🗑</span>
           : sub
             ? <>
-                <div style={{ fontSize: "0.95rem", lineHeight: 1 }}>{sub.emoji}</div>
-                <div style={{ fontSize: "0.56rem", fontWeight: "700", marginTop: "3px", lineHeight: 1.2, color: "rgba(255,255,255,0.85)", wordBreak: "break-word", maxWidth: "95%" }}>{sub.name}</div>
+                <span className="se-cell-emoji">{sub.emoji}</span>
+                <span className="se-cell-name" title={sub.name}>{shortName(sub.name)}</span>
               </>
-            : <span style={{ color: "rgba(255,255,255,0.13)", fontSize: "0.95rem" }}>+</span>
+            : <span className="se-cell-plus">+</span>
         }
       </div>
     );
@@ -486,65 +474,47 @@ export default function ScheduleEditor({
     const sub = disp(day, lid);
     const erH = erase && hover?.day === day && hover?.lid === lid;
     const prH = !erase && active !== null && hover?.day === day && hover?.lid === lid;
-    const col = sub?.color;
-    const cr  = active !== null || erase ? "pointer" : "default";
-    const showTools = !erase && hover?.day === day && hover?.lid === lid;
-    const toolBtn = {
-      background: "rgba(255,255,255,0.15)", backdropFilter: "blur(4px)",
-      border: "1px solid rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.85)",
-      borderRadius: "5px", fontSize: "0.7rem", padding: "2px 5px",
-      cursor: "pointer", lineHeight: 1.3, fontWeight: "600",
-    };
+    const showTools = !erase && active === null && (isFocused(day, lid) || (hover?.day === day && hover?.lid === lid));
+    const cls = ['se-cell'];
+    if (sub) cls.push('has-fag');
+    if (erH) cls.push('is-erase');
+    if (prH) cls.push('is-preview');
+    if (isFocused(day, lid)) cls.push('is-focus');
     return (
       <div
-        style={{ position: "relative" }}
+        className="se-cell-wrap"
         onMouseEnter={() => setHover({ day, lid, slot: null })}
         onMouseLeave={() => setHover(null)}
       >
         <div
+          className={cls.join(' ')}
+          style={fagVars(sub?.color, cellCursor)}
           onClick={() => paint(day, lid)}
-          style={{
-            background: erH
-              ? "rgba(231,76,60,0.18)"
-              : col ? col + (prH ? "40" : "1a")
-              : prH ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
-            border: prH && !erH ? `1px solid ${acCol}55` : "1px solid transparent",
-            borderLeft: `3px solid ${erH ? "#E74C3C" : col ? col + (prH ? "" : "cc") : prH ? acCol : "rgba(255,255,255,0.08)"}`,
-            borderRadius: "8px", padding: "7px 3px", minHeight: "58px", cursor: cr,
-            transition: "all 0.1s", display: "flex", flexDirection: "column",
-            justifyContent: "center", alignItems: "center", textAlign: "center",
-            opacity: erH ? 0.45 : 1,
-          }}
+          role="button"
+          tabIndex={0}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); paint(day, lid); } }}
+          aria-label={`${day} ${frame.find(f => f.id === lid)?.label || ''}: ${sub ? sub.name : 'tom'}`}
         >
           {erH
-            ? <span style={{ fontSize: "0.85rem" }}>🗑</span>
+            ? <span className="se-cell-emoji">🗑</span>
             : sub
               ? <>
-                  <div style={{ fontSize: "1.05rem", lineHeight: 1 }}>{sub.emoji}</div>
-                  <div style={{ fontSize: "0.62rem", fontWeight: "700", marginTop: "4px", lineHeight: 1.25, color: "rgba(255,255,255,0.9)", wordBreak: "break-word", maxWidth: "90%" }}>{sub.name}</div>
+                  <span className="se-cell-emoji">{sub.emoji}</span>
+                  <span className="se-cell-name">{sub.name}</span>
                 </>
-              : <div style={{ color: "rgba(255,255,255,0.12)", fontSize: "1.1rem" }}>+</div>
+              : <span className="se-cell-plus">+</span>
           }
         </div>
         {showTools && (
-          <div style={{ position: "absolute", top: "4px", right: "4px", display: "flex", gap: "3px", zIndex: 5 }}>
+          <div className="se-cell-tools">
             {isMg && (
-              <button
-                onClick={e => { e.stopPropagation(); splitCell(day, lid); }}
-                title={parts ? `Del for ${parts[0]} og ${parts[1]}` : "Del cellen i to"}
-                style={toolBtn}
-              >◫</button>
+              <button type="button" className="se-tool" onClick={e => { e.stopPropagation(); splitCell(day, lid); setFocus(null); }}
+                title={parts ? `Del for ${parts[0]} og ${parts[1]}` : "Del cellen i to"} aria-label="Del per trinn">◫</button>
             )}
-            <button
-              onClick={e => { e.stopPropagation(); makeWeekAlt(day, lid); }}
-              title="Veksle mellom partalls- og oddetallsuker"
-              style={toolBtn}
-            >🗓</button>
-            <button
-              onClick={e => { e.stopPropagation(); makeParallel(day, lid); }}
-              title="Flere fag samtidig (parallelt, på tvers av trinn)"
-              style={toolBtn}
-            >⇉</button>
+            <button type="button" className="se-tool" onClick={e => { e.stopPropagation(); makeWeekAlt(day, lid); setFocus(null); }}
+              title="Veksle mellom partalls- og oddetallsuker" aria-label="Partall og oddetall">🗓</button>
+            <button type="button" className="se-tool" onClick={e => { e.stopPropagation(); makeParallel(day, lid); setFocus(null); }}
+              title="Flere fag samtidig (parallelt, på tvers av trinn)" aria-label="Flere fag samtidig">⇉</button>
           </div>
         )}
       </div>
@@ -553,33 +523,18 @@ export default function ScheduleEditor({
 
   /* ── Render sammensatt celle (fådelt / ukeveksling / parallell) ── */
   const renderComposite = (day, lid, raw) => {
-    const smallBtn = {
-      background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.22)",
-      color: "rgba(255,255,255,0.7)", borderRadius: "4px", fontSize: "0.58rem",
-      padding: "1px 5px", cursor: "pointer", lineHeight: 1.5, fontWeight: "700",
-    };
-
     let slots;
-    let badge = null;
+    let badge;
     if (isWeekAlt(raw)) {
       slots = [renderSlot(day, lid, 'even', 'Partall'), renderSlot(day, lid, 'odd', 'Oddetall')];
       badge = "Uke";
     } else if (isParallel(raw)) {
       const count = (raw.ids || []).length;
       slots = (raw.ids || []).map((_, i) => (
-        <div key={i} style={{ position: "relative", flex: 1, minWidth: 0, display: "flex" }}>
+        <div key={i} className="se-slot-wrap">
           {renderSlot(day, lid, i, `Valg ${i + 1}`)}
           {count > 2 && (
-            <button
-              onClick={e => { e.stopPropagation(); removeParallelSlot(day, lid, i); }}
-              title="Fjern dette valget"
-              style={{
-                position: "absolute", bottom: "2px", right: "2px", zIndex: 6,
-                background: "rgba(231,76,60,0.22)", border: "none",
-                color: "rgba(255,255,255,0.75)", borderRadius: "4px",
-                fontSize: "0.55rem", padding: "0 4px", cursor: "pointer", lineHeight: 1.6,
-              }}
-            >✕</button>
+            <button type="button" className="se-slot-remove" onClick={e => { e.stopPropagation(); removeParallelSlot(day, lid, i); }} title="Fjern dette valget" aria-label="Fjern dette valget">✕</button>
           )}
         </div>
       ));
@@ -589,31 +544,22 @@ export default function ScheduleEditor({
         renderSlot(day, lid, 'a', parts ? parts[0] : 'A'),
         renderSlot(day, lid, 'b', parts ? parts[1] : 'B'),
       ];
+      badge = "Fådelt";
     }
 
     return (
-      <div style={{ position: "relative" }}>
-        <div style={{ position: "absolute", top: "3px", right: "3px", zIndex: 5, display: "flex", gap: "3px" }}>
+      <div className="se-cell-wrap se-cell-composite">
+        <div className="se-cell-tools is-static">
           {isParallel(raw) && (
-            <button onClick={() => addParallelSlot(day, lid)} title="Legg til fag i parallellen" style={smallBtn}>+</button>
+            <button type="button" className="se-tool" onClick={() => addParallelSlot(day, lid)} title="Legg til fag i parallellen" aria-label="Legg til fag">+</button>
           )}
-          <button onClick={() => mergeCell(day, lid)} title="Slå sammen" style={smallBtn}>⊟</button>
+          <button type="button" className="se-tool" onClick={() => mergeCell(day, lid)} title="Slå sammen til én celle" aria-label="Slå sammen">⊟</button>
         </div>
-        {badge && (
-          <span style={{
-            position: "absolute", top: "3px", left: "4px", zIndex: 5,
-            fontSize: "0.5rem", fontWeight: "800", letterSpacing: "0.04em",
-            color: "rgba(255,255,255,0.42)", textTransform: "uppercase",
-            pointerEvents: "none",
-          }}>{badge}</span>
-        )}
-        <div style={{ display: "flex", flexDirection: "row", gap: "2px" }}>
-          {slots}
-        </div>
+        {badge && <span className="se-cell-badge">{badge}</span>}
+        <div className="se-slots">{slots}</div>
       </div>
     );
   };
-
 
   /* ── Frame-editor (tidspunkter) ── */
   const fUpd = (id, k, v) => setFEdit(p => p.map(r => r.id === id ? { ...r, [k]: v } : r));
@@ -667,164 +613,142 @@ export default function ScheduleEditor({
     setTimeout(() => setSaved(false), 2000);
   };
 
+  /* ── Hjelpetekst som følger det læreren gjør ── */
+  const hint = erase
+    ? 'Slette-modus: trykk på en celle for å tømme den.'
+    : active
+      ? `Trykk på cellene som skal ha «${acSub?.name}». Trykk på faget igjen for å legge fra deg penselen.`
+      : 'Velg et fag, og trykk så på cellene. Trykk på en fylt celle uten fag valgt for å dele den.';
+
+  const gridRows = ['auto', ...frame.map(r => (r.type === 'break' ? 'auto' : 'minmax(76px, 1fr)'))].join(' ');
+
   /* ── Render ── */
   return (
-    <div style={{ minHeight: "100vh", padding: "14px", fontFamily: "system-ui,sans-serif", boxSizing: "border-box", background: "linear-gradient(160deg,#1a2535,#0f1820)", color: "white" }}>
+    <div className="se">
 
-      {/* HEADER – rad 1: klassenavn + knapper */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px", flexWrap: "wrap", gap: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {/* Tilbake-knapp */}
-          <button
-            onClick={onBack}
-            title="Tilbake til klasselista"
-            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)", borderRadius: "8px", padding: "6px 10px", cursor: "pointer", fontSize: "0.8rem", fontWeight: "600" }}
-          >
-            ← Tilbake
-          </button>
-          <span style={{ fontSize: "1.3rem" }}>🏫</span>
+      {/* Topplinje: tilbake, klassenavn, lagre */}
+      <header className="se-header">
+        <div className="se-header-left">
+          <button type="button" className="k-btn k-btn--tilbake k-btn--liten" onClick={onBack}>← Tilbake</button>
+          <span className="se-school" aria-hidden="true">🏫</span>
           {editCn
             ? <input
+                className="se-input se-input-name"
                 autoFocus value={cn} onChange={e => setCn(e.target.value)}
                 onBlur={() => setEditCn(false)}
                 onKeyDown={e => e.key === "Enter" && setEditCn(false)}
-                style={inp({ width: "170px", fontSize: "1rem", fontWeight: "700", padding: "3px 8px" })}
+                aria-label="Klassenavn"
               />
-            : <span
-                onClick={() => setEditCn(true)}
-                style={{ fontSize: "1rem", fontWeight: "700", cursor: "text", borderBottom: "2px dashed rgba(255,255,255,0.25)", paddingBottom: "1px" }}
-                title="Klikk for å endre"
-              >
-                {cn} <span style={{ fontSize: "0.65rem", opacity: 0.35 }}>✎</span>
-              </span>
+            : <button type="button" className="se-name" onClick={() => setEditCn(true)} title="Trykk for å endre navnet">
+                {cn} <span className="se-name-pen" aria-hidden="true">✎</span>
+              </button>
           }
           {isMg && parts && (
-            <span style={{ fontSize: "0.62rem", background: "rgba(64,196,255,0.12)", border: "1px solid rgba(64,196,255,0.3)", color: "#40C4FF", borderRadius: "20px", padding: "2px 8px", fontWeight: "600" }}>
-              Fådelt · {parts[0]} / {parts[1]}
-            </span>
+            <span className="se-badge">Fådelt · {parts[0]} / {parts[1]}</span>
           )}
         </div>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-          <button
-            onClick={() => { setFEdit(JSON.parse(JSON.stringify(frame))); setModal("frame"); }}
-            style={{ background: "rgba(64,196,255,0.1)", border: "1px solid rgba(64,196,255,0.4)", color: "#40C4FF", padding: "6px 11px", borderRadius: "8px", cursor: "pointer", fontSize: "0.74rem", fontWeight: "600" }}
-          >
-            Rediger timeplan
-          </button>
-          <button
-            onClick={() => { setErase(e => !e); setActive(null); }}
-            style={{ background: erase ? "rgba(231,76,60,0.2)" : "rgba(64,196,255,0.1)", border: `1px solid ${erase ? "#E74C3C99" : "rgba(64,196,255,0.4)"}`, color: erase ? "#E74C3C" : "#40C4FF", padding: "6px 11px", borderRadius: "8px", cursor: "pointer", fontSize: "0.74rem", fontWeight: "600" }}
-          >
-            🗑 {erase ? "Slette-modus på" : "Slette-modus"}
-          </button>
-          <button
-            onClick={handleSave}
-            style={{ background: saved ? "#27AE6022" : "rgba(64,196,255,0.1)", border: `1px solid ${saved ? "#27AE60" : "rgba(64,196,255,0.4)"}`, color: saved ? "#27AE60" : "#40C4FF", padding: "6px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "0.74rem", fontWeight: "700", transition: "all 0.2s" }}
-          >
-            {saved ? "✓ Lagret!" : "Lagre"}
+        <div className="se-header-right">
+          <button type="button" className={`k-btn k-btn--ny${saved ? ' is-saved' : ''}`} onClick={handleSave}>
+            {saved ? "✓ Lagret" : "Lagre timeplanen"}
           </button>
         </div>
+      </header>
+
+      {/* Verktøy, gruppert etter hva de virker på */}
+      <div className="se-toolbar">
+        <section className="se-group">
+          <h3 className="k-group-title">Klasse</h3>
+          <div className="se-group-row">
+            <button type="button" className="k-btn k-btn--ny k-btn--liten" onClick={() => { setNewCn(""); setModal("newClass"); }}>+ Ny klasse</button>
+            <button type="button" className="k-btn k-btn--ny k-btn--liten" onClick={() => { setNewCn(""); setModal("newMgClass"); }}>+ Ny fådelt klasse</button>
+          </div>
+        </section>
+        <section className="se-group">
+          <h3 className="k-group-title">Skoledagen</h3>
+          <div className="se-group-row">
+            <button type="button" className="k-btn k-btn--rediger k-btn--liten" onClick={() => { setFEdit(JSON.parse(JSON.stringify(frame))); setModal("frame"); }}>
+              🕗 Tider og pauser
+            </button>
+          </div>
+        </section>
+        <section className="se-group">
+          <h3 className="k-group-title">Tegn</h3>
+          <div className="se-group-row">
+            <button
+              type="button"
+              className={`k-btn k-btn--slett k-btn--liten${erase ? ' is-on' : ''}`}
+              aria-pressed={erase}
+              onClick={() => { setErase(e => !e); setActive(null); setFocus(null); }}
+            >
+              🗑 {erase ? "Slette-modus er på" : "Slette-modus"}
+            </button>
+          </div>
+        </section>
       </div>
 
-      {/* HEADER – rad 2: ny klasse */}
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "6px", marginBottom: "12px" }}>
-        <button
-          onClick={() => { setNewCn(""); setModal("newClass"); }}
-          style={{ background: "rgba(67,160,71,0.12)", border: "1px solid rgba(67,160,71,0.45)", color: "#66BB6A", padding: "4px 11px", borderRadius: "8px", cursor: "pointer", fontSize: "0.7rem", fontWeight: "600" }}
-        >
-          + Ny klasse
-        </button>
-        <button
-          onClick={() => { setNewCn(""); setModal("newMgClass"); }}
-          style={{ background: "rgba(142,36,170,0.14)", border: "1px solid rgba(142,36,170,0.5)", color: "#CE93D8", padding: "4px 11px", borderRadius: "8px", cursor: "pointer", fontSize: "0.7rem", fontWeight: "600" }}
-        >
-          + Ny fådelt klasse
-        </button>
-      </div>
-
-      {/* GRID */}
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "3px", tableLayout: "fixed" }}>
-          <colgroup>
-            <col style={{ width: "76px" }} />
-            {DAYS.map(d => <col key={d} />)}
-          </colgroup>
-          <thead>
-            <tr>
-              <th />
-              {DAYS.map((d, i) => (
-                <th key={d} style={{ padding: "5px 2px", textAlign: "center", color: "rgba(255,255,255,0.45)", fontWeight: "700", fontSize: "0.75rem", letterSpacing: "0.04em" }}>{DAYS_S[i]}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
+      <div className="se-main">
+        {/* Rutenettet */}
+        <div className="se-grid-wrap">
+          <div className="se-grid" style={{ gridTemplateRows: gridRows }} role="group" aria-label="Timeplan">
+            <div className="se-corner" />
+            {DAYS.map((d, i) => (
+              <div key={d} className="se-day"><span className="se-day-long">{d}</span><span className="se-day-short">{DAYS_S[i]}</span></div>
+            ))}
             {frame.map(row => row.type === "break"
-              ? <tr key={row.id}>
-                  <td style={{ textAlign: "right", padding: "1px 6px 1px 0", verticalAlign: "middle" }}>
-                    <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.57rem" }}>{row.start}–{row.end}</span>
-                  </td>
-                  <td colSpan={5} style={{ padding: "1px" }}>
-                    <div style={{ background: "rgba(255,255,255,0.035)", borderRadius: "5px", padding: "3px 10px", color: "rgba(255,255,255,0.22)", fontSize: "0.62rem", textAlign: "center", textTransform: "uppercase", letterSpacing: "0.07em" }}>{row.label}</div>
-                  </td>
-                </tr>
-              : <tr key={row.id}>
-                  <td style={{ padding: "2px 6px 2px 0", textAlign: "right", verticalAlign: "middle" }}>
-                    <div style={{ color: "rgba(255,255,255,0.55)", fontSize: "0.7rem", fontWeight: "700" }}>{row.label}</div>
-                    <div style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.57rem" }}>{row.start}–{row.end}</div>
-                  </td>
-                  {DAYS.map(day => {
+              ? [
+                  <div key={`${row.id}-t`} className="se-time se-time-break">{row.start}–{row.end}</div>,
+                  <div key={`${row.id}-b`} className="se-break">{row.label}</div>,
+                ]
+              : [
+                  <div key={`${row.id}-t`} className="se-time">
+                    <span className="se-time-label">{row.label}</span>
+                    <span className="se-time-range">{row.start}–{row.end}</span>
+                  </div>,
+                  ...DAYS.map(day => {
                     const raw = sched[day]?.[row.id];
                     return (
-                      <td key={day} style={{ padding: "2px" }}>
-                        {isObj(raw)
-                          ? renderComposite(day, row.id, raw)
-                          : renderSingle(day, row.id)}
-                      </td>
+                      <div key={`${row.id}-${day}`} className="se-td">
+                        {isObj(raw) ? renderComposite(day, row.id, raw) : renderSingle(day, row.id)}
+                      </div>
                     );
-                  })}
-                </tr>
+                  }),
+                ]
             )}
-          </tbody>
-        </table>
-      </div>
-
-      <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "16px 0 14px" }} />
-
-      {/* FAG-PALETT */}
-      <div>
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "6px" }}>
-          <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.65rem", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase" }}>Fag</span>
-          <span style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.68rem" }}>
-            {active ? `← Klikk celle for «${acSub?.name}»` : erase ? "← Klikk celle for å slette" : "Velg et fag, klikk deretter en celle"}
-          </span>
+          </div>
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-          {subj.map(s => (
-            <div key={s.id} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-              <button
-                onClick={() => { setActive(p => p === s.id ? null : s.id); setErase(false); }}
-                style={{ background: active === s.id ? s.color : s.color + "22", border: `1.5px solid ${s.color}`, borderRadius: "20px", padding: "5px 26px 5px 10px", color: "white", cursor: "pointer", display: "flex", alignItems: "center", gap: "5px", fontSize: "0.73rem", fontWeight: "600", transition: "all 0.12s", transform: active === s.id ? "scale(1.06)" : "scale(1)", boxShadow: active === s.id ? `0 0 14px ${s.color}55` : "none" }}
-              >
-                <span style={{ fontSize: "0.85rem" }}>{s.emoji}</span>
-                <span>{s.name}</span>
-              </button>
-              <button
-                onClick={() => setEditSj(s.id)}
-                title="Rediger fag"
-                style={{ position: "absolute", right: "8px", background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: "0.62rem", padding: 0, lineHeight: 1 }}
-              >✎</button>
-            </div>
-          ))}
-          <button
-            onClick={() => setModal("newSubj")}
-            style={{ background: "transparent", border: "1.5px dashed rgba(255,255,255,0.18)", borderRadius: "20px", padding: "5px 12px", color: "rgba(255,255,255,0.32)", cursor: "pointer", fontSize: "0.73rem", fontWeight: "600" }}
-          >
-            + Nytt fag
-          </button>
-        </div>
-        <p style={{ margin: "8px 0 0", color: "rgba(255,255,255,0.22)", fontSize: "0.64rem" }}>
-          💡 Fagfarger og emojier synkroniseres automatisk med statuslinjen på hovedskjermen
-        </p>
+
+        {/* Fagpaletten */}
+        <aside className="se-side">
+          <h3 className="k-group-title">Fag</h3>
+          <div className="se-palette">
+            {subj.map(s => (
+              <div key={s.id} className={`se-chip-wrap${active === s.id ? ' is-active' : ''}`}>
+                <button
+                  type="button"
+                  className="se-chip"
+                  style={fagVars(s.color)}
+                  aria-pressed={active === s.id}
+                  onClick={() => { setActive(p => p === s.id ? null : s.id); setErase(false); setFocus(null); }}
+                >
+                  <span className="se-chip-emoji">{s.emoji}</span>
+                  <span className="se-chip-name">{s.name}</span>
+                </button>
+                <button type="button" className="se-chip-edit" onClick={() => setEditSj(s.id)} title={`Rediger ${s.name}`} aria-label={`Rediger ${s.name}`}>✎</button>
+              </div>
+            ))}
+            <button type="button" className="se-chip se-chip-new" onClick={() => setModal("newSubj")}>+ Nytt fag</button>
+          </div>
+          <Info felt>{hint}</Info>
+          <dl className="se-legend">
+            <div><dt>◫</dt><dd>Del per trinn (fådelt)</dd></div>
+            <div><dt>🗓</dt><dd>Partalls- og oddetallsuker</dd></div>
+            <div><dt>⇉</dt><dd>Flere fag samtidig</dd></div>
+            <div><dt>⊟</dt><dd>Slå sammen igjen</dd></div>
+            <div><dt>+</dt><dd>Ett fag til i parallellen</dd></div>
+            <div><dt>✕</dt><dd>Fjern et valg</dd></div>
+          </dl>
+          <Info>Fagfarger og emoji brukes også på tidslinjen og hovedskjermen.</Info>
+        </aside>
       </div>
 
       {/* REDIGER FAG */}
@@ -833,17 +757,28 @@ export default function ScheduleEditor({
         if (!s) return null;
         const upd = (k, v) => setSubj(p => p.map(x => x.id === editSj ? { ...x, [k]: v } : x));
         return (
-          <Overlay onClose={() => setEditSj(null)}>
-            <h3 style={{ margin: "0 0 14px", fontSize: "0.95rem" }}>Rediger: {s.name}</h3>
-            <input value={s.name} onChange={e => upd("name", e.target.value)} style={inp({ width: "100%", marginBottom: "10px" })} placeholder="Fagnavn" />
-            <div style={{ display: "flex", gap: "10px", marginBottom: "14px", alignItems: "center" }}>
-              <input value={s.emoji} onChange={e => upd("emoji", e.target.value)} style={inp({ width: "58px", textAlign: "center", fontSize: "1.3rem", padding: "5px" })} placeholder="😀" />
-              <input type="color" value={s.color} onChange={e => upd("color", e.target.value)} style={{ width: "44px", height: "40px", border: "none", borderRadius: "8px", cursor: "pointer", flexShrink: 0 }} />
-              <div style={inp({ flex: 1, padding: "6px 10px", fontFamily: "monospace", fontSize: "0.8rem", pointerEvents: "none" })}>{s.color}</div>
+          <Overlay onClose={() => setEditSj(null)} title={`Rediger ${s.name}`}>
+            <h3 className="se-modal-title">Rediger: {s.name}</h3>
+            <label className="se-field">
+              <span>Fagnavn</span>
+              <input className="se-input" value={s.name} onChange={e => upd("name", e.target.value)} placeholder="Fagnavn" />
+            </label>
+            <div className="se-field-row">
+              <label className="se-field se-field-emoji">
+                <span>Emoji</span>
+                <input className="se-input" value={s.emoji} onChange={e => upd("emoji", e.target.value)} placeholder="😀" />
+              </label>
+              <label className="se-field">
+                <span>Farge</span>
+                <span className="se-color-row">
+                  <input type="color" className="se-color" value={s.color} onChange={e => upd("color", e.target.value)} />
+                  <code>{s.color}</code>
+                </span>
+              </label>
             </div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button onClick={() => setEditSj(null)} style={{ flex: 1, background: "rgba(64,196,255,0.12)", border: "1px solid rgba(64,196,255,0.5)", color: "#40C4FF", padding: "8px", borderRadius: "8px", cursor: "pointer", fontWeight: "700" }}>Ferdig</button>
-              <button onClick={() => { setSubj(p => p.filter(x => x.id !== editSj)); setEditSj(null); }} style={{ background: "rgba(231,76,60,0.15)", border: "1px solid #E74C3C55", color: "#E74C3C", padding: "8px 12px", borderRadius: "8px", cursor: "pointer" }}>Slett fag</button>
+            <div className="se-modal-actions">
+              <button type="button" className="k-btn k-btn--ny" onClick={() => setEditSj(null)}>Ferdig</button>
+              <button type="button" className="k-btn k-btn--slett" onClick={() => { setSubj(p => p.filter(x => x.id !== editSj)); setEditSj(null); }}>Slett fag</button>
             </div>
           </Overlay>
         );
@@ -851,16 +786,30 @@ export default function ScheduleEditor({
 
       {/* NYTT FAG */}
       {modal === "newSubj" && (
-        <Overlay onClose={() => setModal(null)}>
-          <h3 style={{ margin: "0 0 14px", fontSize: "0.95rem" }}>Nytt fag</h3>
-          <input autoFocus placeholder="Fagnavn" value={newSj.name} onChange={e => setNewSj(p => ({ ...p, name: e.target.value }))} style={inp({ width: "100%", marginBottom: "10px" })} />
-          <div style={{ display: "flex", gap: "10px", marginBottom: "14px", alignItems: "center" }}>
-            <input placeholder="😀" value={newSj.emoji} onChange={e => setNewSj(p => ({ ...p, emoji: e.target.value }))} style={inp({ width: "58px", textAlign: "center", fontSize: "1.3rem", padding: "5px" })} />
-            <input type="color" value={newSj.color} onChange={e => setNewSj(p => ({ ...p, color: e.target.value }))} style={{ width: "44px", height: "40px", border: "none", borderRadius: "8px", cursor: "pointer" }} />
-            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem" }}>Velg farge</span>
+        <Overlay onClose={() => setModal(null)} title="Nytt fag">
+          <h3 className="se-modal-title">Nytt fag</h3>
+          <label className="se-field">
+            <span>Fagnavn</span>
+            <input className="se-input" autoFocus placeholder="Fagnavn" value={newSj.name} onChange={e => setNewSj(p => ({ ...p, name: e.target.value }))} />
+          </label>
+          <div className="se-field-row">
+            <label className="se-field se-field-emoji">
+              <span>Emoji</span>
+              <input className="se-input" placeholder="😀" value={newSj.emoji} onChange={e => setNewSj(p => ({ ...p, emoji: e.target.value }))} />
+            </label>
+            <label className="se-field">
+              <span>Farge</span>
+              <span className="se-color-row">
+                <input type="color" className="se-color" value={newSj.color} onChange={e => setNewSj(p => ({ ...p, color: e.target.value }))} />
+                <code>{newSj.color}</code>
+              </span>
+            </label>
           </div>
-          <div style={{ display: "flex", gap: "8px" }}>
+          <Info>Fargen brukes på tidslinjen, hovedskjermen og nedtellingsskiva. Velg en som skiller seg fra de andre fagene.</Info>
+          <div className="se-modal-actions">
             <button
+              type="button"
+              className="k-btn k-btn--ny"
               onClick={() => {
                 if (!newSj.name.trim()) return;
                 const id = Math.max(...subj.map(s => s.id), 0) + 1;
@@ -870,87 +819,82 @@ export default function ScheduleEditor({
                 setModal(null);
                 setNewSj({ name: "", emoji: "📚", color: "#4A90E2" });
               }}
-              style={{ flex: 1, background: "rgba(64,196,255,0.12)", border: "1px solid rgba(64,196,255,0.5)", color: "#40C4FF", padding: "8px", borderRadius: "8px", cursor: "pointer", fontWeight: "700" }}
             >Legg til</button>
-            <button onClick={() => setModal(null)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)", padding: "8px", borderRadius: "8px", cursor: "pointer" }}>Avbryt</button>
+            <button type="button" className="k-btn" onClick={() => setModal(null)}>Avbryt</button>
           </div>
         </Overlay>
       )}
 
       {/* NY VANLIG KLASSE */}
       {modal === "newClass" && (
-        <Overlay onClose={() => setModal(null)}>
-          <h3 style={{ margin: "0 0 8px", fontSize: "0.95rem" }}>Ny klasse</h3>
-          <p style={{ margin: "0 0 14px", color: "rgba(255,255,255,0.35)", fontSize: "0.78rem" }}>Skriv trinnummer eller klassenavn.</p>
-          <input autoFocus placeholder="f.eks. 8A" value={newCn} onChange={e => setNewCn(e.target.value)} onKeyDown={e => e.key === "Enter" && doCreateClass(false)} style={inp({ width: "100%", marginBottom: "14px" })} />
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={() => doCreateClass(false)} style={{ flex: 1, background: "rgba(64,196,255,0.12)", border: "1px solid rgba(64,196,255,0.5)", color: "#40C4FF", padding: "8px", borderRadius: "8px", cursor: "pointer", fontWeight: "700" }}>Opprett</button>
-            <button onClick={() => setModal(null)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)", padding: "8px", borderRadius: "8px", cursor: "pointer" }}>Avbryt</button>
+        <Overlay onClose={() => setModal(null)} title="Ny klasse">
+          <h3 className="se-modal-title">Ny klasse</h3>
+          <Info>Skriv trinn eller klassenavn, for eksempel «8A». Timeplanen starter tom.</Info>
+          <label className="se-field">
+            <span>Navn</span>
+            <input className="se-input" autoFocus placeholder="f.eks. 8A" value={newCn} onChange={e => setNewCn(e.target.value)} onKeyDown={e => e.key === "Enter" && doCreateClass(false)} />
+          </label>
+          <div className="se-modal-actions">
+            <button type="button" className="k-btn k-btn--ny" onClick={() => doCreateClass(false)}>Opprett</button>
+            <button type="button" className="k-btn" onClick={() => setModal(null)}>Avbryt</button>
           </div>
         </Overlay>
       )}
 
       {/* NY FÅDELT KLASSE */}
       {modal === "newMgClass" && (
-        <Overlay onClose={() => setModal(null)}>
-          <h3 style={{ margin: "0 0 8px", fontSize: "0.95rem" }}>Ny fådelt klasse</h3>
-          <p style={{ margin: "0 0 14px", color: "rgba(255,255,255,0.35)", fontSize: "0.78rem" }}>
-            Skriv trinnummer eller klassenavn (for eksempel «6. og 7.»).
-          </p>
-          <input
-            autoFocus
-            placeholder='f.eks. "6. og 7." eller "5 og 6 trinn"'
-            value={newCn}
-            onChange={e => setNewCn(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && doCreateClass(true)}
-            style={inp({ width: "100%", marginBottom: "8px" })}
-          />
-          <div style={{ marginBottom: "14px", minHeight: "22px" }}>
+        <Overlay onClose={() => setModal(null)} title="Ny fådelt klasse">
+          <h3 className="se-modal-title">Ny fådelt klasse</h3>
+          <Info>Skriv begge trinnene i navnet, for eksempel «6. og 7.». Da kan hver time deles per trinn.</Info>
+          <label className="se-field">
+            <span>Navn</span>
+            <input
+              className="se-input"
+              autoFocus
+              placeholder='f.eks. «6. og 7.» eller «5 og 6 trinn»'
+              value={newCn}
+              onChange={e => setNewCn(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && doCreateClass(true)}
+            />
+          </label>
+          <div className="se-preview">
             {newCn.trim() && (
               previewParts
-                ? <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem" }}>
-                    <span style={{ color: "#43A047" }}>✓</span>
-                    <span style={{ color: "rgba(255,255,255,0.5)" }}>Gjenkjent:</span>
-                    <span style={{ background: "rgba(64,196,255,0.12)", border: "1px solid rgba(64,196,255,0.3)", color: "#40C4FF", borderRadius: "12px", padding: "1px 8px", fontWeight: "700" }}>{previewParts[0]}</span>
-                    <span style={{ color: "rgba(255,255,255,0.3)" }}>og</span>
-                    <span style={{ background: "rgba(64,196,255,0.12)", border: "1px solid rgba(64,196,255,0.3)", color: "#40C4FF", borderRadius: "12px", padding: "1px 8px", fontWeight: "700" }}>{previewParts[1]}</span>
-                  </div>
-                : <div style={{ fontSize: "0.72rem", color: "rgba(255,200,100,0.7)" }}>
-                    ⚠ Klarer ikke å finne to trinnummer – delceller merkes A / B
-                  </div>
+                ? <span className="se-preview-ok">✓ Gjenkjent: <b>{previewParts[0]}</b> og <b>{previewParts[1]}</b></span>
+                : <span className="se-preview-warn">⚠ Fant ikke to trinn. Delcellene merkes A / B.</span>
             )}
           </div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={() => doCreateClass(true)} style={{ flex: 1, background: "rgba(64,196,255,0.12)", border: "1px solid rgba(64,196,255,0.5)", color: "#40C4FF", padding: "8px", borderRadius: "8px", cursor: "pointer", fontWeight: "700" }}>Opprett</button>
-            <button onClick={() => setModal(null)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)", padding: "8px", borderRadius: "8px", cursor: "pointer" }}>Avbryt</button>
+          <div className="se-modal-actions">
+            <button type="button" className="k-btn k-btn--ny" onClick={() => doCreateClass(true)}>Opprett</button>
+            <button type="button" className="k-btn" onClick={() => setModal(null)}>Avbryt</button>
           </div>
         </Overlay>
       )}
 
-      {/* REDIGER TIMEPLAN-RAMMER */}
+      {/* TIDER OG PAUSER */}
       {modal === "frame" && fEdit && (
-        <Overlay onClose={() => setModal(null)}>
-          <h3 style={{ margin: "0 0 4px", fontSize: "0.95rem" }}>Rediger timeplan</h3>
-          <p style={{ margin: "0 0 12px", color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>T = time · P = pause. Endre navn og klokkeslett etter behov.</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "12px" }}>
+        <Overlay onClose={() => setModal(null)} title="Tider og pauser">
+          <h3 className="se-modal-title">Tider og pauser</h3>
+          <Info>T er time og P er pause. Endre navn og klokkeslett, eller legg til og fjern rader.</Info>
+          <div className="se-frames">
             {fEdit.map(row => (
-              <div key={row.id} style={{ display: "flex", alignItems: "center", gap: "5px", background: row.type === "lesson" ? "rgba(64,196,255,0.07)" : "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "6px 8px" }}>
-                <span style={{ fontSize: "0.62rem", color: row.type === "lesson" ? "#40C4FF88" : "rgba(255,255,255,0.3)", width: "14px", fontWeight: "700", flexShrink: 0 }}>{row.type === "lesson" ? "T" : "P"}</span>
-                <input value={row.label} onChange={e => fUpd(row.id, "label", e.target.value)} style={inp({ flex: 2, padding: "4px 7px", fontSize: "0.78rem" })} />
-                <input value={row.start} onChange={e => fUpd(row.id, "start", e.target.value)} style={inp({ width: "52px", padding: "4px 5px", textAlign: "center", fontSize: "0.78rem", fontFamily: "monospace" })} placeholder="08:30" />
-                <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.7rem", flexShrink: 0 }}>–</span>
-                <input value={row.end} onChange={e => fUpd(row.id, "end", e.target.value)} style={inp({ width: "52px", padding: "4px 5px", textAlign: "center", fontSize: "0.78rem", fontFamily: "monospace" })} placeholder="09:30" />
-                <button onClick={() => fRem(row.id)} style={{ background: "rgba(231,76,60,0.12)", border: "none", color: "#E74C3C88", borderRadius: "5px", padding: "3px 7px", cursor: "pointer", fontSize: "0.75rem", flexShrink: 0 }}>✕</button>
+              <div key={row.id} className={`se-frame-row${row.type === 'lesson' ? ' is-lesson' : ''}`}>
+                <span className="se-frame-type" aria-label={row.type === "lesson" ? "Time" : "Pause"}>{row.type === "lesson" ? "T" : "P"}</span>
+                <input className="se-input" value={row.label} onChange={e => fUpd(row.id, "label", e.target.value)} aria-label="Navn" />
+                <input className="se-input se-input-time" value={row.start} onChange={e => fUpd(row.id, "start", e.target.value)} placeholder="08:30" aria-label="Fra" />
+                <span className="se-frame-dash">–</span>
+                <input className="se-input se-input-time" value={row.end} onChange={e => fUpd(row.id, "end", e.target.value)} placeholder="09:30" aria-label="Til" />
+                <button type="button" className="se-frame-remove" onClick={() => fRem(row.id)} aria-label={`Fjern ${row.label}`}>✕</button>
               </div>
             ))}
           </div>
-          <div style={{ display: "flex", gap: "6px", marginBottom: "14px" }}>
-            <button onClick={() => fAdd("lesson")} style={{ flex: 1, background: "rgba(64,196,255,0.07)", border: "1px dashed rgba(64,196,255,0.3)", color: "#40C4FF88", padding: "6px", borderRadius: "8px", cursor: "pointer", fontSize: "0.75rem" }}>+ Time</button>
-            <button onClick={() => fAdd("break")} style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.35)", padding: "6px", borderRadius: "8px", cursor: "pointer", fontSize: "0.75rem" }}>+ Pause</button>
+          <div className="se-frame-add">
+            <button type="button" className="k-btn k-btn--liten" onClick={() => fAdd("lesson")}>+ Time</button>
+            <button type="button" className="k-btn k-btn--liten" onClick={() => fAdd("break")}>+ Pause</button>
           </div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={fSave} style={{ flex: 1, background: "rgba(64,196,255,0.12)", border: "1px solid rgba(64,196,255,0.5)", color: "#40C4FF", padding: "8px", borderRadius: "8px", cursor: "pointer", fontWeight: "700" }}>Lagre</button>
-            <button onClick={() => setModal(null)} style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.45)", padding: "8px", borderRadius: "8px", cursor: "pointer" }}>Avbryt</button>
+          <div className="se-modal-actions">
+            <button type="button" className="k-btn k-btn--ny" onClick={fSave}>Bruk tidene</button>
+            <button type="button" className="k-btn" onClick={() => setModal(null)}>Avbryt</button>
           </div>
         </Overlay>
       )}

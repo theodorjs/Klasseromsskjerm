@@ -36,6 +36,7 @@ export default function Toolbox({
   currentClass,
   onAddCountdown,
   onToggleCountdownVisibility,
+  onEnterWallMode,
 }) {
   const [open, setOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -224,6 +225,16 @@ export default function Toolbox({
         }}>
           <span className="icon">📅</span>
           <span className="label">Velg tid</span>
+        </div>
+
+        {/* Veggskjerm */}
+        <div className="toolbox-item" id="tool-wall" onClick={e => {
+          e.stopPropagation();
+          closeToolbox();
+          onEnterWallMode?.();
+        }}>
+          <span className="icon">📺</span>
+          <span className="label">Veggskjerm</span>
         </div>
 
         {/* Lock */}

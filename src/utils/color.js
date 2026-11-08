@@ -120,3 +120,26 @@ export function getSubjectDefaultColor(subject) {
   const name = subjectInfo ? subjectInfo.full : (stripped || subject);
   return colorMap[name] || '#ffffff';
 }
+
+/** Pauser og fri har ingen fagfarge; da får nedtelleren TimeTimer-rød. */
+const NON_SUBJECT_ACTIVITIES = new Set(['Pause', 'Mat', 'Storefri', 'FRI', 'Fri']);
+
+/**
+ * Farge og navn for faget som pågår nå, slik nedtelleren kan følge faget.
+ * Returnerer { color, name } eller null når det ikke er noen time.
+ */
+export function getCurrentSubjectColor(primaryState) {
+  const activity = String(primaryState?.currentActivity || '').trim();
+  if (!activity || NON_SUBJECT_ACTIVITIES.has(activity)) return null;
+  const first = activity.split('/')[0].trim();
+  const base = first
+    .replace(/\s+\d+\.-\d+\.?$/, '')
+    .replace(/\s+\d+\.?$/, '')
+    .trim();
+  const subjectColors = primaryState?.classData?.subjectColors || {};
+  const stored = normalizeHexColor(subjectColors[first]) || normalizeHexColor(subjectColors[base]);
+  const fallback = normalizeHexColor(getSubjectDefaultColor(base));
+  const color = stored || (fallback && fallback !== '#FFFFFF' ? fallback : null);
+  if (!color) return null;
+  return { color, name: base || first };
+}

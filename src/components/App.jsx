@@ -17,6 +17,10 @@ import SplitScreen from './SplitScreen.jsx';
 import ShareModal from './ShareModal.jsx';
 import ReceiveShareModal from './ReceiveShareModal.jsx';
 import { readShareTokenFromLocation, clearShareHashFromLocation, decodeShareToken } from '../utils/share.js';
+import { getCurrentSubjectColor } from '../utils/color.js';
+import WallScreen from './WallScreen.jsx';
+import { readWallModePreference, WALL_MODE_KEY } from '../utils/wallMode.js';
+import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
 import {
   EditModal,
   ActivityModal,
@@ -90,7 +94,25 @@ export default function App() {
   } = state;
 
   // Clock tick state
-  const [tick, setTick] = useState(0);
+  const [tick, setTick] = useState(0);  // eslint-disable-line no-unused-vars
+
+  // Veggskjerm: egen visning for en liten skjerm langt unna
+  const [wallMode, setWallMode] = useState(readWallModePreference);
+  function enterWallMode() {
+    safeSetItem(WALL_MODE_KEY, 'vegg');
+    setWallMode(true);
+  }
+  function exitWallMode() {
+    safeRemoveItem(WALL_MODE_KEY);
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('visning')) {
+        url.searchParams.delete('visning');
+        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      }
+    } catch { /* adressen lar seg ikke endre; visningen bytter uansett */ }
+    setWallMode(false);
+  }
 
   // Deling av timeplan via lenke
   const [shareOpen, setShareOpen] = useState(false);
@@ -132,12 +154,18 @@ export default function App() {
     else document.body.classList.remove('under-the-hood-active');
   }, [underTheHoodOpen]);
 
+  useEffect(() => {
+    document.body.classList.toggle('vegg-aktiv', wallMode);
+    return () => document.body.classList.remove('vegg-aktiv');
+  }, [wallMode]);
+
   // Compute current time info
   const { osloTime, currentDay, realDay, realOsloTime } = getOsloTimeAndDay(simState);
   const isSim = !!(simState.simDay || simState.simHour != null || simState.simMinute != null);
   const currentTime = isSim ? osloTime : realOsloTime;
   const currentMinutes = getMinutesFromTime(currentTime);
   const realMinutes = getMinutesFromTime(realOsloTime);
+  const currentSeconds = isSim ? 0 : new Date().getSeconds();
 
   // Status bar date
   const now = new Date();
@@ -152,6 +180,9 @@ export default function App() {
     .filter(Boolean);
 
   const isWeekend = (now.getDay() === 0 || now.getDay() === 6) && !isSim;
+
+  // Nedtelleren følger fargen til faget som pågår
+  const currentSubject = getCurrentSubjectColor(primaryState);
 
   // Count downs for stack
   const countdowns = currentClass?.customCountdowns || [];
@@ -183,6 +214,57 @@ export default function App() {
     }
   }
 
+  if (wallMode) {
+    return (
+      <>
+        <Stars />
+        <WallScreen
+          primaryState={primaryState}
+          displayStates={displayStates}
+          currentMinutes={currentMinutes}
+          currentSeconds={currentSeconds}
+          currentDay={currentDay}
+          currentTime={currentTime}
+          dateStr={dateStr}
+          isWeekend={isWeekend}
+          classes={classes}
+          activeTimelineClassNames={activeTimelineClassNames}
+          tempScheduleChanges={tempScheduleChanges}
+          realMinutes={realMinutes}
+          isSim={isSim}
+          themeMode={themeMode}
+          countdowns={countdowns}
+          countdownsVisible={countdownsVisible}
+          onExit={exitWallMode}
+        />
+        <TimerPanel
+          open={timerPanelOpen}
+          onClose={() => setTimerPanelOpen(false)}
+          onRequestOpen={() => setTimerPanelOpen(true)}
+          subjectColor={currentSubject?.color || null}
+          subjectName={currentSubject?.name || null}
+        />
+        <ReceiveShareModal
+          state={receiveState}
+          hasExisting={!!(receiveState?.payload && Object.hasOwn(classes, receiveState.payload.name))}
+          canUndo={canUndoImport}
+          onAccept={() => {
+            if (!receiveState?.payload) return;
+            try {
+              const { replaced } = importSharedClass(receiveState.payload);
+              setReceiveState(prev => ({ ...prev, status: 'done', replaced }));
+            } catch (err) {
+              console.error('Import av delt timeplan feilet:', err);
+              setReceiveState({ status: 'error', error: 'Kunne ikke legge til timeplanen.' });
+            }
+          }}
+          onUndo={() => { undoLastImport(); setReceiveState(null); }}
+          onClose={() => setReceiveState(null)}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <div className="noise-bg"></div>
@@ -212,6 +294,7 @@ export default function App() {
             currentClass={currentClass}
             onAddCountdown={() => setCountdownModal({ index: null })}
             onToggleCountdownVisibility={toggleCountdownVisibility}
+            onEnterWallMode={enterWallMode}
           />
           <MainContainer
             primaryState={primaryState}
@@ -260,6 +343,9 @@ export default function App() {
       <TimerPanel
         open={timerPanelOpen}
         onClose={() => setTimerPanelOpen(false)}
+        onRequestOpen={() => setTimerPanelOpen(true)}
+        subjectColor={currentSubject?.color || null}
+        subjectName={currentSubject?.name || null}
       />
 
       <div className="reset-button" id="reset-button" style={{ display: 'none' }}>Tilbakestill</div>

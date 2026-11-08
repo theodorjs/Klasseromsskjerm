@@ -66,8 +66,7 @@ export default function SplitScreen({
 
   function renderClassGrid() {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div className="noise-bg"></div>
+      <div className="klasse-meny">
         <h1 className="class-tool-title">Velg klasse</h1>
         <div className="class-grid" id="class-grid">
           {Object.keys(classes).map(className => {
@@ -97,84 +96,89 @@ export default function SplitScreen({
             );
           })}
         </div>
-        <div style={{ marginTop: 50 }}>
-          <button className="neumorphic-btn" onClick={onClose}>Tilbake</button>
-          {editPermission && <button className="neumorphic-btn" onClick={() => {
-            const name = prompt("Navn på ny klasse:");
-            if (name) {
-              if (classes[name]) { alert("En klasse med dette navnet finnes allerede."); return; }
-              onAddNewClass(name);
-              onSelectClass(name);
-            }
-          }}>+ Ny klasse</button>}
-          {!editPermission && (
-            <p style={{
-              marginTop: 18, fontSize: '0.85rem', opacity: 0.75,
-              maxWidth: 460, textAlign: 'center',
-            }}>
-              🔒 Logg inn med «Lås opp» i verktøykassen for å endre timeplan, fag og klasser.
-            </p>
-          )}
-          {editPermission && currentClassName && classes[currentClassName] && (
-            <>
-              <button className="neumorphic-btn" id="rename-class-btn" onClick={() => {
-                const oldName = currentClassName;
-                const input = prompt("Nytt navn på klassen:", oldName);
-                if (input === null) return;
-                const newName = input.trim();
-                if (!newName) { alert("Klassen må ha et navn."); return; }
-                if (newName === oldName) return;
-                if (classes[newName]) { alert("En klasse med dette navnet finnes allerede."); return; }
-                onRenameClass(oldName, newName);
-              }}>Gi nytt navn</button>
-              <button className="neumorphic-btn" id="delete-class-btn" onClick={() => {
-                const names = Object.keys(classes);
-                if (names.length <= 1) { alert("Du må ha minst én klasse."); return; }
-                if (confirm(`Slette klassen "${currentClassName}"?`)) {
-                  onDeleteClass(currentClassName);
-                }
-              }}>Slett klasse</button>
-              <button className="neumorphic-btn" id="edit-schedule-btn" onClick={() => setView('scheduleEditor')}>Rediger timeplan</button>
-              <button className="neumorphic-btn" id="subject-color-btn" onClick={() => setView('subjectColors')}>🎨 Fagfarger</button>
-            </>
-          )}
-        </div>
+        {!editPermission && (
+          <p className="klasse-laas">
+            🔒 Logg inn med «Lås opp» i verktøykassen for å endre timeplan, fag og klasser.
+          </p>
+        )}
+
         {editPermission && (
-          <div className="class-tool-row">
+          <div className="klasse-grupper">
             {currentClassName && classes[currentClassName] && (
-              <button className="neumorphic-btn" id="share-class-btn" onClick={onOpenShare}>
-                🔗 Del timeplan
-              </button>
+              <section className="k-group" aria-label={`Verktøy for ${currentClassName}`}>
+                <h3 className="k-group-title">Denne klassen: {currentClassName}</h3>
+                <div className="k-group-row">
+                  <button className="k-btn k-btn--rediger" id="edit-schedule-btn" onClick={() => setView('scheduleEditor')}>🖊 Rediger timeplan</button>
+                  <button className="k-btn k-btn--regnbue" id="subject-color-btn" onClick={() => setView('subjectColors')}>🎨 Fagfarger</button>
+                </div>
+                <div className="k-group-row">
+                  <button className="k-btn k-btn--navn k-btn--liten" id="rename-class-btn" onClick={() => {
+                    const oldName = currentClassName;
+                    const input = prompt("Nytt navn på klassen:", oldName);
+                    if (input === null) return;
+                    const newName = input.trim();
+                    if (!newName) { alert("Klassen må ha et navn."); return; }
+                    if (newName === oldName) return;
+                    if (classes[newName]) { alert("En klasse med dette navnet finnes allerede."); return; }
+                    onRenameClass(oldName, newName);
+                  }}>✎ Gi nytt navn</button>
+                  <button className="k-btn k-btn--slett k-btn--liten" id="delete-class-btn" onClick={() => {
+                    const names = Object.keys(classes);
+                    if (names.length <= 1) { alert("Du må ha minst én klasse."); return; }
+                    if (confirm(`Slette klassen "${currentClassName}"?`)) {
+                      onDeleteClass(currentClassName);
+                    }
+                  }}>🗑 Slett klasse</button>
+                </div>
+              </section>
             )}
-            <button className="neumorphic-btn" id="backup-download-btn" onClick={handleDownloadBackup}>
-              ⬇ Last ned sikkerhetskopi
-            </button>
-            <button className="neumorphic-btn" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}>
-              ⬆ Gjenopprett fra fil
-            </button>
-            {canUndoImport && lastImportInfo && (
-              <button className="neumorphic-btn" id="undo-import-btn" onClick={() => {
-                const when = lastImportInfo.at
-                  ? new Date(lastImportInfo.at).toLocaleString('no-NO', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
-                  : '';
-                const what = lastImportInfo.replaced
-                  ? `Legge tilbake timeplanen «${lastImportInfo.name}» slik den var før den ble oppdatert fra lenke${when ? ` ${when}` : ''}?`
-                  : `Fjerne klassen «${lastImportInfo.name}» som ble lagt til fra lenke${when ? ` ${when}` : ''}?`;
-                if (confirm(what)) {
-                  onUndoImport();
-                  setDataMessage({ text: 'Forrige timeplan er lagt tilbake.', kind: 'ok' });
-                }
-              }}>
-                ↩ Angre mottatt timeplan
-              </button>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/json,.json"
-              style={{ display: 'none' }}
-              onChange={handleRestoreFile}
-            />
+
+            <section className="k-group" aria-label="Alle klasser">
+              <h3 className="k-group-title">Klasser</h3>
+              <div className="k-group-row">
+                <button className="k-btn k-btn--ny" id="new-class-btn" onClick={() => {
+                  const name = prompt("Navn på ny klasse:");
+                  if (name) {
+                    if (classes[name]) { alert("En klasse med dette navnet finnes allerede."); return; }
+                    onAddNewClass(name);
+                    onSelectClass(name);
+                  }
+                }}>+ Ny klasse</button>
+              </div>
+              <p className="info">Huk av klassene som skal vises i tidslinjen. Trykk på kortet for å velge hvilken klasse skjermen følger.</p>
+            </section>
+
+            <section className="k-group" aria-label="Deling og sikkerhetskopi">
+              <h3 className="k-group-title">Deling og sikkerhetskopi</h3>
+              <div className="k-group-row">
+                {currentClassName && classes[currentClassName] && (
+                  <button className="k-btn k-btn--liten" id="share-class-btn" onClick={onOpenShare}>🔗 Del timeplan</button>
+                )}
+                <button className="k-btn k-btn--liten" id="backup-download-btn" onClick={handleDownloadBackup}>⬇ Last ned sikkerhetskopi</button>
+                <button className="k-btn k-btn--liten" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}>⬆ Gjenopprett fra fil</button>
+                {canUndoImport && lastImportInfo && (
+                  <button className="k-btn k-btn--liten" id="undo-import-btn" onClick={() => {
+                    const when = lastImportInfo.at
+                      ? new Date(lastImportInfo.at).toLocaleString('no-NO', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+                      : '';
+                    const what = lastImportInfo.replaced
+                      ? `Legge tilbake timeplanen «${lastImportInfo.name}» slik den var før den ble oppdatert fra lenke${when ? ` ${when}` : ''}?`
+                      : `Fjerne klassen «${lastImportInfo.name}» som ble lagt til fra lenke${when ? ` ${when}` : ''}?`;
+                    if (confirm(what)) {
+                      onUndoImport();
+                      setDataMessage({ text: 'Forrige timeplan er lagt tilbake.', kind: 'ok' });
+                    }
+                  }}>↩ Angre mottatt timeplan</button>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json,.json"
+                style={{ display: 'none' }}
+                onChange={handleRestoreFile}
+              />
+            </section>
           </div>
         )}
         {editPermission && dataMessage && (
@@ -182,6 +186,8 @@ export default function SplitScreen({
             {dataMessage.text}
           </p>
         )}
+
+        <button className="k-btn k-btn--tilbake" id="class-back-btn" onClick={onClose}>← Tilbake til skjermen</button>
       </div>
     );
   }

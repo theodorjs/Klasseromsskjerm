@@ -1,258 +1,309 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { computeTimerGradientColors, normalizeHexColor, TIMER_GRADIENT_DEFAULT } from '../utils/color.js';
-import { safeGetItem, safeSetItem } from '../utils/storage.js';
+import TimeTimerDial from './TimeTimerDial.jsx';
+import Info from './Info.jsx';
+import { normalizeHexColor } from '../utils/color.js';
+import {
+  loadTimerSettings, saveTimerSettings,
+  loadTimerRun, saveTimerRun,
+  clampDuration, formatTimerReadout, formatDurationLabel,
+  primeTimerAudio, playTimerChime,
+  TIMER_PRESETS_MIN, TIMER_CLASSIC_RED, MAX_DURATION_MS,
+} from '../utils/timer.js';
 
-const TIMER_GRADIENT_KEY = 'timerGradientBaseColor';
-const CIRCUMFERENCE = 2 * Math.PI * 111.5;
+/** Hvor lenge «Tiden er ute» står etter at en reload fant en utløpt timer. */
+const DONE_GRACE_MS = 10 * 60 * 1000;
 
-export default function TimerPanel({ open, onClose }) {
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(0);
-  const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [remainingMs, setRemainingMs] = useState(0);
-  const [totalMs, setTotalMs] = useState(0);
-  const [gradientColor, setGradientColor] = useState(() => {
-    const saved = safeGetItem(TIMER_GRADIENT_KEY);
-    return normalizeHexColor(saved) || TIMER_GRADIENT_DEFAULT;
+/**
+ * Nedteller i TimeTimer-stil. Skiva er full når timeren starter og krymper
+ * mot null. Fargen følger faget som pågår, med mulighet for egen farge.
+ * Kjøringen lagres, så timeren overlever at siden lastes på nytt.
+ */
+export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor, subjectName }) {
+  const [settings, setSettings] = useState(loadTimerSettings);
+  const [run, setRun] = useState(() => {
+    const saved = loadTimerRun();
+    if (!saved) return null;
+    if (saved.endAt !== null && saved.endAt <= Date.now()) {
+      // Utløp mens siden var lukket: vis «ferdig» en stund, ellers start blankt
+      return Date.now() - saved.endAt < DONE_GRACE_MS ? { ...saved, done: true } : null;
+    }
+    return saved;
   });
-  const [gradientControlOpen, setGradientControlOpen] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const [colorOpen, setColorOpen] = useState(false);
+  const [big, setBig] = useState(false);
+  const closeBtnRef = useRef(null);
+  const chimedRef = useRef(false);
 
-  const timerEndAtRef = useRef(0);
-  const animFrameRef = useRef(null);
-  const isPausedRef = useRef(false);
+  const running = !!run && run.endAt !== null && !run.done;
+  const paused = !!run && run.endAt === null && !run.done;
+  const done = !!run?.done;
+  const totalMs = run?.totalMs ?? settings.durationMs;
+  const remainingMs = run
+    ? (run.done ? 0 : (run.endAt !== null ? Math.max(0, run.endAt - now) : run.pausedRemainingMs))
+    : settings.durationMs;
 
-  const { baseColor, partnerColor } = computeTimerGradientColors(gradientColor);
-  const progress = totalMs > 0 ? Math.max(0, Math.min(1, remainingMs / totalMs)) : 1;
-  const dashOffset = CIRCUMFERENCE * (1 - progress);
+  const followColor = normalizeHexColor(subjectColor) || TIMER_CLASSIC_RED;
+  const discColor = settings.colorOverride || followColor;
 
-  const totalSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
-  const dispHours = Math.floor(totalSeconds / 3600);
-  const dispMinutes = Math.floor((totalSeconds % 3600) / 60);
-  const dispSeconds = totalSeconds % 60;
+  // Når tiden er ute: stopp, lagre, ring og åpne panelet hvis det er lukket.
+  // Ligger i en ref så klokka under alltid kaller nyeste versjon.
+  const finishRef = useRef(null);
+  useEffect(() => {
+    finishRef.current = () => {
+      if (!run || run.done) return;
+      const finished = { ...run, endAt: null, pausedRemainingMs: 0, done: true };
+      setRun(finished);
+      saveTimerRun({ totalMs: finished.totalMs, endAt: Date.now(), pausedRemainingMs: 0 });
+      if (settings.sound && !chimedRef.current) {
+        chimedRef.current = true;
+        playTimerChime();
+      }
+      if (!open) onRequestOpen?.();
+    };
+  });
 
-  function stopAnimation() {
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
-  }
-
-  const runAnimation = useCallback(() => {
-    if (!isRunning) return;
-    const now = performance.now();
-    const remaining = Math.max(0, timerEndAtRef.current - now);
-    setRemainingMs(remaining);
-    if (remaining <= 0) {
-      stopAnimation();
-      setIsRunning(false);
-      isPausedRef.current = false;
-      setRemainingMs(0);
-      setTotalMs(0);
-      return;
-    }
-    animFrameRef.current = requestAnimationFrame(runAnimation);
-  }, [isRunning]);
+  // Klokke: jevn mens panelet er åpent, ellers sjeldnere. Stopper selv ved null.
+  const endAt = run?.endAt ?? null;
+  useEffect(() => {
+    if (!running || endAt === null) return undefined;
+    let frame = null;
+    let interval = null;
+    const tick = () => {
+      const t = Date.now();
+      if (t >= endAt) {
+        setNow(endAt);
+        finishRef.current?.();
+        return;
+      }
+      setNow(t);
+      if (open) frame = requestAnimationFrame(tick);
+    };
+    if (open) frame = requestAnimationFrame(tick);
+    else interval = setInterval(tick, 500);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      if (interval) clearInterval(interval);
+    };
+  }, [running, endAt, open]);
 
   useEffect(() => {
-    if (isRunning) {
-      animFrameRef.current = requestAnimationFrame(runAnimation);
+    if (!open) return undefined;
+    const id = setTimeout(() => closeBtnRef.current?.focus(), 50);
+    function onKey(e) {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      // Lukk ett lag om gangen: fargevelger, stor visning, så panelet
+      if (colorOpen) { setColorOpen(false); return; }
+      if (big) { setBig(false); return; }
+      onClose();
     }
-    return stopAnimation;
-  }, [isRunning, runAnimation]);
+    window.addEventListener('keydown', onKey);
+    return () => { clearTimeout(id); window.removeEventListener('keydown', onKey); };
+  }, [open, onClose, big, colorOpen]);
 
-  function startOrPause() {
-    if (isRunning) {
-      const remaining = Math.max(0, timerEndAtRef.current - performance.now());
-      stopAnimation();
-      setIsRunning(false);
-      isPausedRef.current = true;
-      setRemainingMs(remaining);
+  const updateSettings = useCallback((patch) => {
+    setSettings(prev => {
+      const next = { ...prev, ...patch };
+      saveTimerSettings(next);
+      return next;
+    });
+  }, []);
+
+  function persistRun(next) {
+    setRun(next);
+    saveTimerRun(next ? { totalMs: next.totalMs, endAt: next.endAt, pausedRemainingMs: next.pausedRemainingMs } : null);
+  }
+
+  function start() {
+    primeTimerAudio();
+    chimedRef.current = false;
+    const base = paused ? run.pausedRemainingMs : settings.durationMs;
+    const total = paused ? run.totalMs : settings.durationMs;
+    if (!base || base <= 0) return;
+    setNow(Date.now());
+    persistRun({ totalMs: total, endAt: Date.now() + base, pausedRemainingMs: null, done: false });
+  }
+
+  function pause() {
+    if (!running) return;
+    persistRun({ ...run, endAt: null, pausedRemainingMs: Math.max(0, run.endAt - Date.now()) });
+  }
+
+  function reset() {
+    chimedRef.current = false;
+    persistRun(null);
+  }
+
+  function setDuration(ms) {
+    updateSettings({ durationMs: clampDuration(ms) });
+    if (run) persistRun(null);
+  }
+
+  function nudge(deltaMs) {
+    if (running || paused) {
+      // Juster pågående timer: både gjenstående og total flyttes, så skiva ikke hopper
+      const rem = running ? Math.max(0, run.endAt - Date.now()) : run.pausedRemainingMs;
+      const nextRem = Math.min(MAX_DURATION_MS, Math.max(0, rem + deltaMs));
+      if (nextRem <= 0) {
+        // Trukket ned til null: da er tiden ute, ikke «pause på 00:00»
+        finishRef.current?.();
+        return;
+      }
+      const nextTotal = Math.max(nextRem, Math.min(MAX_DURATION_MS, run.totalMs + deltaMs));
+      persistRun(running
+        ? { ...run, totalMs: nextTotal, endAt: Date.now() + nextRem }
+        : { ...run, totalMs: nextTotal, pausedRemainingMs: nextRem });
       return;
     }
-
-    let rem = remainingMs;
-    if (rem <= 0) {
-      const total = ((hours * 3600) + (minutes * 60) + seconds) * 1000;
-      if (total <= 0) return;
-      rem = total;
-      setTotalMs(total);
-      setRemainingMs(rem);
-    }
-
-    timerEndAtRef.current = performance.now() + rem;
-    setIsRunning(true);
-    isPausedRef.current = false;
+    // «−» stopper på ett minutt; en kortere varighet (fra lagring) blir aldri lengre av å trykke −
+    const floor = Math.min(settings.durationMs, 60000);
+    setDuration(Math.max(floor, settings.durationMs + deltaMs));
   }
 
-  function resetTimer() {
-    stopAnimation();
-    setIsRunning(false);
-    isPausedRef.current = false;
-    setRemainingMs(0);
-    setTotalMs(0);
-  }
+  const readout = formatTimerReadout(remainingMs);
+  const durationMinutes = Math.round(settings.durationMs / 60000);
+  const statusText = done
+    ? 'Tiden er ute'
+    : running ? 'Teller ned' : paused ? 'Pause' : `Klar: ${formatDurationLabel(settings.durationMs)}`;
 
-  function clampValue(val, min, max) {
-    const n = parseInt(val, 10);
-    if (!Number.isFinite(n)) return min;
-    return Math.min(max, Math.max(min, n));
-  }
+  const colorLabel = settings.colorOverride
+    ? 'Egen farge'
+    : (subjectName ? `Følger faget: ${subjectName}` : 'Klassisk rød (ingen time nå)');
 
-  function handleGradientChange(color) {
-    const normalized = normalizeHexColor(color) || TIMER_GRADIENT_DEFAULT;
-    setGradientColor(normalized);
-    safeSetItem(TIMER_GRADIENT_KEY, normalized);
-  }
-
-  let centerClass = '';
-  if (dispHours > 0) centerClass = 'layout-hour-min-sec';
-  else if (totalSeconds >= 60) centerClass = 'layout-min-sec';
-  else centerClass = 'layout-sec-only';
+  const showMini = !open && (running || paused || done);
 
   return (
-    <div className={`timer-panel${open ? ' active' : ''}`} id="timer-panel">
-      <div className="timer-card">
-        <div className="timer-close" id="timer-close-btn" onClick={onClose}>✕</div>
-        <div className="timer-ring" onClick={(e) => {
-          e.stopPropagation();
-          setGradientControlOpen(v => !v);
-        }}>
-          <svg viewBox="0 0 246 246">
-            <defs>
-              <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop id="timer-gradient-start" offset="0%" stopColor={baseColor} />
-                <stop id="timer-gradient-mid" offset="52%" stopColor={partnerColor} />
-                <stop id="timer-gradient-end" offset="100%" stopColor={baseColor} />
-              </linearGradient>
-            </defs>
-            <circle className="circle-bg" cx="123" cy="123" r="111.5"></circle>
-            <circle
-              className="circle-fill"
-              cx="123" cy="123" r="111.5"
-              style={{ strokeDasharray: CIRCUMFERENCE, strokeDashoffset: dashOffset }}
-            ></circle>
-          </svg>
-          <div className={`timer-center ${centerClass}`}>
-            <div id="timer-hour-readout" className="timer-center-line timer-center-hour">
-              {String(dispHours).padStart(2, '0')}
-            </div>
-            <div id="timer-min-readout" className="timer-center-line">
-              {String(dispHours > 0 ? dispMinutes : (totalSeconds >= 60 ? Math.floor(totalSeconds / 60) : dispMinutes)).padStart(2, '0')}
-            </div>
-            <div id="timer-sec-readout" className="timer-center-sub">
-              {String(dispSeconds).padStart(2, '0')}
-            </div>
-          </div>
-        </div>
-
-        <div
-          className={`timer-gradient-control${gradientControlOpen ? ' active' : ''}`}
-          id="timer-gradient-control"
-          aria-hidden={gradientControlOpen ? 'false' : 'true'}
-          onClick={e => e.stopPropagation()}
-          onMouseDown={e => e.stopPropagation()}
+    <>
+      {showMini && (
+        <button
+          type="button"
+          className={`timer-mini${done ? ' is-done' : ''}`}
+          onClick={onRequestOpen}
+          aria-label={`Nedteller: ${done ? 'tiden er ute' : readout}. Åpne.`}
         >
-          <input
-            type="color"
-            id="timer-gradient-picker"
-            value={gradientColor}
-            aria-label="Velg timer-farge"
-            onClick={e => e.stopPropagation()}
-            onMouseDown={e => e.stopPropagation()}
-            onChange={e => handleGradientChange(e.target.value)}
-          />
-        </div>
+          <TimeTimerDial totalMs={totalMs} remainingMs={remainingMs} mode={settings.mode} color={discColor} size={44} done={done} className="tt-dial-mini" />
+          <span className="timer-mini-readout">{done ? 'Ferdig' : readout}</span>
+        </button>
+      )}
 
-        <div className="timer-input-vertical">
-          <div className="inputGroup time-unit">
-            <label className="time-unit-label" htmlFor="timer-hours">Timer</label>
-            <div className="time-unit-row">
-              <div className="time-unit-field" data-unit="Timer">
-                <input
-                  type="number" id="timer-hours" min="0" max="99" inputMode="numeric"
-                  value={isRunning ? '' : hours}
-                  disabled={isRunning}
-                  onMouseDown={e => e.stopPropagation()}
-                  onChange={e => setHours(clampValue(e.target.value, 0, 99))}
-                  onBlur={e => { if (e.target.value === '') setHours(0); }}
-                />
-              </div>
-              <div className="time-spin" aria-hidden="false">
-                <button type="button" className="time-spin-btn" onClick={e => { e.stopPropagation(); if (!isRunning) setHours(h => Math.min(99, h + 1)); }} onMouseDown={e => e.stopPropagation()} aria-label="Øk timer"><span className="time-spin-chevron up"></span></button>
-                <button type="button" className="time-spin-btn" onClick={e => { e.stopPropagation(); if (!isRunning) setHours(h => Math.max(0, h - 1)); }} onMouseDown={e => e.stopPropagation()} aria-label="Reduser timer"><span className="time-spin-chevron down"></span></button>
-              </div>
-            </div>
-          </div>
-          <div className="inputGroup time-unit">
-            <label className="time-unit-label" htmlFor="timer-minutes">Minutter</label>
-            <div className="time-unit-row">
-              <div className="time-unit-field" data-unit="Minutter">
-                <input
-                  type="number" id="timer-minutes" min="0" max="59" inputMode="numeric"
-                  value={isRunning ? '' : minutes}
-                  disabled={isRunning}
-                  onMouseDown={e => e.stopPropagation()}
-                  onChange={e => setMinutes(clampValue(e.target.value, 0, 59))}
-                  onBlur={e => { if (e.target.value === '') setMinutes(0); }}
-                />
-              </div>
-              <div className="time-spin" aria-hidden="false">
-                <button type="button" className="time-spin-btn" onClick={e => { e.stopPropagation(); if (!isRunning) setMinutes(m => Math.min(59, m + 1)); }} onMouseDown={e => e.stopPropagation()} aria-label="Øk minutter"><span className="time-spin-chevron up"></span></button>
-                <button type="button" className="time-spin-btn" onClick={e => { e.stopPropagation(); if (!isRunning) setMinutes(m => Math.max(0, m - 1)); }} onMouseDown={e => e.stopPropagation()} aria-label="Reduser minutter"><span className="time-spin-chevron down"></span></button>
-              </div>
-            </div>
-          </div>
-          <div className="inputGroup time-unit">
-            <label className="time-unit-label" htmlFor="timer-seconds">Sekunder</label>
-            <div className="time-unit-row">
-              <div className="time-unit-field" data-unit="Sekunder">
-                <input
-                  type="number" id="timer-seconds" min="0" max="59" inputMode="numeric"
-                  value={isRunning ? '' : seconds}
-                  disabled={isRunning}
-                  onMouseDown={e => e.stopPropagation()}
-                  onChange={e => setSeconds(clampValue(e.target.value, 0, 59))}
-                  onBlur={e => { if (e.target.value === '') setSeconds(0); }}
-                />
-              </div>
-              <div className="time-spin" aria-hidden="false">
-                <button type="button" className="time-spin-btn" onClick={e => { e.stopPropagation(); if (!isRunning) setSeconds(s => Math.min(59, s + 1)); }} onMouseDown={e => e.stopPropagation()} aria-label="Øk sekunder"><span className="time-spin-chevron up"></span></button>
-                <button type="button" className="time-spin-btn" onClick={e => { e.stopPropagation(); if (!isRunning) setSeconds(s => Math.max(0, s - 1)); }} onMouseDown={e => e.stopPropagation()} aria-label="Reduser sekunder"><span className="time-spin-chevron down"></span></button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className={`timer-panel${open ? ' active' : ''}${big ? ' is-big' : ''}`} id="timer-panel" role="dialog" aria-modal="false" aria-label="Nedteller">
+        <div className={`tt-device${done ? ' is-done' : ''}`}>
+          <button ref={closeBtnRef} type="button" className="tt-close" id="timer-close-btn" aria-label={big ? 'Tilbake til liten visning' : 'Lukk nedteller'} onClick={() => { setColorOpen(false); if (big) setBig(false); else onClose(); }}>✕</button>
 
-        <div className="timer-buttons">
-          <button
-            className={`timer-control timer-toggle${isRunning ? ' running' : ''}`}
-            id="timer-start"
-            aria-label="Start eller pause timer"
-            onClick={startOrPause}
-          >
-            <svg className="timer-icon timer-icon-play" viewBox="0 0 24 24" aria-hidden="true" style={{ display: isRunning ? 'none' : 'block' }}>
-              <path d="M8 5v14l11-7z"></path>
-            </svg>
-            <svg className="timer-icon timer-icon-pause" viewBox="0 0 24 24" aria-hidden="true" style={{ display: isRunning ? 'block' : 'none' }}>
-              <path d="M7 5h4v14H7zM13 5h4v14h-4z"></path>
-            </svg>
-          </button>
-          <button
-            className="timer-control timer-stop"
-            id="timer-reset"
-            aria-label="Stopp og nullstill timer"
-            onClick={resetTimer}
-          >
-            <svg className="timer-icon timer-icon-stop" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M7 7h10v10H7z"></path>
-            </svg>
-          </button>
-        </div>
-        <div id="timer-display" style={{ display: 'none' }}>
-          {String(dispHours).padStart(2, '0')}:{String(dispMinutes).padStart(2, '0')}:{String(dispSeconds).padStart(2, '0')}
+          <div className="tt-plate">
+            <TimeTimerDial
+              totalMs={totalMs}
+              remainingMs={remainingMs}
+              mode={settings.mode}
+              color={discColor}
+              size={300}
+              done={done}
+              title={`Nedteller, ${readout} igjen`}
+            />
+
+            <div className="tt-readout">
+              <span className="tt-readout-time">{done ? '0:00' : readout}</span>
+              {/* Bare statusordene leses opp, aldri sekundtelleren */}
+              <span className="tt-readout-status" role="status" aria-live="polite">{statusText}</span>
+            </div>
+
+            <div className="tt-controls" role="group" aria-label="Styr nedtelleren">
+              {!running && (
+                <button type="button" className="k-btn k-btn--ny tt-main-btn" id="timer-start" onClick={start}>
+                  {paused ? '▶ Fortsett' : done ? '▶ Start på nytt' : '▶ Start'}
+                </button>
+              )}
+              {running && (
+                <button type="button" className="k-btn k-btn--rediger tt-main-btn" id="timer-pause" onClick={pause}>❚❚ Pause</button>
+              )}
+              <button type="button" className="k-btn k-btn--tilbake" id="timer-reset" onClick={reset} disabled={!run}>Nullstill</button>
+              {!big && (
+                <button type="button" className="k-btn" id="timer-big" onClick={() => setBig(true)} title="Fyll skjermen med skiva">⤢ Stor</button>
+              )}
+            </div>
+          </div>
+
+          <div className="tt-settings">
+            <div className="tt-row">
+              <span className="tt-row-label">Varighet</span>
+              <div className="tt-stepper" role="group" aria-label="Juster minutter">
+                <button type="button" className="tt-step" aria-label="Ett minutt mindre" onClick={() => nudge(-60000)}>−</button>
+                <span className="tt-step-value">{running || paused ? readout : `${durationMinutes} min`}</span>
+                <button type="button" className="tt-step" aria-label="Ett minutt mer" onClick={() => nudge(60000)}>+</button>
+              </div>
+            </div>
+            <div className="tt-presets" role="group" aria-label="Hurtigvalg">
+              {TIMER_PRESETS_MIN.map(min => (
+                <button
+                  key={min}
+                  type="button"
+                  className={`tt-preset${!run && durationMinutes === min && settings.durationMs % 60000 === 0 ? ' is-active' : ''}`}
+                  aria-label={`${min} ${min === 1 ? 'minutt' : 'minutter'}`}
+                  aria-pressed={!run && durationMinutes === min && settings.durationMs % 60000 === 0}
+                  onClick={() => setDuration(min * 60000)}
+                >{min}</button>
+              ))}
+            </div>
+
+            <div className="tt-row">
+              <span className="tt-row-label">Skive</span>
+              <div className="tt-segment" role="group" aria-label="Hvordan skiva skalerer">
+                <button type="button" aria-pressed={settings.mode === 'fit'} className={`tt-seg${settings.mode === 'fit' ? ' is-active' : ''}`} onClick={() => updateSettings({ mode: 'fit' })}>Full ved start</button>
+                <button type="button" aria-pressed={settings.mode === 'fixed60'} className={`tt-seg${settings.mode === 'fixed60' ? ' is-active' : ''}`} onClick={() => updateSettings({ mode: 'fixed60' })}>Alltid 60 min</button>
+              </div>
+            </div>
+
+            <div className="tt-row">
+              <span className="tt-row-label">Farge</span>
+              <div className="tt-color">
+                <button
+                  type="button"
+                  className="tt-color-chip"
+                  aria-expanded={colorOpen}
+                  onClick={() => setColorOpen(v => !v)}
+                  title="Endre fargen på skiva"
+                >
+                  <span className="tt-swatch" style={{ background: discColor }} aria-hidden="true" />
+                  <span>{colorLabel}</span>
+                </button>
+                {colorOpen && (
+                  <div className="tt-color-pop">
+                    <label className="tt-color-pick">
+                      <input
+                        type="color"
+                        value={discColor}
+                        aria-label="Velg farge på skiva"
+                        onChange={e => updateSettings({ colorOverride: normalizeHexColor(e.target.value) })}
+                      />
+                      <span>Velg farge</span>
+                    </label>
+                    <button type="button" className="k-btn k-btn--tilbake k-btn--liten" onClick={() => { updateSettings({ colorOverride: null }); setColorOpen(false); }} disabled={!settings.colorOverride}>
+                      Følg faget
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="tt-row">
+              <span className="tt-row-label" id="tt-lyd-label">Lyd</span>
+              <button
+                type="button"
+                className={`tt-toggle${settings.sound ? ' is-on' : ''}`}
+                role="switch"
+                aria-checked={settings.sound}
+                aria-label="Lyd når tiden er ute"
+                onClick={() => { primeTimerAudio(); updateSettings({ sound: !settings.sound }); }}
+              >
+                <span className="tt-toggle-knob" aria-hidden="true" />
+                <span aria-hidden="true">{settings.sound ? 'Klokke når tiden er ute' : 'Stille'}</span>
+              </button>
+            </div>
+
+            <Info>Skiva er full når du starter og krymper mot null, uansett om du har satt 5 eller 60 minutter. Velg «Alltid 60 min» for å få en skive som ligner den fysiske.</Info>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

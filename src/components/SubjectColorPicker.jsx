@@ -33,10 +33,10 @@ export default function SubjectColorPicker({ currentClass, onPickColor, onBack, 
   return (
     <div className="editor-container schedule-editor-container subject-color-editor-container">
       <h2 className="subject-color-title">🎨 Fagfarger</h2>
-      <p style={{ color: '#aaa', marginBottom: 10 }}>Klikk på et fag for å endre farge og emoji</p>
+      <p style={{ color: '#aaa', marginBottom: 10 }}>Trykk på et fag for å endre farge og emoji</p>
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-        <button className="neumorphic-btn" onClick={onGeneratePalette}>Generer palett</button>
-        <button className="neumorphic-btn" onClick={onBack}>Tilbake</button>
+        <button className="k-btn k-btn--tilbake" onClick={onBack}>← Tilbake</button>
+        <button className="k-btn k-btn--regnbue" onClick={onGeneratePalette} title="Gir alle fagene nye farger som passer sammen">🎲 Generer palett</button>
       </div>
       <div className="subject-grid">
         {subjects.map(subject => {

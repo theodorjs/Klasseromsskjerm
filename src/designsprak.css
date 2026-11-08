@@ -1,0 +1,1161 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Felles designspråk for verktøyene
+   ───────────────────────────────────────────────────────────────────
+   Én regel: det elevene LESER er glass (hovedskjermen, uendret),
+   det læreren TAR PÅ er et instrument: matt, ugjennomsiktig flate med
+   én myk skygge, kraftige tall og tydelig innfelt trykk. Materialet er
+   hentet fra TimeTimer-bildene i «Mine designprinsipper/Nedtellingsklokker».
+
+   Tokens ligger i to lag (som i Kooperative grupper): systemverdier
+   per ui-dark/ui-light, og rollenavn som komponentene bruker.
+   Lastes etter index.css og vinner derfor ved lik spesifisitet.
+   ═══════════════════════════════════════════════════════════════════ */
+
+body {
+    /* Instrumentflaten (mørk grafitt) */
+    --instrument: #1E242C;
+    --instrument-2: #262D37;          /* forsenkninger, felt, sekundære flater */
+    --instrument-3: #313945;          /* hevet knapp, chip */
+    --instrument-kant: rgba(255, 255, 255, 0.10);
+    --instrument-lys: rgba(255, 255, 255, 0.06); /* lys kant øverst («lyset kommer ovenfra») */
+    --instrument-skygge: 0 18px 44px rgba(0, 0, 0, 0.45);
+    --trykk-inn: inset 0 3px 8px rgba(0, 0, 0, 0.45);
+
+    --tekst: #EEF2F6;
+    --tekst-dempet: #A5AFBC;
+    --tekst-svak: #6F7A88;
+
+    /* Handlingsfarger med fast betydning (grønn = nytt, rødt = slett) */
+    --ny: #43A047;         --ny-tekst: #0E1620;
+    --rediger: #FF8A50;    --rediger-tekst: #0E1620;
+    --navn: #FFC107;       --navn-tekst: #0E1620;
+    --slett: #EF5350;      --slett-tekst: #0E1620;
+    --tilbake: #64B5F6;    --tilbake-tekst: #0E1620;
+    --advarsel-tekst: #FFC107;
+    --noytral-knapp: #313945; --noytral-knapp-tekst: #EEF2F6;
+    --fokus: #8FD3FF;
+
+    /* TimeTimer-skiva */
+    --tt-plate: #262D37;
+    --tt-ink: #F3F5F8;
+    --tt-tick: rgba(243, 245, 248, 0.82);
+    --tt-well: rgba(0, 0, 0, 0.22);
+    --tt-hub: #0F1216;
+    --tt-knob: #C9A65A;
+
+    --radius-s: 8px;
+    --radius-m: 14px;
+    --radius-l: 24px;
+}
+
+body.ui-light {
+    /* Instrumentflaten (lyst porselen, som i bildene) */
+    --instrument: #EEF2F6;
+    --instrument-2: #E1E7EE;
+    --instrument-3: #FFFFFF;
+    --instrument-kant: rgba(28, 39, 53, 0.12);
+    --instrument-lys: rgba(255, 255, 255, 0.9);
+    --instrument-skygge: 0 18px 44px rgba(60, 76, 96, 0.22);
+    --trykk-inn: inset 0 3px 8px rgba(28, 39, 53, 0.18);
+
+    --tekst: #1C2735;
+    --tekst-dempet: #56637A;
+    --tekst-svak: #8A95A6;
+
+    --ny: #2E7D32;         --ny-tekst: #FFFFFF;
+    --rediger: #B45309;    --rediger-tekst: #FFFFFF;
+    --navn: #F9A825;       --navn-tekst: #1C2735;
+    --slett: #C62828;      --slett-tekst: #FFFFFF;
+    --tilbake: #1565C0;    --tilbake-tekst: #FFFFFF;
+    --advarsel-tekst: #8A5A00;
+    --noytral-knapp: #FFFFFF; --noytral-knapp-tekst: #1C2735;
+    --fokus: #1565C0;
+
+    --tt-plate: #F6F8FA;
+    --tt-ink: #1C2735;
+    --tt-tick: rgba(28, 39, 53, 0.85);
+    --tt-well: rgba(28, 39, 53, 0.06);
+    --tt-hub: #1A1D22;
+    --tt-knob: #B8964A;
+}
+
+/* ─── Knapper ────────────────────────────────────────────────────── */
+
+.k-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45em;
+    min-height: 44px;
+    padding: 10px 18px;
+    border: 1px solid var(--instrument-kant);
+    border-radius: var(--radius-m);
+    background: var(--noytral-knapp);
+    color: var(--noytral-knapp-tekst);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18), inset 0 1px 0 var(--instrument-lys);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+}
+
+.k-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.k-btn:active:not(:disabled) { transform: scale(0.97); box-shadow: var(--trykk-inn); }
+.k-btn:disabled { opacity: 0.45; cursor: default; }
+.k-btn:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+
+.k-btn--liten { min-height: 36px; padding: 6px 12px; font-size: 0.9rem; border-radius: var(--radius-s); }
+
+.k-btn--ny       { background: var(--ny);       color: var(--ny-tekst);       border-color: transparent; }
+.k-btn--rediger  { background: var(--rediger);  color: var(--rediger-tekst);  border-color: transparent; }
+.k-btn--navn     { background: var(--navn);     color: var(--navn-tekst);     border-color: transparent; }
+.k-btn--tilbake  { background: var(--tilbake);  color: var(--tilbake-tekst);  border-color: transparent; }
+
+/* Slett: kontur, aldri fylt, så den ikke trykkes ved et uhell */
+.k-btn--slett {
+    background: transparent;
+    color: var(--slett);
+    border: 2px solid var(--slett);
+    box-shadow: none;
+}
+.k-btn--slett:hover:not(:disabled) { background: rgba(239, 83, 80, 0.12); filter: none; }
+
+/* Fagfarger: diagonal regnbue av selve fagfargene */
+.k-btn--regnbue {
+    background: linear-gradient(135deg, #EE4C17 0%, #E59C1F 25%, #1A963B 50%, #1384CF 75%, #9933FF 100%);
+    color: #FFFFFF;
+    border-color: transparent;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+/* ─── Grupper av verktøy, med liten overskrift ───────────────────── */
+
+.k-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px 16px;
+    border: 1px solid var(--instrument-kant);
+    border-radius: var(--radius-l);
+    background: var(--instrument);
+    box-shadow: var(--instrument-skygge), inset 0 1px 0 var(--instrument-lys);
+    color: var(--tekst);
+    min-width: 0;
+}
+
+.k-group-title {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tekst-dempet);
+}
+
+.k-group-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* ─── (i) Forklaringer ───────────────────────────────────────────── */
+
+.info {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: var(--tekst-dempet);
+}
+
+.info .info-ikon { flex: none; margin-top: 0.18em; }
+
+.info-felt {
+    background: var(--instrument-2);
+    border-radius: var(--radius-s);
+    padding: 0.6rem 0.8rem;
+    color: var(--tekst);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Nedteller i TimeTimer-stil
+   ═══════════════════════════════════════════════════════════════════ */
+
+.timer-panel {
+    top: 90px; /* under statuslinjen */
+    left: 50%;
+    transform: translateX(-50%);
+    min-height: 0;
+    max-height: calc(100vh - 102px);
+    overflow: visible;
+    z-index: 2900; /* under dialogene (3000+), så de aldri havner bak nedtelleren */
+}
+
+/* Nedtelleren er ikke synlig mens klassemenyen og editoren er åpne (den går videre i bakgrunnen) */
+body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
+
+.timer-panel.active { transform: translateX(-50%); }
+
+/* Stor visning på tavla: skiva fyller skjermen */
+.timer-panel.is-big {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: none;
+    max-height: none;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    justify-content: center;
+    background: var(--instrument);
+    z-index: 5600;
+}
+.timer-panel.is-big.active { transform: none; }
+.timer-panel.is-big .tt-device {
+    width: 100%;
+    max-height: none;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.timer-panel.is-big .tt-settings { display: none; }
+.timer-panel.is-big .tt-plate { flex: 1; min-height: 0; justify-content: center; width: 100%; }
+.timer-panel.is-big .tt-dial { width: min(calc(100vh - 12vh - 210px), 92vw); height: auto; }
+.timer-panel.is-big .tt-device { overflow: auto; }
+.timer-panel.is-big .tt-readout-time { font-size: clamp(3rem, 12vh, 7rem); }
+.timer-panel.is-big .tt-readout-status { font-size: 1.3rem; }
+.timer-panel.is-big .tt-controls { margin-top: 14px; }
+.timer-panel.is-big .tt-main-btn { min-height: 60px; font-size: 1.3rem; }
+
+.tt-device {
+    position: relative;
+    width: min(380px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    border-radius: var(--radius-l);
+    background: var(--instrument);
+    border: 1px solid var(--instrument-kant);
+    box-shadow: var(--instrument-skygge), inset 0 1px 0 var(--instrument-lys);
+    color: var(--tekst);
+    display: flex;
+    flex-direction: column;
+    padding: 18px 18px 16px;
+    gap: 14px;
+}
+
+.tt-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument-3);
+    color: var(--tekst);
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+.tt-close:active { box-shadow: var(--trykk-inn); }
+.tt-close:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+
+.tt-plate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0 4px;
+}
+
+/* Skiva */
+.tt-dial { display: block; overflow: visible; max-width: 100%; height: auto; }
+.tt-well { fill: var(--tt-well); }
+.tt-tick { stroke: var(--tt-tick); stroke-width: 2.5; stroke-linecap: round; }
+.tt-tick-major { stroke-width: 5; }
+.tt-label {
+    fill: var(--tt-ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+.tt-unit {
+    fill: var(--tekst-dempet);
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.tt-dial-mini .tt-unit { display: none; }
+.tt-disc {
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.28));
+}
+.tt-hub { fill: var(--tt-hub); }
+.tt-knob { fill: var(--tt-knob); }
+.tt-knob-center { fill: rgba(0, 0, 0, 0.55); }
+
+@keyframes tt-done-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+.tt-dial.is-done .tt-well { animation: tt-done-pulse 1.6s ease-in-out infinite; fill: rgba(239, 83, 80, 0.28); }
+
+/* Digital tid under skiva */
+.tt-readout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+.tt-readout-time {
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--tekst);
+}
+.tt-readout-status {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--tekst-dempet);
+    letter-spacing: 0.02em;
+}
+.tt-device.is-done .tt-readout-status { color: var(--slett); }
+
+.tt-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+    margin-top: 6px;
+}
+.tt-main-btn { min-width: 150px; font-size: 1.1rem; min-height: 52px; }
+
+/* Innstillinger */
+.tt-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 12px 10px;
+    border-radius: var(--radius-m);
+    background: var(--instrument-2);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.16);
+}
+
+.tt-row {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    align-items: center;
+    gap: 10px;
+}
+.tt-row-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tekst-dempet);
+}
+
+.tt-stepper {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    align-items: center;
+    gap: 6px;
+}
+.tt-step {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument-3);
+    color: var(--tekst);
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18), inset 0 1px 0 var(--instrument-lys);
+}
+.tt-step:active { box-shadow: var(--trykk-inn); transform: scale(0.96); }
+.tt-step:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+.tt-step-value {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--tekst);
+}
+
+.tt-presets {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+.tt-preset {
+    min-height: 40px;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument-3);
+    color: var(--tekst);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 var(--instrument-lys);
+}
+.tt-preset:active { box-shadow: var(--trykk-inn); }
+.tt-preset.is-active { background: var(--tekst); color: var(--instrument); border-color: transparent; }
+.tt-preset:focus-visible { outline: 3px solid var(--fokus); outline-offset: 1px; }
+
+.tt-segment {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 3px;
+    border-radius: var(--radius-s);
+    background: var(--instrument);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.18);
+}
+.tt-seg {
+    min-height: 38px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--tekst-dempet);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 4px 6px;
+}
+.tt-seg.is-active { background: var(--tekst); color: var(--instrument); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); }
+.tt-seg:focus-visible { outline: 3px solid var(--fokus); outline-offset: 1px; }
+
+.tt-color { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.tt-color-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 4px 12px 4px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument-3);
+    color: var(--tekst);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+    box-shadow: inset 0 1px 0 var(--instrument-lys);
+}
+.tt-color-chip:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+.tt-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    flex: none;
+}
+.tt-color-pop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.tt-color-pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--tekst);
+    cursor: pointer;
+}
+.tt-color-pick input[type="color"] {
+    width: 44px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--instrument-kant);
+    border-radius: var(--radius-s);
+    background: var(--instrument-3);
+    cursor: pointer;
+}
+
+.tt-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 4px 12px 4px 4px;
+    border-radius: 999px;
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument-3);
+    color: var(--tekst-dempet);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 var(--instrument-lys);
+}
+.tt-toggle.is-on { color: var(--tekst); }
+.tt-toggle:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+.tt-toggle-knob {
+    position: relative;
+    width: 44px;
+    height: 26px;
+    border-radius: 13px;
+    background: var(--instrument);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    flex: none;
+}
+.tt-toggle-knob::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--tekst-dempet);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+.tt-toggle.is-on .tt-toggle-knob::after { transform: translateX(18px); background: var(--ny); }
+
+/* Liten status når panelet er lukket, så en pågående timer ikke er usynlig */
+.timer-mini {
+    position: fixed;
+    right: 35px;
+    bottom: 120px;
+    z-index: 2004;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px 6px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument);
+    color: var(--tekst);
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    box-shadow: var(--instrument-skygge), inset 0 1px 0 var(--instrument-lys);
+}
+.timer-mini.is-done { animation: tt-done-pulse 1.6s ease-in-out infinite; }
+.timer-mini:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+.tt-dial-mini .tt-label, .tt-dial-mini .tt-tick:not(.tt-tick-major), .tt-dial-mini .tt-knob, .tt-dial-mini .tt-knob-center { display: none; }
+.tt-dial-mini .tt-tick-major { stroke-width: 10; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Bevegelse: respekter «reduser bevegelse»
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+    #stars, #stars2, #stars3, #stars:after, #stars2:after, #stars3:after { animation: none !important; }
+    .class-card.active::before { animation: none !important; }
+    .tt-dial.is-done .tt-well, .timer-mini.is-done { animation: none !important; }
+    .k-btn, .tt-step, .tt-toggle-knob::after, .split-layer, .split-surface, .toolbox-items, .edit-modal { transition: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Timeplaneditoren («se» = schedule editor)
+   Følger lyst og mørkt tema via tokens, bruker hele høyden, og har
+   forklaringer der knappene er.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.se {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 20px 16px;
+    color: var(--tekst);
+    background: var(--instrument);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+}
+
+.se-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.se-header-left, .se-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.se-school { font-size: 1.6rem; }
+.se-name {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 2px 4px;
+    font: inherit;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--tekst);
+    border-bottom: 2px dashed var(--instrument-kant);
+    cursor: text;
+}
+.se-name-pen { font-size: 0.9rem; opacity: 0.5; margin-left: 2px; }
+.se-badge {
+    font-size: 0.8rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--instrument-2);
+    border: 1px solid var(--instrument-kant);
+    color: var(--tekst-dempet);
+}
+.k-btn.is-saved { filter: saturate(0.6); }
+
+.se-toolbar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.se-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 12px 10px;
+    border-radius: var(--radius-m);
+    background: var(--instrument-2);
+    border: 1px solid var(--instrument-kant);
+}
+.se-group-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.k-btn--slett.is-on { background: var(--slett); color: var(--slett-tekst); }
+
+.se-main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 14px;
+}
+
+.se-grid-wrap {
+    min-height: 0;
+    overflow: auto;
+    border-radius: var(--radius-m);
+}
+.se-grid {
+    display: grid;
+    grid-template-columns: minmax(92px, 120px) repeat(5, minmax(120px, 1fr));
+    gap: 6px;
+    min-height: 100%;
+    align-items: stretch;
+}
+.se-corner { }
+.se-day {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 2px 4px 6px;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--tekst-dempet);
+}
+.se-day-short { display: none; }
+.se-time {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 2px;
+    padding-right: 8px;
+    text-align: right;
+}
+.se-time-label { font-size: 1rem; font-weight: 800; color: var(--tekst); }
+.se-time-range { font-size: 0.85rem; font-weight: 600; color: var(--tekst-dempet); font-variant-numeric: tabular-nums; }
+.se-time-break { font-size: 0.85rem; color: var(--tekst-dempet); font-variant-numeric: tabular-nums; }
+.se-break {
+    grid-column: 2 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: var(--radius-s);
+    background: var(--instrument-2);
+    color: var(--tekst-dempet);
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.se-td { min-height: 0; display: flex; }
+.se-cell-wrap { position: relative; flex: 1; display: flex; min-height: 76px; }
+
+.se-cell, .se-slot {
+    --fag: transparent;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 6px;
+    text-align: center;
+    border-radius: var(--radius-s);
+    background: var(--instrument-2);
+    border: 2px solid transparent;
+    border-left: 6px solid var(--instrument-kant);
+    transition: background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.se-cell.has-fag, .se-slot.has-fag {
+    background-color: var(--instrument-2);
+    background-image: linear-gradient(var(--fag-tint), var(--fag-tint));
+    border-left-color: var(--fag);
+}
+.se-cell.is-preview, .se-slot.is-preview {
+    background-color: var(--instrument-2);
+    background-image: linear-gradient(var(--fag-tint-sterk), var(--fag-tint-sterk));
+    border-color: var(--fag-tint-sterk);
+    border-left-color: var(--fag);
+}
+.se-cell.is-erase, .se-slot.is-erase {
+    background: rgba(239, 83, 80, 0.18);
+    border-left-color: var(--slett);
+    opacity: 0.6;
+}
+.se-cell.is-focus { border-color: var(--fokus); }
+.se-cell:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+.se-cell-emoji { font-size: 1.5rem; line-height: 1; }
+.se-cell-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--tekst);
+    overflow-wrap: anywhere;
+}
+.se-cell-plus { font-size: 1.4rem; color: var(--tekst-svak); opacity: 0.6; }
+
+.se-cell-tools {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: flex;
+    gap: 4px;
+    z-index: 5;
+}
+.se-tool {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 7px;
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument-3);
+    color: var(--tekst);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.22);
+}
+.se-tool:active { box-shadow: var(--trykk-inn); }
+.se-tool:focus-visible { outline: 3px solid var(--fokus); outline-offset: 1px; }
+
+.se-cell-composite { flex-direction: column; }
+.se-cell-badge {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    z-index: 5;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tekst-dempet);
+    pointer-events: none;
+}
+.se-slots { display: flex; gap: 4px; flex: 1; padding-top: 22px; }
+.se-slot-wrap { position: relative; flex: 1; min-width: 0; display: flex; }
+.se-slot { padding: 6px 4px; }
+.se-slot-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    color: var(--tekst-dempet);
+    line-height: 1;
+}
+.se-slot .se-cell-emoji { font-size: 1.25rem; }
+.se-slot .se-cell-name { font-size: 0.78rem; }
+.se-slot-remove {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    z-index: 6;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(239, 83, 80, 0.3);
+    color: var(--tekst);
+    font-size: 0.7rem;
+    cursor: pointer;
+}
+
+/* Fagpaletten */
+.se-side {
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    border-radius: var(--radius-m);
+    background: var(--instrument-2);
+    border: 1px solid var(--instrument-kant);
+}
+.se-palette { display: flex; flex-direction: column; gap: 6px; }
+.se-chip-wrap { position: relative; display: flex; }
+.se-chip {
+    --fag: #888;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 6px 40px 6px 10px;
+    border-radius: 999px;
+    border: 2px solid var(--fag);
+    background-color: var(--instrument-3);
+    background-image: linear-gradient(var(--fag-tint), var(--fag-tint));
+    color: var(--tekst);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+.se-chip-wrap.is-active .se-chip {
+    background-color: var(--fag);
+    background-image: none;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 0 0 3px var(--fag-tint-sterk), 0 6px 16px rgba(0, 0, 0, 0.25);
+    transform: translateX(4px);
+}
+.se-chip:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+.se-chip-emoji { font-size: 1.2rem; }
+.se-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.se-chip-edit {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.18);
+    color: var(--tekst);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.se-chip-wrap.is-active .se-chip-edit { color: #fff; }
+.se-chip-new {
+    border: 2px dashed var(--instrument-kant);
+    background: transparent;
+    color: var(--tekst-dempet);
+    justify-content: center;
+    padding: 6px 10px;
+}
+.se-legend {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1.6rem 1fr;
+    row-gap: 6px;
+    column-gap: 6px;
+    font-size: 0.85rem;
+    color: var(--tekst-dempet);
+}
+.se-legend > div { display: contents; }
+.se-legend dt { font-weight: 800; color: var(--tekst); text-align: center; }
+.se-legend dd { margin: 0; }
+
+/* Felt og dialoger i editoren */
+.se-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: var(--radius-s);
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument-3);
+    color: var(--tekst);
+    font: inherit;
+    font-size: 1rem;
+    outline: none;
+}
+.se-input:focus-visible { outline: 3px solid var(--fokus); outline-offset: 1px; }
+.se-input-name { width: 220px; font-size: 1.3rem; font-weight: 800; }
+.se-input-time { width: 72px; text-align: center; font-variant-numeric: tabular-nums; }
+
+.se-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.55);
+}
+.se-modal {
+    width: 100%;
+    max-width: 440px;
+    max-height: 86vh;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px;
+    border-radius: var(--radius-l);
+    background: var(--instrument);
+    border: 1px solid var(--instrument-kant);
+    box-shadow: var(--instrument-skygge), inset 0 1px 0 var(--instrument-lys);
+    color: var(--tekst);
+}
+.se-modal-title { margin: 0; font-size: 1.25rem; font-weight: 800; }
+.se-modal-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.se-field { display: flex; flex-direction: column; gap: 6px; font-size: 0.85rem; font-weight: 700; color: var(--tekst-dempet); flex: 1; }
+.se-field-row { display: flex; gap: 12px; }
+.se-field-emoji { flex: 0 0 90px; }
+.se-field-emoji .se-input { text-align: center; font-size: 1.4rem; }
+.se-color-row { display: flex; align-items: center; gap: 10px; }
+.se-color { width: 52px; height: 40px; padding: 0; border: 1px solid var(--instrument-kant); border-radius: var(--radius-s); background: var(--instrument-3); cursor: pointer; }
+.se-color-row code { font-size: 0.9rem; color: var(--tekst); }
+.se-preview { min-height: 24px; font-size: 0.9rem; }
+.se-preview-ok { color: var(--ny); }
+.se-preview-warn { color: var(--advarsel-tekst); font-weight: 700; }
+.se-frames { display: flex; flex-direction: column; gap: 6px; }
+.se-frame-row {
+    display: grid;
+    grid-template-columns: 20px 1fr 72px 12px 72px 32px;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: var(--radius-s);
+    background: var(--instrument-2);
+}
+.se-frame-row.is-lesson { background-image: linear-gradient(rgba(100, 181, 246, 0.14), rgba(100, 181, 246, 0.14)); }
+.se-frame-type { font-size: 0.8rem; font-weight: 800; color: var(--tekst-dempet); text-align: center; }
+.se-frame-dash { text-align: center; color: var(--tekst-svak); }
+.se-frame-remove {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(239, 83, 80, 0.16);
+    color: var(--slett);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.se-frame-add { display: flex; gap: 8px; }
+
+@media (max-width: 980px) {
+    .se { height: auto; min-height: 100vh; overflow: auto; }
+    .se-main { grid-template-columns: 1fr; }
+    .se-side { order: -1; }
+    .se-palette { flex-direction: row; flex-wrap: wrap; }
+    .se-chip-wrap { flex: 0 1 auto; }
+    .se-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+    .se-legend > div { display: flex; gap: 6px; }
+    .se-day-long { display: none; }
+    .se-day-short { display: inline; }
+    .se-grid { grid-template-columns: 72px repeat(5, minmax(96px, 1fr)); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Klassemenyen («under panseret»): knapper med farge etter hva de gjør
+   ═══════════════════════════════════════════════════════════════════ */
+
+.klasse-meny {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: min(1100px, 94vw);
+    max-height: 100vh;
+    overflow: auto;
+    padding: 24px 12px 32px;
+}
+.klasse-meny .class-grid { width: 100%; max-width: 900px; }
+.klasse-meny .class-tool-title { margin-bottom: 8px; }
+.klasse-grupper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 14px;
+    width: 100%;
+}
+.klasse-grupper .k-group { flex: 1 1 280px; max-width: 460px; }
+.klasse-meny .class-tool-msg { margin: 0; }
+.klasse-laas {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--tekst-dempet);
+    max-width: 520px;
+    text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Veggskjerm: liten skjerm, langt unna. Ett budskap, store tall.
+   Laveste støttede nettleser er Safari 14 (iPadOS 14, satt i vite.config.js);
+   derfor ingen color-mix, :has eller container queries her.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.vegg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3vmin 4vmin 1.5vmin;
+    box-sizing: border-box;
+    color: var(--text-color);
+    z-index: 200;
+    text-align: center;
+}
+.vegg-top { display: flex; flex-direction: column; align-items: center; }
+.vegg-clock {
+    font-size: clamp(3rem, 17vmin, 11rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+}
+.vegg-date {
+    margin-top: 0.6vmin;
+    font-size: clamp(1rem, 3.6vmin, 2rem);
+    font-weight: 600;
+    opacity: 0.85;
+}
+.vegg-now {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3vmin;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    padding: 1vmin 0 2vmin;
+}
+.vegg-dial { flex: 0 1 auto; display: flex; align-items: center; justify-content: center; min-height: 0; }
+.vegg-dial .tt-dial { width: min(56vmin, 36vh, 480px); height: auto; }
+.vegg-text { display: flex; flex-direction: column; align-items: center; gap: 1.2vmin; max-width: 100%; }
+
+@media (orientation: landscape) {
+    .vegg-now { flex-direction: row; gap: 6vmin; }
+    .vegg-dial .tt-dial { width: min(52vh, 38vw); }
+    .vegg-text { align-items: flex-start; text-align: left; flex: 1; min-width: 0; }
+}
+.vegg-label { font-size: clamp(1rem, 3.4vmin, 2rem); font-weight: 300; opacity: 0.85; }
+.vegg-activity {
+    font-size: clamp(1.8rem, 10vmin, 6rem);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+.vegg-activity.is-stack { font-size: clamp(1.4rem, 6.5vmin, 4rem); text-transform: none; display: flex; flex-direction: column; gap: 0.6vmin; }
+.vegg-remaining {
+    font-size: clamp(1.3rem, 5.2vmin, 3rem);
+    font-weight: 800;
+    padding: 0.8vmin 2.4vmin;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+body.light-mode .vegg-remaining { background: rgba(28, 39, 53, 0.08); border-color: rgba(28, 39, 53, 0.14); }
+body.colorful-mode .vegg { color: #fff; }
+.vegg-next { font-size: clamp(1rem, 3.6vmin, 2rem); font-weight: 600; opacity: 0.85; }
+/* Tidslinjen ligger i flyten, så innholdet over krymper i stedet for å overlappe */
+.vegg .timeline {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    flex: 0 0 auto;
+    width: 98%;
+    margin: 1vmin auto 0;
+}
+.vegg-countdowns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6vmin 2.4vmin;
+    margin-top: 0.8vmin;
+    font-size: clamp(0.9rem, 3vmin, 1.6rem);
+    font-weight: 600;
+    opacity: 0.9;
+}
+.vegg-countdown b { font-weight: 900; }
+.vegg-exit {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    z-index: 9000;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    opacity: 0.6;
+    cursor: pointer;
+}
+body.light-mode .vegg-exit { background: rgba(255, 255, 255, 0.75); color: #1C2735; border-color: rgba(28, 39, 53, 0.25); }
+.vegg-exit:hover, .vegg-exit:focus-visible, .vegg-exit:active { opacity: 1; }
+body.vegg-aktiv .toolbox-container,
+body.vegg-aktiv .top-status-bar,
+body.vegg-aktiv .countdown-stack { display: none !important; }
+
+/* Nedtellerens lille status skal ikke ligge oppå klassemenyen */
+body.under-the-hood-active .timer-mini { display: none !important; }
