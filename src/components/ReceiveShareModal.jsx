@@ -85,7 +85,7 @@ export default function ReceiveShareModal({ state, hasExisting, canUndo, onAccep
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title={title} titleId="receive-share-title" className="share-modal">
+    <Dialog open={open} onClose={onClose} title={title} titleId="receive-share-title" className="share-modal" lukkPaaBakteppe={status !== 'ask'}>
       {body}
       <div className="k-dialog-actions">{actions}</div>
     </Dialog>

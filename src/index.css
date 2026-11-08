@@ -383,92 +383,9 @@ body.colorful-mode {
     margin-left: 1px;
 }
 
-.sim-indicator {
-    margin-left: 12px;
-    padding: 6px 10px;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
-    color: #1b2735;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
-
-body.ui-dark .sim-indicator {
-    background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%);
-    color: #fff;
-}
-
-.sim-reset-btn {
-    margin-left: 8px;
-    appearance: none;
-    -webkit-appearance: none;
-    border: none;
-    border-radius: 10px;
-    padding: 6px 10px;
-    font-weight: 700;
-    cursor: pointer;
-    outline: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    z-index: 1;
-    background-clip: padding-box;
-    transform: translateZ(0);
-    -webkit-tap-highlight-color: transparent;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(255, 255, 255, 0.75);
-    box-shadow:
-        0 6px 12px rgba(18, 30, 45, 0.16),
-        inset 0 1px 0 rgba(255, 255, 255, 0.92);
-    color: #1b2735;
-}
-
-body.ui-dark .sim-reset-btn {
-    background: rgba(18, 27, 42, 0.92);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.12);
-    box-shadow:
-        0 6px 12px rgba(0, 0, 0, 0.24),
-        inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.sim-reset-btn:focus,
-.sim-reset-btn:focus-visible,
-.sim-reset-btn:active {
-    outline: none;
-    box-shadow:
-        0 6px 12px rgba(18, 30, 45, 0.16),
-        inset 0 1px 0 rgba(255, 255, 255, 0.92);
-}
-
 .date-time .clickable {
     cursor: default;
     /* Remove pointer */
-}
-
-.reset-button {
-    position: fixed;
-    top: 25px;
-    right: 35px;
-    font-size: 1.2rem;
-    font-weight: 100;
-    color: #aaa;
-    background-color: var(--bg-color);
-    border: none;
-    box-shadow: var(--shadow-light), var(--shadow-dark);
-    padding: 8px 15px;
-    border-radius: 12px;
-    cursor: pointer;
-    display: none;
-    z-index: 2001;
-}
-
-body.ui-light .reset-button {
-    color: #000;
-    background-color: transparent;
-    border: 1px solid #fff;
 }
 
 .container {
@@ -657,198 +574,6 @@ body.under-the-hood-active #under-the-hood {
 /* Dag-knapp: synlig valgt dag i mørk modus */
 
 /* Neumorphic Buttons & Cards */
-
-.class-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 30px;
-    width: 80%;
-    max-width: 900px;
-}
-
-.class-tool-title {
-    margin-bottom: 40px;
-    color: #d7dce7;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-body.ui-light .class-tool-title {
-    color: #3c4758;
-    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.65);
-}
-
-body.ui-light .class-card {
-    background: rgba(248, 252, 255, 0.78);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border: 1px solid rgba(255, 255, 255, 0.98);
-    color: #243040;
-    box-shadow: 12px 17px 28px rgba(0, 0, 0, 0.16);
-}
-
-body.ui-light .class-card.active {
-    color: #243040;
-}
-
-body.ui-dark .class-card {
-    background: rgba(43, 58, 80, 0.52);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #eef3fb;
-    box-shadow:
-        12px 17px 28px rgba(0, 0, 0, 0.26),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-body.ui-dark .class-card.active {
-    color: #eef3fb;
-}
-
-.class-card {
-    position: relative;
-    height: 120px;
-    background: var(--bg-color);
-    border: none;
-    border-radius: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    font-weight: 300;
-    cursor: pointer;
-    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28), var(--shadow-light), var(--shadow-dark);
-    transition: all 0.3s ease;
-    text-align: center;
-    padding: 20px;
-    overflow: visible;
-    isolation: isolate;
-    z-index: 0;
-}
-
-.class-card.active {
-    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28), var(--shadow-light), var(--shadow-dark);
-    color: var(--text-color);
-    font-weight: 500;
-}
-
-.class-card.active::before {
-    content: "";
-    position: absolute;
-    inset: -6px;
-    padding: 6px;
-    border-radius: 31px;
-    background: var(--glow-gradient);
-    background-size: 300% 300%;
-    animation: borderFlow 6s linear infinite;
-    -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-    mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-    z-index: -1;
-}
-
-.class-card:hover {
-    transform: translateY(-0.3rem) scale(1.02);
-    box-shadow:
-        0 0 2rem rgba(49, 227, 255, 0.24),
-        0 14px 30px rgba(0, 0, 0, 0.32),
-        var(--shadow-light),
-        var(--shadow-dark);
-}
-
-.class-card-title {
-    display: block;
-    width: 100%;
-    text-align: center;
-    position: relative;
-    z-index: 1;
-}
-
-.class-select-toggle {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    display: block;
-    cursor: pointer;
-    font-size: 16px;
-    user-select: none;
-    pointer-events: auto;
-    z-index: 1;
-}
-
-.class-select-toggle input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    inset: 0;
-    height: 100%;
-    width: 100%;
-}
-
-.class-select-checkmark {
-    position: relative;
-    display: block;
-    top: 0;
-    left: 0;
-    height: 1.6em;
-    width: 1.6em;
-    border-radius: 50%;
-    background: #ffeded38;
-    opacity: 0.4;
-    transition: all 0.2s ease;
-}
-
-.class-select-toggle input:checked~.class-select-checkmark {
-    background: linear-gradient(144deg, #af40ff, #5b42f3 50%, #00ddeb);
-    opacity: 0.9;
-}
-
-.class-select-checkmark:after {
-    content: "";
-    position: absolute;
-    display: none;
-}
-
-.class-select-toggle input:checked~.class-select-checkmark:after {
-    display: block;
-}
-
-.class-select-toggle .class-select-checkmark:after {
-    left: 0.61em;
-    top: 0.43em;
-    width: 0.25em;
-    height: 0.5em;
-    border: solid rgb(255, 255, 255);
-    border-width: 0 0.15em 0.15em 0;
-    transform: rotate(45deg);
-}
-
-body.ui-light .class-card:hover {
-    box-shadow:
-        0 0 2rem rgba(143, 53, 255, 0.18),
-        12px 17px 30px rgba(0, 0, 0, 0.18);
-}
-
-body.ui-dark .class-card:hover {
-    box-shadow:
-        0 0 2rem rgba(49, 227, 255, 0.2),
-        12px 17px 30px rgba(0, 0, 0, 0.28),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-@keyframes borderFlow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
 
 /* Schedule Editor Table */
 .editor-container {
@@ -1390,25 +1115,6 @@ body.ui-light .event-box {
     border: 2px solid white;
 }
 
-.hover-box {
-    position: absolute;
-    bottom: calc(100% + 12px);
-    background-color: #fff;
-    color: #333;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    width: 200px;
-    text-align: center;
-    z-index: 100;
-    display: none;
-    flex-direction: column;
-    gap: 5px;
-    transform: translate(-50%, 10px);
-    opacity: 0;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
 .hover-box.active {
     display: flex;
     transform: translate(-50%, 0);
@@ -1423,12 +1129,6 @@ body.ui-light .event-box {
 .hover-box .time {
     font-weight: normal;
     font-size: 0.9rem;
-}
-
-body.ui-dark .hover-box {
-    background-color: #0f1725;
-    color: #eef2ff;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.45);
 }
 
 .hover-box .teacher {
@@ -1447,23 +1147,6 @@ body.ui-dark .hover-box {
     z-index: 10;
 }
 
-.dropdown-list {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: #333;
-    color: #aaa;
-    border: 1px solid #555;
-    padding: 5px;
-    display: none;
-    z-index: 1000;
-    min-width: 50px;
-}
-
-.dropdown-list.show {
-    display: block;
-}
-
 .day-dropdown {
     left: 0;
 }
@@ -1474,21 +1157,6 @@ body.ui-dark .hover-box {
 
 .minute-dropdown {
     left: 250px;
-}
-
-.dropdown-list button {
-    display: block;
-    width: 100%;
-    text-align: left;
-    background: none;
-    color: #aaa;
-    border: none;
-    padding: 5px;
-    cursor: pointer;
-}
-
-.dropdown-list button:hover {
-    background-color: #555;
 }
 
 /* Color detail modal polish */
@@ -1619,11 +1287,6 @@ body.ui-dark .hover-box {
 
 /* Removed old timer-toggle since it's now in the toolbox */
 /* Neumorphic Mode Toggle Slider */
-.theme-switch-tool {
-    padding: 8px 10px;
-    min-width: 160px;
-    justify-content: center;
-}
 
 .countdown-tool {
     justify-content: space-between;
@@ -1669,139 +1332,6 @@ body.ui-dark .hover-box {
 .countdown-tool-btn:disabled {
     opacity: 0.42;
     cursor: not-allowed;
-}
-
-.theme-switch-tool:hover {
-    transform: none;
-}
-
-.theme-switch-control {
-    position: relative;
-    width: 100%;
-    height: 42px;
-    border-radius: 14px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    align-items: center;
-    padding: 4px;
-    background: linear-gradient(145deg, #8f35ff, #31e3ff 62%, #ffd54f);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.18),
-        0 8px 18px rgba(0, 0, 0, 0.18);
-    overflow: hidden;
-    isolation: isolate;
-    transition: background 0.35s ease, box-shadow 0.35s ease;
-}
-
-.theme-switch-control.mode-0 {
-    background: linear-gradient(145deg, #ffe18f, #ffbf55);
-}
-
-.theme-switch-control.mode-1 {
-    background: linear-gradient(145deg, #425476, #283349);
-}
-
-.theme-switch-control.mode-2 {
-    background:
-        radial-gradient(circle at 22% 28%, rgba(255, 255, 255, 0.2) 0 2px, transparent 2.4px),
-        radial-gradient(circle at 70% 38%, rgba(255, 255, 255, 0.18) 0 1.6px, transparent 2px),
-        radial-gradient(circle at 54% 70%, rgba(255, 255, 255, 0.14) 0 1.2px, transparent 1.8px),
-        linear-gradient(145deg, #111d31, #1b2943);
-}
-
-.theme-switch-control.mode-3 {
-    background: linear-gradient(145deg, #8f35ff, #31e3ff 62%, #ffd54f);
-}
-
-.theme-switch-thumb {
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    width: calc((100% - 8px) / 4);
-    height: calc(100% - 8px);
-    border-radius: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow:
-        0 6px 14px rgba(0, 0, 0, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.28);
-    transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), background 0.28s ease, box-shadow 0.28s ease;
-    z-index: 0;
-    pointer-events: none;
-}
-
-.theme-switch-thumb.mode-0 {
-    background: linear-gradient(145deg, #fff8dd, #ffe4a3);
-    color: #9a5a00;
-}
-
-.theme-switch-thumb.mode-1 {
-    background: linear-gradient(145deg, #45567a, #29344d);
-    color: #eef3ff;
-}
-
-.theme-switch-thumb.mode-2 {
-    background: linear-gradient(145deg, #203050, #0f1b33);
-    color: #f4f7ff;
-}
-
-.theme-switch-thumb.mode-3 {
-    background: linear-gradient(145deg, #8f35ff, #31e3ff 62%, #ffd54f);
-    color: #ffffff;
-}
-
-.theme-switch-thumb-icon {
-    font-size: 1rem;
-    line-height: 1;
-    transform: translateY(-0.5px);
-}
-
-.theme-step {
-    position: relative;
-    z-index: 1;
-    border: none;
-    background: transparent;
-    height: 100%;
-    width: 100%;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    transition: transform 0.18s ease, opacity 0.18s ease, color 0.18s ease;
-}
-
-.theme-step[data-mode="0"] {
-    color: inherit;
-}
-
-.theme-step.active {
-    opacity: 0;
-}
-
-.theme-switch-control.mode-0 .theme-step {
-    color: rgba(96, 60, 9, 0.88);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.theme-switch-control.mode-1 .theme-step,
-.theme-switch-control.mode-2 .theme-step,
-.theme-switch-control.mode-3 .theme-step {
-    color: rgba(245, 248, 255, 0.94);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.theme-step:not(.active):hover {
-    transform: translateY(-1px);
-}
-
-.theme-switch-tool .mode-toggle {
-    display: none !important;
 }
 
 .countdown-stack {
@@ -1943,40 +1473,7 @@ body.colorful-mode .countdown-card-title {
     }
 }
 
-.mode-toggle {
-    display: none;
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 220px;
-    background: var(--bg-color);
-    padding: 15px 20px;
-    border-radius: 20px;
-    box-shadow: var(--shadow-dark), var(--shadow-light);
-    margin-left: 20px;
-    z-index: 200;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.mode-toggle.active {
-    display: flex;
-}
-
 /* Groove track for the slider */
-.slider-track {
-    width: 100%;
-    height: 30px;
-    background: var(--bg-color);
-    border-radius: 15px;
-    box-shadow: inset 4px 4px 8px var(--shadow-dark-color, rgba(0, 0, 0, 0.2)),
-        inset -4px -4px 8px var(--shadow-light-color, rgba(255, 255, 255, 0.1));
-    position: relative;
-    display: flex;
-    align-items: center;
-    padding: 0 4px;
-}
 
 #mode-slider {
     appearance: none;
@@ -2731,12 +2228,6 @@ body.ui-light .timer-stop:active {
 
 /* Neumorphic Modals */
 
-body.ui-light .dropdown-list {
-    background-color: #e8e8e8;
-    color: #333;
-    border-color: #ccc;
-}
-
 body.ui-light .event-box {
     background-color: #ddd;
     color: #333;
@@ -2905,38 +2396,6 @@ body.ui-dark .week-number {
     color: #aaa;
 }
 
-body.ui-dark .dropdown-list {
-    background-color: rgba(0, 0, 0, 0.7);
-    color: #fff;
-    border-color: #555;
-}
-
-body.ui-dark .mode-toggle,
-body.ui-dark .edit-button {
-    background-color: #1C2735;
-    color: #eee;
-}
-
-body.ui-dark .mode-toggle,
-body.ui-dark .edit-button {
-    background-color: #1C2735;
-    color: #eee;
-}
-
-body.ui-dark .slider-track {
-    background: #000;
-    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.8),
-        inset -2px -2px 4px rgba(255, 255, 255, 0.05);
-}
-
-body.ui-dark .dot {
-    background-color: #aaa;
-}
-
-body.ui-dark .dot:hover {
-    background-color: #fff;
-}
-
 body.colorful-mode #current-activity {
     color: #fff;
 }
@@ -2966,22 +2425,8 @@ body.colorful-mode .event-box.break {
 }
 
 /* Light window edges: subtle 3D bevel without white glow */
-body.ui-light .mode-toggle {
-    background: #e8e8e8;
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    box-shadow:
-        13.9px 13.9px 38.8px rgba(105, 123, 145, 0.34),
-        inset 2px 2px 3px rgba(255, 255, 255, 1),
-        inset -2px -2px 3px rgba(0, 0, 0, 0.15);
-}
 
 /* In colorful mode, keep the same edge language but remove bright outer glow */
-body.colorful-mode .mode-toggle {
-    box-shadow:
-        0 14px 30px rgba(18, 28, 50, 0.42),
-        inset 0 1px 0 rgba(255, 255, 255, 0.58),
-        inset 0 -1px 0 rgba(120, 133, 157, 0.45);
-}
 
 /* Emoji Picker Grid */
 
@@ -3037,10 +2482,6 @@ body.under-the-hood-active #stars3 {
    Deling av timeplan, sikkerhetskopi og feilskjerm
    ═══════════════════════════════════════════════════════════ */
 
-.share-qr-caption {
-    font-size: 0.82rem;
-    opacity: 0.7;
-}
 
 body.ui-light .class-tool-msg.is-error {
     color: #c62828;

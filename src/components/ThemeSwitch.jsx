@@ -23,7 +23,7 @@ export default function ThemeSwitch({ themeMode, onSetTheme }) {
     <div
       className={`theme-switch-control mode-${mode}`}
       id="theme-switch-control"
-      role="tablist"
+      role="radiogroup"
       aria-label="Velg tema"
     >
       <div
@@ -34,10 +34,10 @@ export default function ThemeSwitch({ themeMode, onSetTheme }) {
       >
         <span className="theme-switch-thumb-icon" id="theme-switch-thumb-icon">{icon}</span>
       </div>
-      <button type="button" className={`theme-step${mode === '3' ? ' active' : ''}`} data-mode="3" aria-label="Fargerik modus" onClick={e => { e.stopPropagation(); onSetTheme('3'); }} onMouseDown={e => e.stopPropagation()}>🌈</button>
-      <button type="button" className={`theme-step${mode === '0' ? ' active' : ''}`} data-mode="0" aria-label="Lys modus" onClick={e => { e.stopPropagation(); onSetTheme('0'); }} onMouseDown={e => e.stopPropagation()}>☀</button>
-      <button type="button" className={`theme-step${mode === '1' ? ' active' : ''}`} data-mode="1" aria-label="Mørk modus" onClick={e => { e.stopPropagation(); onSetTheme('1'); }} onMouseDown={e => e.stopPropagation()}>☾</button>
-      <button type="button" className={`theme-step${mode === '2' ? ' active' : ''}`} data-mode="2" aria-label="Stjernemodus" onClick={e => { e.stopPropagation(); onSetTheme('2'); }} onMouseDown={e => e.stopPropagation()}>✦</button>
+      <button type="button" role="radio" aria-checked={mode === '3'} className={`theme-step${mode === '3' ? ' active' : ''}`} data-mode="3" aria-label="Fargerik modus" title="Fargerik modus" onClick={e => { e.stopPropagation(); onSetTheme('3'); }} onMouseDown={e => e.stopPropagation()}>🌈</button>
+      <button type="button" role="radio" aria-checked={mode === '0'} className={`theme-step${mode === '0' ? ' active' : ''}`} data-mode="0" aria-label="Lys modus" title="Lys modus" onClick={e => { e.stopPropagation(); onSetTheme('0'); }} onMouseDown={e => e.stopPropagation()}>☀</button>
+      <button type="button" role="radio" aria-checked={mode === '1'} className={`theme-step${mode === '1' ? ' active' : ''}`} data-mode="1" aria-label="Mørk modus" title="Mørk modus" onClick={e => { e.stopPropagation(); onSetTheme('1'); }} onMouseDown={e => e.stopPropagation()}>☾</button>
+      <button type="button" role="radio" aria-checked={mode === '2'} className={`theme-step${mode === '2' ? ' active' : ''}`} data-mode="2" aria-label="Stjernemodus" title="Stjernemodus" onClick={e => { e.stopPropagation(); onSetTheme('2'); }} onMouseDown={e => e.stopPropagation()}>✦</button>
     </div>
   );
 }

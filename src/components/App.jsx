@@ -348,8 +348,6 @@ export default function App() {
         subjectName={currentSubject?.name || null}
       />
 
-      <div className="reset-button" id="reset-button" style={{ display: 'none' }}>Tilbakestill</div>
-
       <TimePicker
         open={timePickerOpen}
         onApply={(day, hour, minute) => {

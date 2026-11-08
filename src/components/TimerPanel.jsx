@@ -116,9 +116,16 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
     };
   }, [running, endAt, open]);
 
+  // Fokus bare idet panelet åpner: effekten under kjører på nytt for hver
+  // klokketikk (onClose er ny hver gang), og ville ellers stjålet fokus hvert sekund.
   useEffect(() => {
     if (!open) return undefined;
     const id = setTimeout(() => closeBtnRef.current?.focus(), 50);
+    return () => clearTimeout(id);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
     function onKey(e) {
       if (e.key !== 'Escape' || e.defaultPrevented) return;
       // Lukk ett lag om gangen: fargevelger, stor visning, så panelet
@@ -127,7 +134,7 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
       onClose();
     }
     window.addEventListener('keydown', onKey);
-    return () => { clearTimeout(id); window.removeEventListener('keydown', onKey); };
+    return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose, big, colorOpen]);
 
   const updateSettings = useCallback((patch) => {

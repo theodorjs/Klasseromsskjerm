@@ -78,10 +78,12 @@ export default function SplitScreen({
                 className={`class-card${isActiveClass ? ' active' : ''}`}
                 onClick={() => onSelectClass(className)}
               >
+                {isActiveClass && <span className="class-card-badge">Vises nå</span>}
                 <span className="class-card-title">{className}</span>
                 <label
                   className="class-select-toggle"
-                  aria-label="Velg klasse i tidslinjen"
+                  aria-label={`Vis ${className} i tidslinjen`}
+                  title={isTimelineActive ? 'Vises i tidslinjen' : 'Vis i tidslinjen'}
                   onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleTimelineClass(className); }}
                 >
                   <input

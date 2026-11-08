@@ -152,7 +152,7 @@ export default function Timeline({
                           </div>
                         );
                       })}
-                      <div className="time">{event.time}-{event.end || formatMinutesAsTime(event.end)}</div>
+                      <div className="time">{event.time}–{formatMinutesAsTime(event.end)}</div>
                     </div>
                   </div>
                 );

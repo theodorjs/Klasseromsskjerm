@@ -133,7 +133,6 @@ export default function Toolbox({
         {/* Theme Switch */}
         <div className="toolbox-item theme-switch-tool" id="tool-mode" onClick={e => e.stopPropagation()}>
           <ThemeSwitch themeMode={themeMode} onSetTheme={mode => { onSetTheme(mode); resetTimer(); }} />
-          <div className="mode-toggle" id="mode-toggle" aria-hidden="true"></div>
         </div>
 
         {/* Timer */}

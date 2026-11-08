@@ -13,11 +13,9 @@ export default function StatusBar({ currentDay, currentHour, currentMinute, date
         :<span id="minute-display" data-changed={isSim ? "true" : "false"}>{String(currentMinute).padStart(2, '0')}</span>
         {isSim && (
           <>
-            <span className="sim-indicator" style={{ display: 'inline-flex' }}>
-              {currentDay} {String(currentHour).padStart(2, '0')}:{String(currentMinute).padStart(2, '0')} (simulert)
-            </span>
-            <button className="sim-reset-btn" style={{ display: 'inline-flex' }} onClick={onResetSim}>
-              Tilbakestill
+            <span className="sim-indicator" title="Klokka viser en valgt tid, ikke nå">Simulert tid</span>
+            <button type="button" className="k-btn k-btn--tilbake k-btn--liten" onClick={onResetSim}>
+              Tilbake til nå
             </button>
           </>
         )}
