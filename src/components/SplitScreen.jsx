@@ -107,12 +107,10 @@ export default function SplitScreen({
             {currentClassName && classes[currentClassName] && (
               <section className="k-group" aria-label={`Verktøy for ${currentClassName}`}>
                 <h3 className="k-group-title">Denne klassen: {currentClassName}</h3>
-                <div className="k-group-row">
+                <div className="k-group-grid">
                   <button className="k-btn k-btn--rediger" id="edit-schedule-btn" onClick={() => setView('scheduleEditor')}>🖊 Rediger timeplan</button>
                   <button className="k-btn k-btn--regnbue" id="subject-color-btn" onClick={() => setView('subjectColors')}>🎨 Fagfarger</button>
-                </div>
-                <div className="k-group-row">
-                  <button className="k-btn k-btn--navn k-btn--liten" id="rename-class-btn" onClick={() => {
+                  <button className="k-btn k-btn--navn" id="rename-class-btn" onClick={() => {
                     const oldName = currentClassName;
                     const input = prompt("Nytt navn på klassen:", oldName);
                     if (input === null) return;
@@ -122,7 +120,7 @@ export default function SplitScreen({
                     if (classes[newName]) { alert("En klasse med dette navnet finnes allerede."); return; }
                     onRenameClass(oldName, newName);
                   }}>✎ Gi nytt navn</button>
-                  <button className="k-btn k-btn--slett k-btn--liten" id="delete-class-btn" onClick={() => {
+                  <button className="k-btn k-btn--slett" id="delete-class-btn" onClick={() => {
                     const names = Object.keys(classes);
                     if (names.length <= 1) { alert("Du må ha minst én klasse."); return; }
                     if (confirm(`Slette klassen "${currentClassName}"?`)) {
@@ -150,14 +148,14 @@ export default function SplitScreen({
 
             <section className="k-group" aria-label="Deling og sikkerhetskopi">
               <h3 className="k-group-title">Deling og sikkerhetskopi</h3>
-              <div className="k-group-row">
+              <div className="k-group-grid">
                 {currentClassName && classes[currentClassName] && (
-                  <button className="k-btn k-btn--liten" id="share-class-btn" onClick={onOpenShare}>🔗 Del timeplan</button>
+                  <button className="k-btn" id="share-class-btn" onClick={onOpenShare}>🔗 Del timeplan</button>
                 )}
-                <button className="k-btn k-btn--liten" id="backup-download-btn" onClick={handleDownloadBackup}>⬇ Last ned sikkerhetskopi</button>
-                <button className="k-btn k-btn--liten" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}>⬆ Gjenopprett fra fil</button>
+                <button className="k-btn" id="backup-download-btn" onClick={handleDownloadBackup}>⬇ Sikkerhetskopi</button>
+                <button className="k-btn" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}>⬆ Gjenopprett</button>
                 {canUndoImport && lastImportInfo && (
-                  <button className="k-btn k-btn--liten" id="undo-import-btn" onClick={() => {
+                  <button className="k-btn" id="undo-import-btn" onClick={() => {
                     const when = lastImportInfo.at
                       ? new Date(lastImportInfo.at).toLocaleString('no-NO', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
                       : '';
@@ -168,7 +166,7 @@ export default function SplitScreen({
                       onUndoImport();
                       setDataMessage({ text: 'Forrige timeplan er lagt tilbake.', kind: 'ok' });
                     }
-                  }}>↩ Angre mottatt timeplan</button>
+                  }}>↩ Angre mottatt</button>
                 )}
               </div>
               <input

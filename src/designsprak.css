@@ -32,6 +32,11 @@ body {
     --slett: #EF5350;      --slett-tekst: #0E1620;
     --tilbake: #64B5F6;    --tilbake-tekst: #0E1620;
     --advarsel-tekst: #FFC107;
+    --ny-tint: rgba(67, 160, 71, 0.20);
+    --rediger-tint: rgba(255, 138, 80, 0.20);
+    --navn-tint: rgba(255, 193, 7, 0.18);
+    --slett-tint: rgba(239, 83, 80, 0.16);
+    --tilbake-tint: rgba(100, 181, 246, 0.20);
     --noytral-knapp: #313945; --noytral-knapp-tekst: #EEF2F6;
     --fokus: #8FD3FF;
 
@@ -68,6 +73,11 @@ body.ui-light {
     --slett: #C62828;      --slett-tekst: #FFFFFF;
     --tilbake: #1565C0;    --tilbake-tekst: #FFFFFF;
     --advarsel-tekst: #8A5A00;
+    --ny-tint: rgba(46, 125, 50, 0.14);
+    --rediger-tint: rgba(180, 83, 9, 0.14);
+    --navn-tint: rgba(249, 168, 37, 0.22);
+    --slett-tint: rgba(198, 40, 40, 0.10);
+    --tilbake-tint: rgba(21, 101, 192, 0.12);
     --noytral-knapp: #FFFFFF; --noytral-knapp-tekst: #1C2735;
     --fokus: #1565C0;
 
@@ -112,19 +122,28 @@ body.ui-light {
 
 .k-btn--liten { min-height: 36px; padding: 6px 12px; font-size: 0.9rem; border-radius: var(--radius-s); }
 
-.k-btn--ny       { background: var(--ny);       color: var(--ny-tekst);       border-color: transparent; }
-.k-btn--rediger  { background: var(--rediger);  color: var(--rediger-tekst);  border-color: transparent; }
-.k-btn--navn     { background: var(--navn);     color: var(--navn-tekst);     border-color: transparent; }
-.k-btn--tilbake  { background: var(--tilbake);  color: var(--tilbake-tekst);  border-color: transparent; }
+/* Fargen er et signal, ikke maling: svak tone i bakgrunnen og farget kant.
+   Bare den ene hovedhandlingen i et bilde fylles helt (.k-btn--fylt). */
+.k-btn--ny       { --k: var(--ny);      --k-tint: var(--ny-tint);      --k-tekst: var(--ny-tekst); }
+.k-btn--rediger  { --k: var(--rediger); --k-tint: var(--rediger-tint); --k-tekst: var(--rediger-tekst); }
+.k-btn--navn     { --k: var(--navn);    --k-tint: var(--navn-tint);    --k-tekst: var(--navn-tekst); }
+.k-btn--tilbake  { --k: var(--tilbake); --k-tint: var(--tilbake-tint); --k-tekst: var(--tilbake-tekst); }
+.k-btn--slett    { --k: var(--slett);   --k-tint: var(--slett-tint);   --k-tekst: var(--slett-tekst); }
 
-/* Slett: kontur, aldri fylt, så den ikke trykkes ved et uhell */
-.k-btn--slett {
-    background: transparent;
-    color: var(--slett);
-    border: 2px solid var(--slett);
-    box-shadow: none;
+.k-btn--ny, .k-btn--rediger, .k-btn--navn, .k-btn--tilbake, .k-btn--slett {
+    background-color: var(--noytral-knapp);
+    background-image: linear-gradient(var(--k-tint), var(--k-tint));
+    border: 1.5px solid var(--k);
+    color: var(--tekst);
 }
-.k-btn--slett:hover:not(:disabled) { background: rgba(239, 83, 80, 0.12); filter: none; }
+.k-btn--fylt, .k-btn--fylt:hover:not(:disabled) {
+    background-color: var(--k);
+    background-image: none;
+    border-color: transparent;
+    color: var(--k-tekst);
+}
+/* Slett er aldri fylt uten at læreren har slått noe på (viskelæret) */
+.k-btn--slett { box-shadow: none; }
 
 /* Fagfarger: diagonal regnbue av selve fagfargene */
 .k-btn--regnbue {
@@ -165,6 +184,16 @@ body.ui-light {
     justify-content: center;
     gap: 10px;
 }
+
+/* Knapper som hører sammen får samme størrelse i et rutenett med to kolonner */
+.k-group-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+}
+.k-group-grid .k-btn { width: 100%; min-height: 52px; white-space: normal; text-align: center; }
+.k-group-grid .k-btn:only-child { grid-column: 1 / -1; }
 
 /* ─── (i) Forklaringer ───────────────────────────────────────────── */
 
@@ -345,13 +374,16 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
 .tt-device.is-done .tt-readout-status { color: var(--slett); }
 
 .tt-controls {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 0.9fr;
     gap: 10px;
-    justify-content: center;
     width: 100%;
+    padding: 0 12px; /* samme innerkant som innstillingsrammen under */
+    box-sizing: border-box;
     margin-top: 6px;
 }
-.tt-main-btn { min-width: 150px; font-size: 1.1rem; min-height: 52px; }
+.tt-controls .k-btn { min-width: 0; padding-left: 10px; padding-right: 10px; }
+.tt-main-btn { font-size: 1.1rem; min-height: 52px; }
 
 /* Innstillinger */
 .tt-settings {
@@ -452,7 +484,53 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
 .tt-seg.is-active { background: var(--tekst); color: var(--instrument); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); }
 .tt-seg:focus-visible { outline: 3px solid var(--fokus); outline-offset: 1px; }
 
-.tt-color { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.tt-row-skive { grid-template-columns: 56px minmax(0, 1fr) auto auto; gap: 8px; }
+.tt-row-skive .tt-seg { white-space: nowrap; font-size: 0.82rem; padding: 4px 4px; }
+.tt-round {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument-3);
+    color: var(--tekst);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18), inset 0 1px 0 var(--instrument-lys);
+    position: relative;
+    padding: 0;
+}
+.tt-round:active { box-shadow: var(--trykk-inn); transform: scale(0.96); }
+.tt-round:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+.tt-color-btn { --disc: #E8412C; }
+.tt-color-fill {
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    background: var(--disc);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.tt-color-glyph {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--instrument-3);
+    border: 1px solid var(--instrument-kant);
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tt-bell { color: var(--tekst-svak); filter: grayscale(1); opacity: 0.7; }
+.tt-bell.is-on { color: var(--tekst); filter: none; opacity: 1; border-color: var(--navn); box-shadow: 0 0 0 3px var(--navn-tint), 0 4px 10px rgba(0, 0, 0, 0.18); }
+
+.tt-color { position: relative; display: flex; }
 .tt-color-chip {
     display: inline-flex;
     align-items: center;
@@ -480,11 +558,22 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
     flex: none;
 }
 .tt-color-pop {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px); /* åpner oppover, så den holder seg innenfor panelet */
+    z-index: 5;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 10px;
-    flex-wrap: wrap;
+    padding: 12px;
+    border-radius: var(--radius-m);
+    background: var(--instrument);
+    border: 1px solid var(--instrument-kant);
+    box-shadow: var(--instrument-skygge);
+    min-width: 220px;
 }
+.tt-color-now { font-size: 0.85rem; font-weight: 700; color: var(--tekst-dempet); }
 .tt-color-pick {
     display: inline-flex;
     align-items: center;

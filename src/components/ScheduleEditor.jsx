@@ -615,7 +615,7 @@ export default function ScheduleEditor({
 
   /* ── Hjelpetekst som følger det læreren gjør ── */
   const hint = erase
-    ? 'Slette-modus: trykk på en celle for å tømme den.'
+    ? 'Viskelæret er på: trykk på en celle for å tømme den.'
     : active
       ? `Trykk på cellene som skal ha «${acSub?.name}». Trykk på faget igjen for å legge fra deg penselen.`
       : 'Velg et fag, og trykk så på cellene. Trykk på en fylt celle uten fag valgt for å dele den.';
@@ -648,7 +648,7 @@ export default function ScheduleEditor({
           )}
         </div>
         <div className="se-header-right">
-          <button type="button" className={`k-btn k-btn--ny${saved ? ' is-saved' : ''}`} onClick={handleSave}>
+          <button type="button" className={`k-btn k-btn--ny k-btn--fylt${saved ? ' is-saved' : ''}`} onClick={handleSave}>
             {saved ? "✓ Lagret" : "Lagre timeplanen"}
           </button>
         </div>
@@ -672,15 +672,16 @@ export default function ScheduleEditor({
           </div>
         </section>
         <section className="se-group">
-          <h3 className="k-group-title">Tegn</h3>
+          <h3 className="k-group-title">Male</h3>
           <div className="se-group-row">
             <button
               type="button"
-              className={`k-btn k-btn--slett k-btn--liten${erase ? ' is-on' : ''}`}
+              className={`k-btn k-btn--slett k-btn--liten${erase ? ' k-btn--fylt' : ''}`}
               aria-pressed={erase}
+              title="Viskelæret tømmer cellene du trykker på"
               onClick={() => { setErase(e => !e); setActive(null); setFocus(null); }}
             >
-              🗑 {erase ? "Slette-modus er på" : "Slette-modus"}
+              🧽 {erase ? "Viskelæret er på" : "Viskelær"}
             </button>
           </div>
         </section>

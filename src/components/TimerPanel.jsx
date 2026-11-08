@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import TimeTimerDial from './TimeTimerDial.jsx';
-import Info from './Info.jsx';
 import { normalizeHexColor } from '../utils/color.js';
 import {
   loadTimerSettings, saveTimerSettings,
@@ -209,7 +208,7 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
 
             <div className="tt-controls" role="group" aria-label="Styr nedtelleren">
               {!running && (
-                <button type="button" className="k-btn k-btn--ny tt-main-btn" id="timer-start" onClick={start}>
+                <button type="button" className="k-btn k-btn--ny k-btn--fylt tt-main-btn" id="timer-start" onClick={start}>
                   {paused ? '▶ Fortsett' : done ? '▶ Start på nytt' : '▶ Start'}
                 </button>
               )}
@@ -245,29 +244,28 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
               ))}
             </div>
 
-            <div className="tt-row">
+            <div className="tt-row tt-row-skive">
               <span className="tt-row-label">Skive</span>
-              <div className="tt-segment" role="group" aria-label="Hvordan skiva skalerer">
-                <button type="button" aria-pressed={settings.mode === 'fit'} className={`tt-seg${settings.mode === 'fit' ? ' is-active' : ''}`} onClick={() => updateSettings({ mode: 'fit' })}>Full ved start</button>
-                <button type="button" aria-pressed={settings.mode === 'fixed60'} className={`tt-seg${settings.mode === 'fixed60' ? ' is-active' : ''}`} onClick={() => updateSettings({ mode: 'fixed60' })}>Alltid 60 min</button>
+              <div className="tt-segment" role="group" aria-label="Skala på skiva">
+                <button type="button" aria-pressed={settings.mode === 'fit'} className={`tt-seg${settings.mode === 'fit' ? ' is-active' : ''}`} title="Hele skiva tilsvarer tiden du har valgt" onClick={() => updateSettings({ mode: 'fit' })}>Valgt tid</button>
+                <button type="button" aria-pressed={settings.mode === 'fixed60'} className={`tt-seg${settings.mode === 'fixed60' ? ' is-active' : ''}`} title="Skiva er alltid 60 minutter, som den fysiske" onClick={() => updateSettings({ mode: 'fixed60' })}>60 min</button>
               </div>
-            </div>
-
-            <div className="tt-row">
-              <span className="tt-row-label">Farge</span>
               <div className="tt-color">
                 <button
                   type="button"
-                  className="tt-color-chip"
+                  className="tt-round tt-color-btn"
+                  style={{ '--disc': discColor }}
                   aria-expanded={colorOpen}
+                  aria-label={`Farge på skiva (${colorLabel}). Endre`}
+                  title={colorLabel}
                   onClick={() => setColorOpen(v => !v)}
-                  title="Endre fargen på skiva"
                 >
-                  <span className="tt-swatch" style={{ background: discColor }} aria-hidden="true" />
-                  <span>{colorLabel}</span>
+                  <span className="tt-color-fill" aria-hidden="true" />
+                  <span className="tt-color-glyph" aria-hidden="true">🎨</span>
                 </button>
                 {colorOpen && (
                   <div className="tt-color-pop">
+                    <span className="tt-color-now">{colorLabel}</span>
                     <label className="tt-color-pick">
                       <input
                         type="color"
@@ -283,24 +281,18 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
                   </div>
                 )}
               </div>
-            </div>
-
-            <div className="tt-row">
-              <span className="tt-row-label" id="tt-lyd-label">Lyd</span>
               <button
                 type="button"
-                className={`tt-toggle${settings.sound ? ' is-on' : ''}`}
+                className={`tt-round tt-bell${settings.sound ? ' is-on' : ''}`}
                 role="switch"
                 aria-checked={settings.sound}
                 aria-label="Lyd når tiden er ute"
+                title={settings.sound ? 'Klokke når tiden er ute. Trykk for å slå av.' : 'Stille. Trykk for å slå på klokka.'}
                 onClick={() => { primeTimerAudio(); updateSettings({ sound: !settings.sound }); }}
               >
-                <span className="tt-toggle-knob" aria-hidden="true" />
-                <span aria-hidden="true">{settings.sound ? 'Klokke når tiden er ute' : 'Stille'}</span>
+                <span aria-hidden="true">{settings.sound ? '🔔' : '🔕'}</span>
               </button>
             </div>
-
-            <Info>Skiva er full når du starter og krymper mot null, uansett om du har satt 5 eller 60 minutter. Velg «Alltid 60 min» for å få en skive som ligner den fysiske.</Info>
           </div>
         </div>
       </div>
