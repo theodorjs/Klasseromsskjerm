@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { computeTimerGradientColors, normalizeHexColor, TIMER_GRADIENT_DEFAULT } from '../utils/color.js';
+import { safeGetItem, safeSetItem } from '../utils/storage.js';
 
 const TIMER_GRADIENT_KEY = 'timerGradientBaseColor';
 const CIRCUMFERENCE = 2 * Math.PI * 111.5;
@@ -12,7 +13,7 @@ export default function TimerPanel({ open, onClose }) {
   const [remainingMs, setRemainingMs] = useState(0);
   const [totalMs, setTotalMs] = useState(0);
   const [gradientColor, setGradientColor] = useState(() => {
-    const saved = localStorage.getItem(TIMER_GRADIENT_KEY);
+    const saved = safeGetItem(TIMER_GRADIENT_KEY);
     return normalizeHexColor(saved) || TIMER_GRADIENT_DEFAULT;
   });
   const [gradientControlOpen, setGradientControlOpen] = useState(false);
@@ -101,7 +102,7 @@ export default function TimerPanel({ open, onClose }) {
   function handleGradientChange(color) {
     const normalized = normalizeHexColor(color) || TIMER_GRADIENT_DEFAULT;
     setGradientColor(normalized);
-    localStorage.setItem(TIMER_GRADIENT_KEY, normalized);
+    safeSetItem(TIMER_GRADIENT_KEY, normalized);
   }
 
   let centerClass = '';

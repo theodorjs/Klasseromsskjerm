@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { isClassMultiGrade } from '../utils/schedule.js';
 import { getMinutesFromTime } from '../utils/time.js';
-import { colorMap } from '../data/constants.js';
+import { getSubject } from '../data/subjects.js';
 
 /* ─── Konstanter ─────────────────────────────────────────── */
 
@@ -41,20 +41,16 @@ const FRAME0 = [
   {id:"l5",type:"lesson",label:"5. time",          start:"13:35",end:"14:35"},
 ];
 
-const SUBJ0 = [
-  {id:1,  name:"Norsk",            emoji:"📝", color: colorMap["Norsk"]             ?? "#EE4C17"},
-  {id:2,  name:"Matematikk",       emoji:"🔢", color: colorMap["Matematikk"]        ?? "#1384CF"},
-  {id:3,  name:"Engelsk",          emoji:"🌍", color: colorMap["Engelsk"]           ?? "#FF772E"},
-  {id:4,  name:"Naturfag",         emoji:"🔬", color: colorMap["Naturfag"]          ?? "#1A963B"},
-  {id:5,  name:"Samfunnsfag",      emoji:"🗺️", color: colorMap["Samfunnsfag"]       ?? "#E59C1F"},
-  {id:6,  name:"KRLE",             emoji:"✨", color: colorMap["KRLE"]              ?? "#AA3AB8"},
-  {id:7,  name:"Kunst og håndverk",emoji:"🎨", color: colorMap["Kunst og håndverk"] ?? "#9933FF"},
-  {id:8,  name:"Musikk",           emoji:"🎵", color: colorMap["Musikk"]            ?? "#C63398"},
-  {id:9,  name:"Kroppsøving",      emoji:"⚽", color: colorMap["Kroppsøving"]       ?? "#00CC00"},
-  {id:10, name:"Valgfag",          emoji:"🎯", color: colorMap["Valgfag"]           ?? "#7E2EAA"},
-  {id:11, name:"Leksehjelp",       emoji:"📚", color: colorMap["Leksehjelp"]        ?? "#0A8F7A"},
-  {id:12, name:"Språkfag",         emoji:"💬", color: colorMap["Språkfag"]          ?? "#F08A24"},
+/** Fagene som står i paletten fra start. Farge og emoji hentes fra subjects.js. */
+const DEFAULT_PALETTE = [
+  "Norsk", "Matematikk", "Engelsk", "Naturfag", "Samfunnsfag", "KRLE",
+  "Kunst og håndverk", "Musikk", "Kroppsøving", "Valgfag", "Leksehjelp", "Språkfag",
 ];
+
+const SUBJ0 = DEFAULT_PALETTE.map((name, i) => {
+  const { color, emoji } = getSubject(name);
+  return { id: i + 1, name, emoji, color };
+});
 
 const blankSched = fr => {
   const s = {};

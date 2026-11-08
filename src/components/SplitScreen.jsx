@@ -1,5 +1,7 @@
+import { useRef, useState } from 'react';
 import ScheduleEditor from './ScheduleEditor.jsx';
 import SubjectColorPicker from './SubjectColorPicker.jsx';
+import { downloadBackup, parseBackupFile, applyBackup } from '../utils/backup.js';
 
 export default function SplitScreen({
   open,
@@ -20,8 +22,47 @@ export default function SplitScreen({
   onPickColor,
   onGeneratePalette,
   onOpenColorModal,
+  onOpenShare,
+  canUndoImport,
+  lastImportInfo,
+  onUndoImport,
 }) {
+  const fileInputRef = useRef(null);
+  const [dataMessage, setDataMessage] = useState(null); // { text, kind: 'ok' | 'error' }
+
+  // Meldingen hører til økten i panelet, ikke til neste gang det åpnes
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (!open) setDataMessage(null);
+  }
+
   if (!open) return null;
+
+  function handleDownloadBackup() {
+    const ok = downloadBackup();
+    setDataMessage(ok
+      ? { text: 'Sikkerhetskopien er laget – sjekk Nedlastinger, og ta vare på filen et trygt sted.', kind: 'ok' }
+      : { text: 'Kunne ikke lage sikkerhetskopi i denne nettleseren.', kind: 'error' });
+  }
+
+  async function handleRestoreFile(event) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = parseBackupFile(text);
+      const when = parsed.exportedAt
+        ? new Date(parsed.exportedAt).toLocaleDateString('no-NO', { day: 'numeric', month: 'long', year: 'numeric' })
+        : 'ukjent dato';
+      const list = parsed.classNames.join(', ');
+      if (!confirm(`Gjenopprette ${parsed.classCount} ${parsed.classCount === 1 ? 'klasse' : 'klasser'} (${list}) fra sikkerhetskopi tatt ${when}?\n\nDagens oppsett på denne maskinen erstattes.`)) return;
+      applyBackup(parsed);
+    } catch (err) {
+      setDataMessage({ text: err?.message || 'Kunne ikke lese filen.', kind: 'error' });
+    }
+  }
 
   function renderClassGrid() {
     return (
@@ -98,6 +139,49 @@ export default function SplitScreen({
             </>
           )}
         </div>
+        {editPermission && (
+          <div className="class-tool-row">
+            {currentClassName && classes[currentClassName] && (
+              <button className="neumorphic-btn" id="share-class-btn" onClick={onOpenShare}>
+                🔗 Del timeplan
+              </button>
+            )}
+            <button className="neumorphic-btn" id="backup-download-btn" onClick={handleDownloadBackup}>
+              ⬇ Last ned sikkerhetskopi
+            </button>
+            <button className="neumorphic-btn" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}>
+              ⬆ Gjenopprett fra fil
+            </button>
+            {canUndoImport && lastImportInfo && (
+              <button className="neumorphic-btn" id="undo-import-btn" onClick={() => {
+                const when = lastImportInfo.at
+                  ? new Date(lastImportInfo.at).toLocaleString('no-NO', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+                  : '';
+                const what = lastImportInfo.replaced
+                  ? `Legge tilbake timeplanen «${lastImportInfo.name}» slik den var før den ble oppdatert fra lenke${when ? ` ${when}` : ''}?`
+                  : `Fjerne klassen «${lastImportInfo.name}» som ble lagt til fra lenke${when ? ` ${when}` : ''}?`;
+                if (confirm(what)) {
+                  onUndoImport();
+                  setDataMessage({ text: 'Forrige timeplan er lagt tilbake.', kind: 'ok' });
+                }
+              }}>
+                ↩ Angre mottatt timeplan
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              style={{ display: 'none' }}
+              onChange={handleRestoreFile}
+            />
+          </div>
+        )}
+        {editPermission && dataMessage && (
+          <p className={`class-tool-msg${dataMessage.kind === 'error' ? ' is-error' : ''}`} role="status">
+            {dataMessage.text}
+          </p>
+        )}
       </div>
     );
   }

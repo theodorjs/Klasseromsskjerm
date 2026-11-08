@@ -1,3 +1,39 @@
+import {
+  colorMap,
+  subjectMap,
+  pickSubjectColors,
+  pickSubjectEmojis,
+} from './subjects.js';
+
+// Fagfarger og fag-emoji bor i ./subjects.js. Re-eksportert her for
+// eksisterende importer.
+export { colorMap, subjectMap };
+
+/** Fagene i standardtimeplanen (farge og emoji hentes fra subjects.js). */
+const DEFAULT_CLASS_SUBJECTS = [
+  "Norsk",
+  "Matematikk",
+  "Engelsk",
+  "Naturfag",
+  "Samfunnsfag",
+  "KRLE",
+  "Kunst og håndverk",
+  "Musikk",
+  "Kroppsøving",
+  "Valgfag",
+  "Leksehjelp",
+  "Språkfag",
+  "Mat og helse",
+  "Utdanningsvalg",
+  "Arbeidslivsfag",
+];
+
+/** Engangsmigrering for 5. og 6. trinn: disse fagene får standardfarge. */
+export const LOWER_GRADE_STANDARD_COLORS = pickSubjectColors([
+  "Mat", "Pause", "Storefri", "Norsk", "Naturfag",
+  "Samfunnsfag", "Matematikk", "Musikk", "Engelsk",
+]);
+
 export const SCHOOL_DAY_FRAMES = [
   { key: 'lesson-1', type: 'lesson', start: '08:30', end: '09:30', label: '1. time' },
   { key: 'pause-1', type: 'break', start: '09:30', end: '09:40', activity: 'Pause', label: 'Lillefri' },
@@ -82,40 +118,9 @@ export const defaultClassTemplate = {
   },
   agendas: {},
   templates: {},
-  subjectColors: {
-    "Norsk": "#EE4C17",
-    "Matematikk": "#1384CF",
-    "Engelsk": "#FF772E",
-    "Naturfag": "#1A963B",
-    "Samfunnsfag": "#E59C1F",
-    "KRLE": "#AA3AB8",
-    "Kunst og håndverk": "#9933FF",
-    "Musikk": "#C63398",
-    "Kroppsøving": "#00CC00",
-    "Valgfag": "#7E2EAA",
-    "Leksehjelp": "#0A8F7A",
-    "Språkfag": "#F08A24",
-    "Mat og helse": "#FF3300",
-    "Utdanningsvalg": "#3B7EA6",
-    "Arbeidslivsfag": "#5E35B1"
-  },
-  subjectEmojis: {
-    "Norsk": "📝",
-    "Matematikk": "🔢",
-    "Engelsk": "🌍",
-    "Naturfag": "🔬",
-    "Samfunnsfag": "🗺️",
-    "KRLE": "✨",
-    "Kunst og håndverk": "🎨",
-    "Musikk": "🎵",
-    "Kroppsøving": "⚽",
-    "Valgfag": "🎯",
-    "Leksehjelp": "📚",
-    "Språkfag": "💬",
-    "Mat og helse": "🍳",
-    "Utdanningsvalg": "🧭",
-    "Arbeidslivsfag": "🛠️"
-  },
+  subjectColors: pickSubjectColors(DEFAULT_CLASS_SUBJECTS),
+  subjectEmojis: pickSubjectEmojis(DEFAULT_CLASS_SUBJECTS),
+
   customCountdowns: [],
   countdownsVisible: true
 };
@@ -129,67 +134,3 @@ export function cloneDefaultClass() {
   return JSON.parse(JSON.stringify(defaultClassTemplate));
 }
 
-export const subjectMap = {
-  "Andakt": { full: "Andakt", short: "Andakt", emoji: "✝️" },
-  "Matematikk": { full: "Matematikk", short: "Matte", emoji: "🔢" },
-  "Norsk": { full: "Norsk", short: "No", emoji: "🇳🇴" },
-  "KRLE": { full: "KRLE", short: "KRLE", emoji: "❤️" },
-  "Naturfag": { full: "Naturfag", short: "Natur", emoji: "🔬" },
-  "Fysak": { full: "Fysak", short: "Fys", emoji: "🤸‍♂️" },
-  "Fys.ak.": { full: "Fys.ak.", short: "Fys.ak.", emoji: "🤸‍♂️" },
-  "Gym": { full: "Gym", short: "Gym", emoji: "🏃‍♀️" },
-  "Kroppsøving": { full: "Kroppsøving", short: "Kroppsøving", emoji: "🏃‍♀️" },
-  "Musikk": { full: "Musikk", short: "Musikk", emoji: "🎶" },
-  "Engelsk": { full: "Engelsk", short: "En", emoji: "🇬🇧" },
-  "Språkfag": { full: "Språkfag", short: "Språk", emoji: "🗣️" },
-  "Samfunnsfag": { full: "Samfunnsfag", short: "Samf", emoji: "🌍" },
-  "Folkhelse & livsmestring": { full: "Folkhelse & livsmestring", short: "F.H.L.M", emoji: "🧠❤️" },
-  "Utdanningsvalg": { full: "Utdanningsvalg", short: "UDV", emoji: "🧭" },
-  "Valgfag": { full: "Valgfag", short: "Valg", emoji: "✨" },
-  "Leksehjelp": { full: "Leksehjelp", short: "Leksehjelp", emoji: "📚" },
-  "Kunst og håndverk": { full: "Kunst og håndverk", short: "K&H", emoji: "🎨" },
-  "Kunst og håndtverk": { full: "Kunst og håndtverk", short: "K&H", emoji: "🎨" },
-  "Mat og helse": { full: "Mat og helse", short: "M&H", emoji: "🌮" },
-  "Pause": { full: "Pause", short: "Pause", emoji: "⏸️" },
-  "Mat": { full: "Mat", short: "Mat", emoji: "🥪" },
-  "Storefri": { full: "Storefri", short: "Storefri", emoji: "😊" }
-};
-
-export const colorMap = {
-  "Andakt": "#7D308E",
-  "KRLE": "#AA3AB8",
-  "Norsk": "#EE4C17",
-  "Naturfag": "#1A963B",
-  "Matematikk": "#1384CF",
-  "Musikk": "#C63398",
-  "Engelsk": "#FF772E",
-  "Kroppsøving": "#00CC00",
-  "Språkfag": "#F08A24",
-  "Samfunnsfag": "#E59C1F",
-  "Folkhelse & livsmestring": "#CC3399",
-  "Utdanningsvalg": "#3B7EA6",
-  "Valgfag": "#7E2EAA",
-  "Leksehjelp": "#0A8F7A",
-  "Kunst og håndverk": "#9933FF",
-  "Gym": "#00CC00",
-  "Fysak": "#76D3A9",
-  "Fys.ak.": "#76D3A9",
-  "Mat og helse": "#FF3300",
-  "Kunst og håndtverk": "#9933FF",
-  "Pause": "#545454",
-  "Mat": "#262626",
-  "Storefri": "#2E2E2E",
-  "Arbeidslivsfag": "#5E35B1"
-};
-
-export const LOWER_GRADE_STANDARD_COLORS = {
-  "Mat": "#262626",
-  "Pause": "#545454",
-  "Storefri": "#2E2E2E",
-  "Norsk": "#EE4C17",
-  "Naturfag": "#1A963B",
-  "Samfunnsfag": "#E59C1F",
-  "Matematikk": "#1384CF",
-  "Musikk": "#C63398",
-  "Engelsk": "#FF772E"
-};

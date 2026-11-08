@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { safeGetItem, safeSetItem, sanitizeNoteHtml } from '../utils/storage.js';
 
 const NOTE_STORAGE_KEY = 'classroomNoteHtml';
 
@@ -44,7 +45,7 @@ export default function NotePanel({ open, onClose }) {
 
   useEffect(() => {
     if (editorRef.current) {
-      editorRef.current.innerHTML = localStorage.getItem(NOTE_STORAGE_KEY) || '';
+      editorRef.current.innerHTML = sanitizeNoteHtml(safeGetItem(NOTE_STORAGE_KEY) || '');
     }
   }, []);
 
@@ -65,7 +66,7 @@ export default function NotePanel({ open, onClose }) {
 
   function saveNote() {
     if (editorRef.current) {
-      localStorage.setItem(NOTE_STORAGE_KEY, editorRef.current.innerHTML);
+      safeSetItem(NOTE_STORAGE_KEY, editorRef.current.innerHTML);
     }
   }
 

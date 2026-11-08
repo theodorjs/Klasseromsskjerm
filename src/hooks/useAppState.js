@@ -22,21 +22,56 @@ import {
   normalizeScheduleEditorDraftForCompare,
   getActivitySubjectParts,
 } from '../utils/schedule.js';
+import { buildClassFromSharePayload } from '../utils/share.js';
+
+import { safeGetItem, safeSetItem, safeRemoveItem, stashRescuedData } from '../utils/storage.js';
+
+/** Ved import av en delt timeplan huskes forrige versjon her, så «Angre» virker også senere. */
+const LAST_IMPORT_KEY = 'klasseromData.sisteImport';
+
+function loadLastImport() {
+  try {
+    const raw = safeGetItem(LAST_IMPORT_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed.name === 'string' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
 
 function loadClasses() {
   let classes = {};
+  let savedData = null;
   try {
-    const savedData = localStorage.getItem('klasseromData');
+    savedData = safeGetItem('klasseromData');
     if (savedData) classes = JSON.parse(savedData);
   } catch (e) {
     console.error("Error parsing klasseromData", e);
+    // Aldri overskriv skadede data stille: ta vare på råteksten så den kan reddes.
+    stashRescuedData(savedData);
+    classes = {};
   }
 
-  if (!classes || Object.keys(classes).length === 0) {
+  // Klasser som ikke er objekter med en timeplan ville krasjet resten av
+  // oppstarten. Sett dem i karantene i stedet for å ta ned hele skjermen.
+  if (classes && typeof classes === 'object' && !Array.isArray(classes)) {
+    const brokenNames = Object.keys(classes).filter(name => {
+      const cd = classes[name];
+      return !cd || typeof cd !== 'object' || Array.isArray(cd)
+        || (cd.schedule !== undefined && (typeof cd.schedule !== 'object' || cd.schedule === null));
+    });
+    if (brokenNames.length) {
+      console.warn('Hopper over skadede klasser:', brokenNames);
+      stashRescuedData(savedData);
+      brokenNames.forEach(name => { delete classes[name]; });
+    }
+  }
+
+  if (!classes || typeof classes !== 'object' || Array.isArray(classes) || Object.keys(classes).length === 0) {
     classes = { [DEFAULT_CLASS_NAME]: cloneDefaultClass() };
     classes[DEFAULT_CLASS_NAME].name = DEFAULT_CLASS_NAME;
-    localStorage.setItem('klasseromData', JSON.stringify(classes));
-    localStorage.setItem('currentClassName', DEFAULT_CLASS_NAME);
+    safeSetItem('klasseromData', JSON.stringify(classes));
+    safeSetItem('currentClassName', DEFAULT_CLASS_NAME);
   }
 
   // Migration: 9A -> 7. og 8.
@@ -45,18 +80,20 @@ function loadClasses() {
     classes["7. og 8."] = classes["9A"];
     classes["7. og 8."].name = "7. og 8.";
     delete classes["9A"];
-    localStorage.setItem('klasseromData', JSON.stringify(classes));
-    const storedCurrentClassName = localStorage.getItem('currentClassName');
+    safeSetItem('klasseromData', JSON.stringify(classes));
+    const storedCurrentClassName = safeGetItem('currentClassName');
     if (!storedCurrentClassName || storedCurrentClassName === "9A") {
-      localStorage.setItem('currentClassName', "7. og 8.");
+      safeSetItem('currentClassName', "7. og 8.");
     }
     try {
-      const savedActive = JSON.parse(localStorage.getItem('activeTimelineClassNames') || '[]');
+      const savedActive = JSON.parse(safeGetItem('activeTimelineClassNames') || '[]');
       if (Array.isArray(savedActive)) {
         const migrated = savedActive.map(name => name === "9A" ? "7. og 8." : name);
-        localStorage.setItem('activeTimelineClassNames', JSON.stringify(migrated));
+        safeSetItem('activeTimelineClassNames', JSON.stringify(migrated));
       }
-    } catch (e) {}
+    } catch {
+      // ignorer ugyldig liste
+    }
   }
 
   // Migration: legacy 7. og 8. template
@@ -76,7 +113,7 @@ function loadClasses() {
       cd78.breaks = JSON.parse(JSON.stringify(upgraded.breaks));
       cd78.mainTimes = JSON.parse(JSON.stringify(upgraded.mainTimes));
       cd78.name = "7. og 8.";
-      localStorage.setItem('klasseromData', JSON.stringify(classes));
+      safeSetItem('klasseromData', JSON.stringify(classes));
     }
   }
 
@@ -121,7 +158,7 @@ function loadClasses() {
     });
 
     if (didRepair) {
-      localStorage.setItem('klasseromData', JSON.stringify(classes));
+      safeSetItem('klasseromData', JSON.stringify(classes));
     }
   })();
 
@@ -129,7 +166,7 @@ function loadClasses() {
 
   // Apply lower grade standard colors (one-time migration)
   const migrationKey = 'lowerGradeStandardColorsApplied_v1';
-  if (localStorage.getItem(migrationKey) !== 'true') {
+  if (safeGetItem(migrationKey) !== 'true') {
     let didChange = false;
     ["5. trinn", "6. trinn"].forEach((className) => {
       const cd = classes[className];
@@ -138,8 +175,8 @@ function loadClasses() {
       cd.subjectColors = { ...cd.subjectColors, ...LOWER_GRADE_STANDARD_COLORS };
       didChange = true;
     });
-    if (didChange) localStorage.setItem('klasseromData', JSON.stringify(classes));
-    localStorage.setItem(migrationKey, 'true');
+    if (didChange) safeSetItem('klasseromData', JSON.stringify(classes));
+    safeSetItem(migrationKey, 'true');
   }
 
   return classes;
@@ -148,13 +185,15 @@ function loadClasses() {
 function loadTempScheduleChanges() {
   let temp = { date: "", changes: {} };
   try {
-    const saved = sessionStorage.getItem('tempScheduleChanges');
+    const saved = safeGetItem('tempScheduleChanges', sessionStorage);
     if (saved) temp = JSON.parse(saved);
-  } catch (e) {}
+  } catch {
+    // start med tom liste
+  }
   const todayDate = new Date().toISOString().split('T')[0];
   if (temp.date !== todayDate) {
     temp = { date: todayDate, changes: {} };
-    sessionStorage.setItem('tempScheduleChanges', JSON.stringify(temp));
+    safeSetItem('tempScheduleChanges', JSON.stringify(temp), sessionStorage);
   }
   if (!temp.changes) temp.changes = {};
   return temp;
@@ -188,31 +227,33 @@ export function useAppState() {
 
   const [currentClassName, setCurrentClassNameState] = useState(() => {
     const c = loadClasses();
-    let name = localStorage.getItem('currentClassName') || Object.keys(c)[0];
+    let name = safeGetItem('currentClassName') || Object.keys(c)[0];
     if (!c[name]) name = Object.keys(c)[0];
     return name;
   });
 
   const [activeTimelineClassNames, setActiveTimelineClassNamesState] = useState(() => {
     const c = loadClasses();
-    let name = localStorage.getItem('currentClassName') || Object.keys(c)[0];
+    let name = safeGetItem('currentClassName') || Object.keys(c)[0];
     if (!c[name]) name = Object.keys(c)[0];
     let list = [];
     try {
-      const saved = JSON.parse(localStorage.getItem('activeTimelineClassNames') || '[]');
+      const saved = JSON.parse(safeGetItem('activeTimelineClassNames') || '[]');
       if (Array.isArray(saved)) list = saved;
-    } catch (e) {}
+    } catch {
+      // start med gjeldende klasse
+    }
     return normalizeActiveTimelineClassNames(list, c, name);
   });
 
   const [tempScheduleChanges, setTempScheduleChangesState] = useState(() => loadTempScheduleChanges());
-  const [editPermission, setEditPermissionState] = useState(() => sessionStorage.getItem('isTeacher') === 'true');
+  const [editPermission, setEditPermissionState] = useState(() => safeGetItem('isTeacher', sessionStorage) === 'true');
 
   // Simulated time: null values mean real time
   const [simState, setSimState] = useState({ simDay: null, simHour: null, simMinute: null });
 
   // Theme
-  const [themeMode, setThemeModeState] = useState(() => localStorage.getItem('preferredMode') || '2');
+  const [themeMode, setThemeModeState] = useState(() => safeGetItem('preferredMode') || '2');
 
   // UI panel visibility
   const [timerPanelOpen, setTimerPanelOpen] = useState(false);
@@ -234,11 +275,14 @@ export function useAppState() {
   // Agenda subject selection
   const [agendaSubject, setAgendaSubject] = useState('');
 
+  // Siste mottatte deling – gjør «Angre» mulig, også etter at dialogen er lukket
+  const [lastImportBackup, setLastImportBackup] = useState(() => loadLastImport());
+
   // Internal helper to save classes to state + localStorage
   const saveClasses = useCallback((newClasses) => {
     const copy = { ...newClasses };
     Object.values(copy).forEach(ensureClassData);
-    localStorage.setItem('klasseromData', JSON.stringify(copy));
+    safeSetItem('klasseromData', JSON.stringify(copy));
     setClassesState(copy);
     return copy;
   }, []);
@@ -246,7 +290,7 @@ export function useAppState() {
   const updateTempSchedule = useCallback((updater) => {
     setTempScheduleChangesState(prev => {
       const next = updater(prev);
-      sessionStorage.setItem('tempScheduleChanges', JSON.stringify(next));
+      safeSetItem('tempScheduleChanges', JSON.stringify(next), sessionStorage);
       return next;
     });
   }, []);
@@ -254,7 +298,7 @@ export function useAppState() {
   // Actions
   const selectClass = useCallback((name) => {
     setCurrentClassNameState(name);
-    localStorage.setItem('currentClassName', name);
+    safeSetItem('currentClassName', name);
 
     setClassesState(prev => {
       const cd = prev[name];
@@ -276,7 +320,7 @@ export function useAppState() {
       }
       setClassesState(cls => {
         const normalized = normalizeActiveTimelineClassNames(next, cls, name);
-        localStorage.setItem('activeTimelineClassNames', JSON.stringify(normalized));
+        safeSetItem('activeTimelineClassNames', JSON.stringify(normalized));
         return cls;
       });
       return next;
@@ -293,7 +337,7 @@ export function useAppState() {
         setCurrentClassNameState(curName => {
           if (curName === name) {
             const newCur = next[0];
-            localStorage.setItem('currentClassName', newCur);
+            safeSetItem('currentClassName', newCur);
             return newCur;
           }
           return curName;
@@ -310,7 +354,7 @@ export function useAppState() {
       }
       setClassesState(cls => {
         const normalized = normalizeActiveTimelineClassNames(next, cls, name);
-        localStorage.setItem('activeTimelineClassNames', JSON.stringify(normalized));
+        safeSetItem('activeTimelineClassNames', JSON.stringify(normalized));
         return cls;
       });
       return next;
@@ -337,24 +381,24 @@ export function useAppState() {
 
       const oldShiftKey = `paletteShiftIndex:${oldName}`;
       const newShiftKey = `paletteShiftIndex:${newName}`;
-      const shiftValue = localStorage.getItem(oldShiftKey);
+      const shiftValue = safeGetItem(oldShiftKey);
       if (shiftValue !== null) {
-        localStorage.setItem(newShiftKey, shiftValue);
+        safeSetItem(newShiftKey, shiftValue);
         localStorage.removeItem(oldShiftKey);
       }
 
-      localStorage.setItem('currentClassName', newName);
+      safeSetItem('currentClassName', newName);
       setCurrentClassNameState(newName);
 
       setActiveTimelineClassNamesState(tl => {
         const newTl = tl.map(n => n === oldName ? newName : n);
         const normalized = normalizeActiveTimelineClassNames(newTl, newClasses, newName);
-        localStorage.setItem('activeTimelineClassNames', JSON.stringify(normalized));
+        safeSetItem('activeTimelineClassNames', JSON.stringify(normalized));
         return normalized;
       });
 
       Object.values(newClasses).forEach(ensureClassData);
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, []);
@@ -367,19 +411,19 @@ export function useAppState() {
       delete newClasses[name];
       localStorage.removeItem(`paletteShiftIndex:${name}`);
       const nextName = Object.keys(newClasses)[0];
-      localStorage.setItem('currentClassName', nextName);
+      safeSetItem('currentClassName', nextName);
       setCurrentClassNameState(nextName);
       ensureClassData(newClasses[nextName]);
 
       setActiveTimelineClassNamesState(tl => {
         const newTl = tl.filter(n => n !== name);
         const normalized = normalizeActiveTimelineClassNames(newTl, newClasses, nextName);
-        localStorage.setItem('activeTimelineClassNames', JSON.stringify(normalized));
+        safeSetItem('activeTimelineClassNames', JSON.stringify(normalized));
         return normalized;
       });
 
       Object.values(newClasses).forEach(ensureClassData);
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, []);
@@ -394,7 +438,7 @@ export function useAppState() {
       newClasses[name].multiGradeLabels = getDefaultMultiGradeLabels(name);
       ensureClassData(newClasses[name]);
       Object.values(newClasses).forEach(ensureClassData);
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
     // selectClass will be called from the component after this
@@ -403,17 +447,17 @@ export function useAppState() {
   const setThemeMode = useCallback((mode) => {
     const m = String(mode);
     setThemeModeState(m);
-    localStorage.setItem('preferredMode', m);
+    safeSetItem('preferredMode', m);
   }, []);
 
   const grantEditPermission = useCallback(() => {
     setEditPermissionState(true);
-    sessionStorage.setItem('isTeacher', 'true');
+    safeSetItem('isTeacher', 'true', sessionStorage);
   }, []);
 
   const revokeEditPermission = useCallback(() => {
     setEditPermissionState(false);
-    sessionStorage.setItem('isTeacher', 'false');
+    safeSetItem('isTeacher', 'false', sessionStorage);
   }, []);
 
   const resetToRealTime = useCallback(() => {
@@ -438,7 +482,7 @@ export function useAppState() {
         cd.customCountdowns.push(payload);
       }
       cd.countdownsVisible = true;
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -450,7 +494,7 @@ export function useAppState() {
       if (!cd || !Array.isArray(cd.customCountdowns)) return prev;
       cd.customCountdowns.splice(index, 1);
       if (!cd.customCountdowns.length) cd.countdownsVisible = true;
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -461,7 +505,7 @@ export function useAppState() {
       const cd = newClasses[currentClassName];
       if (!cd) return prev;
       cd.countdownsVisible = cd.countdownsVisible === false;
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -480,7 +524,7 @@ export function useAppState() {
       } else {
         cd.agendas[subject].push(payload);
       }
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -489,9 +533,9 @@ export function useAppState() {
     setClassesState(prev => {
       const newClasses = { ...prev };
       const cd = newClasses[currentClassName];
-      if (!cd?.agendas?.[subject]?.[index] === undefined) return prev;
+      if (cd?.agendas?.[subject]?.[index] === undefined) return prev;
       cd.agendas[subject][index].completed = !cd.agendas[subject][index].completed;
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -502,7 +546,7 @@ export function useAppState() {
       const cd = newClasses[currentClassName];
       if (!cd?.agendas?.[subject]) return prev;
       cd.agendas[subject] = cd.agendas[subject].filter((_, i) => i !== index);
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -514,7 +558,7 @@ export function useAppState() {
       if (!cd) return prev;
       if (!cd.agendas) cd.agendas = {};
       cd.agendas[subject] = newItems;
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -526,7 +570,7 @@ export function useAppState() {
       if (!cd) return prev;
       if (!cd.agendas) cd.agendas = {};
       cd.agendas[subject] = [];
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -538,7 +582,7 @@ export function useAppState() {
       if (!cd?.agendas?.[subject]?.length) return prev;
       if (!cd.templates) cd.templates = {};
       cd.templates[subject] = JSON.parse(JSON.stringify(cd.agendas[subject]));
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -550,7 +594,7 @@ export function useAppState() {
       if (!cd?.templates?.[subject]) return prev;
       if (!cd.agendas) cd.agendas = {};
       cd.agendas[subject] = JSON.parse(JSON.stringify(cd.templates[subject]));
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -565,7 +609,7 @@ export function useAppState() {
       if (!cd.subjectEmojis) cd.subjectEmojis = {};
       cd.subjectColors[subject] = color;
       if (emoji !== undefined) cd.subjectEmojis[subject] = emoji;
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -579,7 +623,7 @@ export function useAppState() {
 
       const shiftKey = `paletteShiftIndex:${currentClassName}`;
       const paletteSize = Math.max(1, subjects.length);
-      const rawShift = parseInt(localStorage.getItem(shiftKey) || '0', 10);
+      const rawShift = parseInt(safeGetItem(shiftKey) || '0', 10);
       const currentShift = Number.isFinite(rawShift) ? ((rawShift % paletteSize) + paletteSize) % paletteSize : 0;
       const step = 360 / paletteSize;
       const startH = currentShift * step;
@@ -589,11 +633,73 @@ export function useAppState() {
       const newCd = newClasses[currentClassName];
       if (!newCd.subjectColors) newCd.subjectColors = {};
       subjects.forEach((subj, idx) => { newCd.subjectColors[subj] = palette[idx]; });
-      localStorage.setItem(shiftKey, String((currentShift + 1) % paletteSize));
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem(shiftKey, String((currentShift + 1) % paletteSize));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
+
+  /**
+   * Tar imot en delt timeplan (fra #del=-lenke). Erstatter timeplan, pauser,
+   * farger og emoji for klassen med samme navn – eller oppretter den – og
+   * beholder lokal agenda og nedtellinger. Returnerer { replaced }.
+   * Forrige versjon av akkurat denne klassen lagres, så «Angre» kan gjøres senere.
+   */
+  const importSharedClass = useCallback((payload) => {
+    const existing = Object.hasOwn(classes, payload.name) ? classes[payload.name] : null;
+    const built = buildClassFromSharePayload(payload, existing);
+    const newClasses = { ...classes, [payload.name]: built };
+    Object.values(newClasses).forEach(ensureClassData);
+
+    const backup = {
+      name: payload.name,
+      previous: existing ? JSON.parse(JSON.stringify(existing)) : null,
+      previousCurrentClassName: currentClassName,
+      previousActive: [...activeTimelineClassNames],
+      at: new Date().toISOString(),
+    };
+    setLastImportBackup(backup);
+    safeSetItem(LAST_IMPORT_KEY, JSON.stringify(backup));
+
+    safeSetItem('klasseromData', JSON.stringify(newClasses));
+    setClassesState(newClasses);
+    selectClass(payload.name);
+    return { replaced: !!existing };
+  }, [classes, currentClassName, activeTimelineClassNames, selectClass]);
+
+  /** Angrer bare den importerte klassen; alt annet som er gjort siden beholdes. */
+  const undoLastImport = useCallback(() => {
+    if (!lastImportBackup) return;
+    const { name, previous, previousCurrentClassName, previousActive } = lastImportBackup;
+    let restoredClasses = null;
+    setClassesState(prev => {
+      const next = { ...prev };
+      if (previous) next[name] = JSON.parse(JSON.stringify(previous));
+      else delete next[name];
+      if (!Object.keys(next).length) next[DEFAULT_CLASS_NAME] = cloneDefaultClass();
+      Object.values(next).forEach(ensureClassData);
+      safeSetItem('klasseromData', JSON.stringify(next));
+      restoredClasses = next;
+
+      const fallbackName = Object.hasOwn(next, previousCurrentClassName) ? previousCurrentClassName : Object.keys(next)[0];
+      setCurrentClassNameState(cur => {
+        const nextCur = Object.hasOwn(next, cur) && (previous || cur !== name) ? cur : fallbackName;
+        safeSetItem('currentClassName', nextCur);
+        setActiveTimelineClassNamesState(active => {
+          const base = previous ? active : active.filter(n => n !== name);
+          const source = base.length ? base : previousActive;
+          const normalized = normalizeActiveTimelineClassNames(source, next, nextCur);
+          safeSetItem('activeTimelineClassNames', JSON.stringify(normalized));
+          return normalized;
+        });
+        return nextCur;
+      });
+      return next;
+    });
+    setLastImportBackup(null);
+    safeRemoveItem(LAST_IMPORT_KEY);
+    return restoredClasses;
+  }, [lastImportBackup]);
 
   /**
    * Lagrer timeplan fra det nye visuelle ScheduleEditor-verktøyet.
@@ -644,7 +750,7 @@ export function useAppState() {
       cd.subjectEmojis = keptEmojis;
 
       Object.values(newClasses).forEach(ensureClassData);
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, []);
@@ -685,7 +791,7 @@ export function useAppState() {
       });
 
       Object.values(newClasses).forEach(ensureClassData);
-      localStorage.setItem('klasseromData', JSON.stringify(newClasses));
+      safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
   }, [currentClassName]);
@@ -741,6 +847,10 @@ export function useAppState() {
     loadAgendaTemplate,
     saveSubjectColor,
     generatePalette,
+    importSharedClass,
+    undoLastImport,
+    canUndoImport: !!lastImportBackup,
+    lastImportInfo: lastImportBackup ? { name: lastImportBackup.name, at: lastImportBackup.at, replaced: !!lastImportBackup.previous } : null,
     saveScheduleV2,
     saveScheduleFromDraft,
     buildScheduleEditorDraftFromClass: (cls, name) =>

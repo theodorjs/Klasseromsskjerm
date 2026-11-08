@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppState } from '../hooks/useAppState.js';
 import { getOsloTimeAndDay, getMinutesFromTime } from '../utils/time.js';
 import { getClassScheduleState, normalizeActiveTimelineClassNames, getTempScheduleKey } from '../utils/schedule.js';
@@ -14,6 +14,9 @@ import TimerPanel from './TimerPanel.jsx';
 import AgendaSidebar from './AgendaSidebar.jsx';
 import NotePanel from './NotePanel.jsx';
 import SplitScreen from './SplitScreen.jsx';
+import ShareModal from './ShareModal.jsx';
+import ReceiveShareModal from './ReceiveShareModal.jsx';
+import { readShareTokenFromLocation, clearShareHashFromLocation, decodeShareToken } from '../utils/share.js';
 import {
   EditModal,
   ActivityModal,
@@ -80,10 +83,38 @@ export default function App() {
     generatePalette,
     saveScheduleFromDraft,  // eslint-disable-line no-unused-vars
     saveScheduleV2,
+    importSharedClass,
+    undoLastImport,
+    canUndoImport,
+    lastImportInfo,
   } = state;
 
   // Clock tick state
   const [tick, setTick] = useState(0);
+
+  // Deling av timeplan via lenke
+  const [shareOpen, setShareOpen] = useState(false);
+  const [receiveState, setReceiveState] = useState(null); // { status, payload, error, replaced }
+
+  useEffect(() => {
+    // Kjøres ved oppstart og hver gang #-delen endres. Hashen fjernes med en
+    // gang, så StrictMode sin andre kjøring og en ny klikk på samme lenke
+    // begge oppfører seg riktig.
+    function handleIncomingLink() {
+      const token = readShareTokenFromLocation();
+      if (!token) return;
+      clearShareHashFromLocation();
+      try {
+        const payload = decodeShareToken(token);
+        setReceiveState({ status: 'ask', payload });
+      } catch (err) {
+        setReceiveState({ status: 'error', error: err?.message || 'Lenken kunne ikke leses.' });
+      }
+    }
+    handleIncomingLink();
+    window.addEventListener('hashchange', handleIncomingLink);
+    return () => window.removeEventListener('hashchange', handleIncomingLink);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => setTick(t => t + 1), 1000);
@@ -261,6 +292,35 @@ export default function App() {
         onPickColor={(subject) => setColorDetailModal({ subject })}
         onGeneratePalette={() => { generatePalette(); }}
         onOpenColorModal={(subject) => setColorDetailModal({ subject })}
+        onOpenShare={() => setShareOpen(true)}
+        canUndoImport={canUndoImport}
+        lastImportInfo={lastImportInfo}
+        onUndoImport={undoLastImport}
+      />
+
+      <ShareModal
+        open={shareOpen}
+        classData={currentClass}
+        className={currentClassName}
+        onClose={() => setShareOpen(false)}
+      />
+
+      <ReceiveShareModal
+        state={receiveState}
+        hasExisting={!!(receiveState?.payload && Object.hasOwn(classes, receiveState.payload.name))}
+        canUndo={canUndoImport}
+        onAccept={() => {
+          if (!receiveState?.payload) return;
+          try {
+            const { replaced } = importSharedClass(receiveState.payload);
+            setReceiveState(prev => ({ ...prev, status: 'done', replaced }));
+          } catch (err) {
+            console.error('Import av delt timeplan feilet:', err);
+            setReceiveState({ status: 'error', error: 'Kunne ikke legge til timeplanen.' });
+          }
+        }}
+        onUndo={() => { undoLastImport(); setReceiveState(null); }}
+        onClose={() => setReceiveState(null)}
       />
 
       <AgendaSidebar
