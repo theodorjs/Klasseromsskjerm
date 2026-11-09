@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--
+  Videresending til Klasseskjerm.
+
+  Denne filen hører hjemme som 404.html i et eget repo som heter nøyaktig
+  «theodorjs.github.io», med GitHub Pages slått på. GitHub viser den for alle
+  adresser på theodorjs.github.io som ikke finnes, og den sender disse videre
+  til https://theodorjs.github.io/Klasseskjerm/:
+    /Klasseromsskjerm/…  (gammel adresse, gamle hjemskjerm-ikoner og delte lenker)
+    /klasseskjerm/…      (liten forbokstav, eller annen blanding av store og små)
+  ?vegg=… og #del=… blir med, så delte timeplaner og veggskjerm-lenker virker.
+  Andre adresser får en vanlig «finnes ikke»-melding.
+-->
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Klasseskjerm</title>
+  <meta name="robots" content="noindex">
+  <script>
+    (function () {
+      var treff = /^\/(klasseromsskjerm|klasseskjerm)(\/.*)?$/i.exec(location.pathname);
+      if (treff) {
+        location.replace('/Klasseskjerm/' + location.search + location.hash);
+      } else {
+        document.documentElement.className = 'ukjent';
+      }
+    })();
+  </script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #1C2735; color: #EEF2F6; font: 600 1.1rem/1.5 -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    body { display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; box-sizing: border-box; }
+    a { color: #7FC4FF; }
+    .ukjent-tekst { display: none; }
+    html.ukjent .flytter-tekst { display: none; }
+    html.ukjent .ukjent-tekst { display: block; }
+  </style>
+</head>
+<body>
+  <p class="flytter-tekst">Klasseskjerm har ny adresse.<br><a href="/Klasseskjerm/">Gå til Klasseskjerm</a></p>
+  <p class="ukjent-tekst">Denne siden finnes ikke.<br><a href="/Klasseskjerm/">Gå til Klasseskjerm</a></p>
+</body>
+</html>
