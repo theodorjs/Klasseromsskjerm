@@ -6,6 +6,7 @@ import { getClassScheduleState, normalizeActiveTimelineClassNames, getTempSchedu
 import Stars from './Stars.jsx';
 import StatusBar from './StatusBar.jsx';
 import MainContainer from './MainContainer.jsx';
+import ElevPortrett from './ElevPortrett.jsx';
 import Timeline from './Timeline.jsx';
 import Toolbox from './Toolbox.jsx';
 import TimePicker from './TimePicker.jsx';
@@ -19,6 +20,13 @@ import ReceiveShareModal from './ReceiveShareModal.jsx';
 import { readShareTokenFromLocation, clearShareHashFromLocation, decodeShareToken } from '../utils/share.js';
 import { getCurrentSubjectColor } from '../utils/color.js';
 import WallScreen from './WallScreen.jsx';
+import ForsteMote from './ForsteMote.jsx';
+import { DagensTimeKort, PlanleggTimeDialog } from './DagensTime.jsx';
+import { useDagensTime, finnSynligTime, dagensDato } from '../hooks/useDagensTime.js';
+import { formatMinutesAsTime } from '../utils/time.js';
+import { formatExpandedActivityDisplay } from '../utils/schedule.js';
+import Presentasjon from './Presentasjon.jsx';
+import usePresentasjon from '../hooks/usePresentasjon.js';
 import { readWallModePreference, WALL_MODE_KEY } from '../utils/wallMode.js';
 import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
 import {
@@ -93,6 +101,11 @@ export default function App() {
     lastImportInfo,
   } = state;
 
+  // Dagens time: tittel, tid, mål og agenda på tavla
+  const dagensTime = useDagensTime();
+  const [planleggOpen, setPlanleggOpen] = useState(false);
+  const [planleggId, setPlanleggId] = useState(null);
+
   // Clock tick state
   const [tick, setTick] = useState(0);  // eslint-disable-line no-unused-vars
 
@@ -113,6 +126,9 @@ export default function App() {
     } catch { /* adressen lar seg ikke endre; visningen bytter uansett */ }
     setWallMode(false);
   }
+
+  // Vis for klassen: fullskjerm og ren visning med ett trykk, Esc tilbake
+  const { presenterer, startPresentasjon, avsluttPresentasjon } = usePresentasjon();
 
   // Deling av timeplan via lenke
   const [shareOpen, setShareOpen] = useState(false);
@@ -197,6 +213,28 @@ export default function App() {
     ? (currentClass?.subjectEmojis?.[colorModalSubject] || 'palette')
     : 'palette';
 
+  // Timen som står på tavla nå, og forslag til tid når en ny time settes opp
+  const synligTime = finnSynligTime(dagensTime.timer, dagensDato(), currentDay, currentMinutes);
+  const planleggEksisterende = planleggId ? (dagensTime.timer.find(t => t.id === planleggId) || null) : null;
+  function lagForslag() {
+    const okter = (primaryState?.normalizedDayEvents || []).filter(e => e.type === 'class');
+    const okt = okter.find(e => currentMinutes >= e.start && currentMinutes < e.end)
+      || okter.find(e => e.start > currentMinutes);
+    if (okt) {
+      return {
+        fra: formatMinutesAsTime(okt.start),
+        til: formatMinutesAsTime(okt.end),
+        fag: formatExpandedActivityDisplay(okt.displayActivity || okt.activity).split(' / ')[0],
+      };
+    }
+    const start = Math.min(23 * 60, Math.ceil((currentMinutes + 1) / 5) * 5);
+    return { fra: formatMinutesAsTime(start), til: formatMinutesAsTime(Math.min(start + 45, 23 * 60 + 59)), fag: '' };
+  }
+  function openPlanlegg(id) {
+    setPlanleggId(id ?? synligTime?.id ?? null);
+    setPlanleggOpen(true);
+  }
+
   // Handler: open edit modal from timeline
   function handleOpenEditModal({ eventKey, legacyEventKey, displayActivity, hasTempActivity }) {
     setEditModal({ eventKey, legacyEventKey, displayActivity, hasTempActivity });
@@ -280,6 +318,7 @@ export default function App() {
             themeMode={themeMode}
             onSetTheme={setThemeMode}
             onOpenTimer={() => setTimerPanelOpen(true)}
+            onOpenPlanlegg={() => openPlanlegg()}
             onOpenAgenda={() => setAgendaOpen(true)}
             onOpenNote={() => setNoteOpen(true)}
             onOpenClass={() => { setUnderTheHoodOpen(true); setUnderTheHoodView('classGrid'); }}
@@ -295,13 +334,43 @@ export default function App() {
             onAddCountdown={() => setCountdownModal({ index: null })}
             onToggleCountdownVisibility={toggleCountdownVisibility}
             onEnterWallMode={enterWallMode}
+            onPresent={startPresentasjon}
           />
-          <MainContainer
+          {synligTime ? (
+            <DagensTimeKort
+              time={synligTime}
+              minutter={currentMinutes}
+              onEndre={() => openPlanlegg(synligTime.id)}
+              onSkjul={() => dagensTime.skjulTime(synligTime.id)}
+              onVekslePunkt={(i) => dagensTime.vekslePunkt(synligTime.id, i)}
+            />
+          ) : (
+            <MainContainer
+              primaryState={primaryState}
+              displayStates={displayStates}
+              currentMinutes={currentMinutes}
+              currentSeconds={currentSeconds}
+              isWeekend={isWeekend}
+              currentDay={currentDay}
+            />
+          )}
+          <ElevPortrett
             primaryState={primaryState}
             displayStates={displayStates}
             currentMinutes={currentMinutes}
-            isWeekend={isWeekend}
+            currentSeconds={currentSeconds}
             currentDay={currentDay}
+            isWeekend={isWeekend}
+            classes={classes}
+            currentClassName={currentClassName}
+            tempScheduleChanges={tempScheduleChanges}
+            editPermission={editPermission}
+            onOpenEditModal={handleOpenEditModal}
+            countdowns={countdowns}
+            countdownsVisible={countdownsVisible}
+            onEditCountdown={(index) => setCountdownModal({ index })}
+            dagensTime={synligTime}
+            onOpenTimer={() => setTimerPanelOpen(true)}
           />
         </div>
 
@@ -325,6 +394,16 @@ export default function App() {
         </div>
       </div>
 
+      <ForsteMote
+        klassenavn={currentClassName}
+        skjult={!!receiveState || underTheHoodOpen}
+        onOpenPlanlegg={() => openPlanlegg()}
+        onOpenTimer={() => setTimerPanelOpen(true)}
+        onPresent={startPresentasjon}
+        onOpenNote={() => setNoteOpen(true)}
+        onOpenClass={() => { setUnderTheHoodOpen(true); setUnderTheHoodView('classGrid'); }}
+      />
+
       <StatusBar
         currentDay={currentDay}
         currentHour={currentHour}
@@ -346,6 +425,7 @@ export default function App() {
         onRequestOpen={() => setTimerPanelOpen(true)}
         subjectColor={currentSubject?.color || null}
         subjectName={currentSubject?.name || null}
+        lessonTitle={synligTime?.tittel || null}
       />
 
       <TimePicker
@@ -428,6 +508,39 @@ export default function App() {
         open={noteOpen}
         onClose={() => setNoteOpen(false)}
       />
+
+      <PlanleggTimeDialog
+        open={planleggOpen}
+        eksisterende={planleggEksisterende}
+        forslag={planleggOpen ? lagForslag() : null}
+        minutter={currentMinutes}
+        dag={currentDay}
+        onLagre={(time) => { dagensTime.lagreTime(time); setPlanleggOpen(false); }}
+        onSlett={(id) => { dagensTime.slettTime(id); setPlanleggOpen(false); }}
+        onAvbryt={() => setPlanleggOpen(false)}
+      />
+      {presenterer && (
+        <Presentasjon
+          primaryState={primaryState}
+          displayStates={displayStates}
+          currentMinutes={currentMinutes}
+          currentDay={currentDay}
+          currentTime={currentTime}
+          dateStr={dateStr}
+          isWeekend={isWeekend}
+          classes={classes}
+          activeTimelineClassNames={activeTimelineClassNames}
+          tempScheduleChanges={tempScheduleChanges}
+          realMinutes={realMinutes}
+          isSim={isSim}
+          themeMode={themeMode}
+          countdowns={countdowns}
+          countdownsVisible={countdownsVisible}
+          subjectColor={currentSubject?.color || null}
+          dagensTime={synligTime}
+          onExit={avsluttPresentasjon}
+        />
+      )}
 
       {/* Modals */}
       <EditModal

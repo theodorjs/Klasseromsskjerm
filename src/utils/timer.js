@@ -45,8 +45,12 @@ const DEFAULT_SETTINGS = {
   mode: 'fixed60',      // 'fixed60' (som den fysiske) | 'fit' (hele skiva = valgt tid)
   sound: true,
   colorOverride: null,  // hex eller null = følg faget
-  durationMs: 15 * 60 * 1000,
+  durationMs: 10 * 60 * 1000,
+  task: '',             // hva klassen skal gjøre, vist over stor visning
 };
+
+/** Lengste oppgavetekst over den store nedtelleren: én til to linjer på tavla. */
+export const TIMER_TASK_MAX = 90;
 
 export function loadTimerSettings() {
   try {
@@ -58,6 +62,7 @@ export function loadTimerSettings() {
       sound: parsed.sound !== false,
       colorOverride: normalizeHexColor(parsed.colorOverride) || null,
       durationMs: clampDuration(parsed.durationMs),
+      task: typeof parsed.task === 'string' ? parsed.task.slice(0, TIMER_TASK_MAX) : '',
     };
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -95,6 +100,27 @@ export function loadTimerRun() {
   } catch {
     return null;
   }
+}
+
+/** Hvor lenge «Tiden er ute» står etter at nedtelleren gikk ut (som i panelet). */
+export const TIMER_DONE_SHOWN_MS = 10 * 60 * 1000;
+
+/**
+ * Nedtelleren slik den er lagret nå, for visninger som bare leser den av
+ * (Vis for klassen, elevens iPad). Null når ingen nedteller går.
+ */
+export function readTimerStatus(now = Date.now()) {
+  const run = loadTimerRun();
+  if (!run) return null;
+  if (run.endAt !== null) {
+    if (run.endAt <= now) {
+      if (now - run.endAt > TIMER_DONE_SHOWN_MS) return null;
+      return { totalMs: run.totalMs, remainingMs: 0, done: true, paused: false };
+    }
+    return { totalMs: run.totalMs, remainingMs: run.endAt - now, done: false, paused: false };
+  }
+  const rest = Math.max(0, run.pausedRemainingMs || 0);
+  return { totalMs: run.totalMs, remainingMs: rest, done: rest <= 0, paused: rest > 0 };
 }
 
 export function saveTimerRun(run) {

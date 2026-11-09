@@ -2,29 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import ThemeSwitch from './ThemeSwitch.jsx';
 import Ikon from './Ikon.jsx';
 
-async function toggleFullscreen() {
-  const root = document.documentElement;
-  try {
-    const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
-    if (fsEl) {
-      if (document.exitFullscreen) await document.exitFullscreen();
-      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-    } else if (root.requestFullscreen) {
-      await root.requestFullscreen();
-    } else if (root.webkitRequestFullscreen) {
-      root.webkitRequestFullscreen();
-    } else {
-      alert('Fullskjerm støttes ikke her. På iPad: legg siden til på Hjem-skjermen og åpne den derfra.');
-    }
-  } catch (err) {
-    console.warn('Kunne ikke endre fullskjerm:', err);
-  }
-}
-
 export default function Toolbox({
   themeMode,
   onSetTheme,
   onOpenTimer,
+  onOpenPlanlegg,
   onOpenAgenda,
   onOpenNote,
   onOpenClass,
@@ -38,9 +20,9 @@ export default function Toolbox({
   onAddCountdown,
   onToggleCountdownVisibility,
   onEnterWallMode,
+  onPresent,
 }) {
   const [open, setOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
   const timerRef = useRef(null);
 
@@ -61,18 +43,6 @@ export default function Toolbox({
     if (open) resetTimer();
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [open]);
-
-  useEffect(() => {
-    function updateFs() {
-      setIsFullscreen(Boolean(document.fullscreenElement || document.webkitFullscreenElement));
-    }
-    document.addEventListener('fullscreenchange', updateFs);
-    document.addEventListener('webkitfullscreenchange', updateFs);
-    return () => {
-      document.removeEventListener('fullscreenchange', updateFs);
-      document.removeEventListener('webkitfullscreenchange', updateFs);
-    };
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -121,22 +91,37 @@ export default function Toolbox({
         role="button"
         aria-label={open ? 'Lukk verktøykassa' : 'Åpne verktøykassa'}
         aria-expanded={open}
-      ><Ikon navn="verktoykasse" /></div>
+      ><Ikon navn="verktoykasse" /><span className="toolbox-main-label">Verktøy</span></div>
 
-      <button
-        className={`toolbox-fullscreen${isFullscreen ? ' is-fullscreen' : ''}`}
-        id="tool-fullscreen"
-        type="button"
-        aria-label={isFullscreen ? 'Avslutt fullskjerm' : 'Fullskjerm'}
-        title={isFullscreen ? 'Avslutt fullskjerm' : 'Fullskjerm'}
-        onMouseDown={e => e.stopPropagation()}
-        onClick={e => { e.stopPropagation(); toggleFullscreen(); resetTimer(); }}
-      ><Ikon navn={isFullscreen ? 'minimize' : 'maximize'} /></button>
+      {/* Vis for klassen står alltid rett etter Verktøy: fullskjerm og ren elevvisning med ett trykk */}
+      {onPresent && (
+        <button
+          type="button"
+          className="presenter-knapp"
+          id="vis-for-klassen"
+          aria-label="Vis for klassen"
+          onMouseDown={e => e.stopPropagation()}
+          onClick={e => { e.stopPropagation(); closeToolbox(); onPresent(); }}
+          title="Fullskjerm for klassen, uten verktøyene. Esc for å gå tilbake."
+        >
+          <Ikon navn="presentation" /> <span>Vis for klassen</span>
+        </button>
+      )}
 
       <div className="toolbox-items">
         {/* Theme Switch */}
         <div className="toolbox-item theme-switch-tool" id="tool-mode" onClick={e => e.stopPropagation()}>
           <ThemeSwitch themeMode={themeMode} onSetTheme={mode => { onSetTheme(mode); resetTimer(); }} />
+        </div>
+
+        {/* Sett opp dagens time: tittel, tid, mål og agenda */}
+        <div className="toolbox-item toolbox-item--time" id="tool-plan" role="button" onClick={e => {
+          e.stopPropagation();
+          closeToolbox();
+          onOpenPlanlegg?.();
+        }}>
+          <span className="icon"><Ikon navn="clipboard-list" /></span>
+          <span className="label">Sett opp timen</span>
         </div>
 
         {/* Timer */}
@@ -146,7 +131,7 @@ export default function Toolbox({
           resetTimer();
         }}>
           <span className="icon"><Ikon navn="timer" /></span>
-          <span className="label">Timer</span>
+          <span className="label">Nedteller</span>
         </div>
 
         {/* Countdown */}

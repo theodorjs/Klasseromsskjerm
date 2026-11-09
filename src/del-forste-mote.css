@@ -1,0 +1,201 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Første møte: velkomstkortet og Verktøy-knappen med navn
+   ───────────────────────────────────────────────────────────────────
+   Kortet er et instrument (læreren tar på det), ikke glass. Det ligger
+   mellom «Akkurat nå» og tidslinja og sperrer ingenting.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Verktøy-knappen får navnet sitt, ikke bare kofferten ───────── */
+
+.toolbox-main {
+    width: auto;
+    min-width: 60px;
+    box-sizing: border-box;
+    padding: 0 20px 0 16px;
+    gap: 10px;
+}
+.toolbox-main-label {
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--tekst);
+}
+@media (max-width: 600px) {
+    .toolbox-main { padding: 0; width: 60px; }
+    .toolbox-main-label { display: none; }
+}
+
+/* ─── Velkomstkortet ─────────────────────────────────────────────── */
+
+/* Kortet har sitt eget «Nedteller»-valg; to like knapper oppå hverandre
+   (smale skjermer) skal det ikke bli */
+body.velkomst-aktiv .timer-launch { display: none; }
+
+
+.fm-kort {
+    position: fixed;
+    left: 50%;
+    bottom: 104px;               /* over tidslinja (62 px + 20 px luft) */
+    transform: translateX(-50%);
+    z-index: 4400;               /* under nedtellingskortene, panelene og verktøykassa */
+    box-sizing: border-box;
+    width: 1040px;
+    max-width: calc(100% - 48px);
+    padding: 18px 22px 20px;
+    border-radius: var(--radius-l);
+    background: var(--instrument);
+    border: 1px solid var(--instrument-kant);
+    box-shadow: var(--instrument-skygge), inset 0 1px 0 var(--instrument-lys);
+    color: var(--tekst);
+    text-align: left;
+    animation: fm-inn 0.35s ease-out both;
+}
+
+@keyframes fm-inn {
+    from { opacity: 0; transform: translate(-50%, 12px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.fm-topp {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+.fm-topp-tekst { min-width: 0; }
+.fm-skjul { flex: none; }
+.fm-tittel {
+    margin: 0 0 6px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--tekst);
+}
+.fm-ingress {
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.45;
+    color: var(--tekst-dempet);
+}
+.fm-ingress strong { color: var(--tekst); font-weight: 800; white-space: nowrap; }
+
+.fm-rad {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-bottom: 8px;
+}
+.fm-sporsmal {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--tekst-dempet);
+}
+
+.fm-valg {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.fm-knapp {
+    appearance: none;
+    -webkit-appearance: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 64px;
+    padding: 10px 14px;
+    border: 1px solid var(--instrument-kant);
+    border-radius: var(--radius-m);
+    background: var(--noytral-knapp);
+    color: var(--noytral-knapp-tekst);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18), inset 0 1px 0 var(--instrument-lys);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.fm-knapp:hover { filter: brightness(1.06); }
+.fm-knapp:active { transform: scale(0.97); box-shadow: var(--trykk-inn); }
+.fm-knapp:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+
+.fm-knapp-ikon { display: inline-flex; flex: none; font-size: 1.6rem; }
+.fm-knapp-tekst { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fm-knapp-tittel { font-size: 1.05rem; font-weight: 800; line-height: 1.2; }
+.fm-knapp-hint { font-size: 0.84rem; line-height: 1.25; color: var(--tekst-dempet); }
+
+/* Den ene hovedhandlingen fylles helt */
+.fm-knapp--hoved {
+    background: var(--ny);
+    border-color: var(--ny);
+    color: var(--ny-tekst);
+}
+.fm-knapp--hoved .fm-knapp-hint { color: var(--ny-tekst); opacity: 0.8; }
+
+.fm-hjelp {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.92rem;
+    color: var(--tekst-dempet);
+}
+.fm-merke {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--radius-s);
+    background: var(--instrument-3);
+    border: 1px solid var(--instrument-kant);
+    color: var(--tekst);
+    font-weight: 800;
+}
+
+/* iPad på høykant og smalere skjermer: tre og tre */
+@media (max-width: 1100px) {
+    .fm-valg { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .fm-knapp--hoved { grid-row: span 2; flex-direction: column; justify-content: center; text-align: center; }
+    .fm-knapp--hoved .fm-knapp-tekst { align-items: center; }
+    .fm-knapp--hoved .fm-knapp-ikon { font-size: 2.2rem; }
+}
+
+/* Lave skjermer (bærbar på projektor): kortere kort, så «Akkurat nå» får være i fred */
+@media (max-height: 860px) and (min-width: 1101px) {
+    .fm-kort { padding: 12px 18px 14px; bottom: 96px; }
+    .fm-topp { margin-bottom: 10px; align-items: center; }
+    .fm-tittel { font-size: 1.15rem; margin-bottom: 2px; }
+    .fm-ingress { font-size: 0.9rem; }
+    .fm-ekstra, .fm-klasse, .fm-rad { display: none; }
+    .fm-knapp { min-height: 50px; padding: 8px 12px; }
+    .fm-knapp-ikon { font-size: 1.35rem; }
+    .fm-knapp-hint { display: none; }
+}
+
+@media (max-height: 740px) and (min-width: 1101px) {
+    .fm-kort { padding: 10px 16px 10px; bottom: 88px; }
+    .fm-ingress { display: none; }
+    .fm-topp { margin-bottom: 8px; }
+    .fm-knapp { min-height: 44px; padding: 6px 12px; }
+}
+
+@media (max-width: 600px) {
+    .fm-kort { bottom: 92px; max-width: calc(100% - 24px); padding: 16px; }
+    .fm-topp { flex-wrap: wrap; }
+    .fm-valg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fm-knapp--hoved { grid-row: auto; grid-column: span 2; flex-direction: row; text-align: left; }
+    .fm-knapp--hoved .fm-knapp-tekst { align-items: flex-start; }
+    .fm-knapp-hint { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fm-kort { animation: none; }
+}
