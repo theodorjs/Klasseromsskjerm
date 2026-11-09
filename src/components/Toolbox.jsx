@@ -121,7 +121,7 @@ export default function Toolbox({
         role="button"
         aria-label={open ? 'Lukk verktøykassa' : 'Åpne verktøykassa'}
         aria-expanded={open}
-      ><Ikon navn="verktoykasse" /></div>
+      ><Ikon navn="verktoykasse" /><span className="toolbox-main-label">Verktøy</span></div>
 
       <button
         className={`toolbox-fullscreen${isFullscreen ? ' is-fullscreen' : ''}`}

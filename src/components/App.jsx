@@ -19,6 +19,7 @@ import ReceiveShareModal from './ReceiveShareModal.jsx';
 import { readShareTokenFromLocation, clearShareHashFromLocation, decodeShareToken } from '../utils/share.js';
 import { getCurrentSubjectColor } from '../utils/color.js';
 import WallScreen from './WallScreen.jsx';
+import ForsteMote from './ForsteMote.jsx';
 import { readWallModePreference, WALL_MODE_KEY } from '../utils/wallMode.js';
 import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
 import {
@@ -324,6 +325,15 @@ export default function App() {
           />
         </div>
       </div>
+
+      <ForsteMote
+        klassenavn={currentClassName}
+        skjult={!!receiveState || underTheHoodOpen}
+        onOpenTimer={() => setTimerPanelOpen(true)}
+        onOpenAgenda={() => setAgendaOpen(true)}
+        onOpenNote={() => setNoteOpen(true)}
+        onOpenClass={() => { setUnderTheHoodOpen(true); setUnderTheHoodView('classGrid'); }}
+      />
 
       <StatusBar
         currentDay={currentDay}
