@@ -146,7 +146,7 @@ export default function Toolbox({
           resetTimer();
         }}>
           <span className="icon"><Ikon navn="timer" /></span>
-          <span className="label">Timer</span>
+          <span className="label">Nedteller</span>
         </div>
 
         {/* Countdown */}

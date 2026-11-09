@@ -45,7 +45,7 @@ const DEFAULT_SETTINGS = {
   mode: 'fixed60',      // 'fixed60' (som den fysiske) | 'fit' (hele skiva = valgt tid)
   sound: true,
   colorOverride: null,  // hex eller null = følg faget
-  durationMs: 15 * 60 * 1000,
+  durationMs: 10 * 60 * 1000,
 };
 
 export function loadTimerSettings() {

@@ -1,0 +1,114 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Del: starte en nedteller
+   Nedtelleren har en synlig knapp på forsiden (samme plass som den lille
+   statusen når timeren går), og hurtigvalgene starter med ett trykk.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Knappen på forsiden: et instrument, samme plass som .timer-mini */
+.timer-launch {
+    position: fixed;
+    right: 35px;
+    bottom: 120px;
+    z-index: 2004;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 64px;
+    padding: 9px 24px 9px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument);
+    color: var(--tekst);
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: var(--instrument-skygge), inset 0 1px 0 var(--instrument-lys);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+.timer-launch-ikon {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ny);
+    color: var(--ny-tekst);
+    font-size: 1.5rem;
+    flex: none;
+}
+.timer-launch:active { box-shadow: var(--trykk-inn); transform: scale(0.97); }
+.timer-launch:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+
+/* Veggskjermen er bare til å lese; klassemenyen skal ikke dekkes */
+body.vegg-aktiv .timer-launch,
+body.under-the-hood-active .timer-launch { display: none !important; }
+
+/* Hurtigvalg: hvert tall starter nedtelleren med en gang */
+.tt-hurtig {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.tt-presets--start { gap: 8px; }
+.tt-preset--start {
+    min-height: 58px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 4px 0;
+    line-height: 1;
+    touch-action: manipulation;
+}
+.tt-preset-tall {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 1.25rem;
+    font-weight: 900;
+}
+.tt-preset-play {
+    width: 0.62em;
+    height: 0.62em;
+    color: var(--ny);
+    fill: currentColor;
+}
+.tt-preset-enhet {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--tekst-dempet);
+}
+/* Kompakt panel (iPad liggende): knappene holder likevel fingerstørrelse */
+@media (max-height: 880px) {
+    .timer-panel:not(.is-big) .tt-preset.tt-preset--start { min-height: 48px; }
+}
+
+/* Mens den går: et pulserende punkt og grønn status, så ingen er i tvil */
+.tt-readout-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.tt-device.is-running .tt-readout-status { color: var(--ny); }
+.tt-live-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--ny);
+    flex: none;
+    animation: tt-live-puls 1.2s ease-in-out infinite;
+}
+.timer-panel.is-big .tt-live-dot { width: 14px; height: 14px; }
+@keyframes tt-live-puls {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.75); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tt-live-dot { animation: none !important; }
+    .timer-launch:active { transform: none; }
+}
