@@ -7,6 +7,7 @@ import './del-start-nedteller.css'
 import './del-nedteller-storskjerm.css'
 import './del-sette-opp-time.css'
 import './del-vis-pa-storskjerm.css'
+import './del-hovedskjerm-avstand.css'
 import App from './components/App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 

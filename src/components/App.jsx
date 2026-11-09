@@ -344,7 +344,7 @@ export default function App() {
           >
             <Ikon navn="presentation" /> <span>Vis for klassen</span>
           </button>
-                    {synligTime ? (
+          {synligTime ? (
             <DagensTimeKort
               time={synligTime}
               minutter={currentMinutes}
@@ -357,6 +357,7 @@ export default function App() {
               primaryState={primaryState}
               displayStates={displayStates}
               currentMinutes={currentMinutes}
+              currentSeconds={currentSeconds}
               isWeekend={isWeekend}
               currentDay={currentDay}
             />
