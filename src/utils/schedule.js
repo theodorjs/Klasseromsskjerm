@@ -434,11 +434,12 @@ export function formatExpandedActivityLabel(activityLabel) {
   if (!parsed.subject) return 'Fri';
   const subjectInfo = getSubjectInfoFromActivityLabel(parsed.subject);
   const baseLabel = subjectInfo ? subjectInfo.full : parsed.subject;
+  // Trinnet står foran faget: «8. Engelsk», «8.-9. Engelsk»
   if (parsed.grades.length === 2) {
-    return `${baseLabel} ${parsed.grades[0]}.-${parsed.grades[1]}.`;
+    return `${parsed.grades[0]}.-${parsed.grades[1]}. ${baseLabel}`;
   }
   if (parsed.grades.length === 1) {
-    return `${baseLabel} ${parsed.grades[0]}.`;
+    return `${parsed.grades[0]}. ${baseLabel}`;
   }
   return baseLabel;
 }

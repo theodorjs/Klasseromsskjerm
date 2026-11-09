@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import Ikon, { FagSymbol } from './Ikon.jsx';
-import { normalizeSubjectLabel } from '../utils/schedule.js';
+import { normalizeSubjectLabel, formatExpandedActivityLabel } from '../utils/schedule.js';
 import { getReadableAgendaTextColor, getSubjectDefaultColor } from '../utils/color.js';
 import { makeDraggablePanel } from '../utils/drag.js';
 
@@ -48,6 +48,8 @@ export default function AgendaSidebar({
   const sortedSubjects = Array.from(subjects).sort();
 
   const subject = normalizeSubjectLabel(agendaSubject);
+  // Lagres som «Engelsk 8.», men vises med trinnet foran: «8. Engelsk»
+  const subjectText = subject ? formatExpandedActivityLabel(subject) : '';
   const items = subject ? (currentClass.agendas?.[subject] || []) : [];
   const hasTemplate = subject && currentClass.templates?.[subject]?.length > 0;
 
@@ -95,7 +97,7 @@ export default function AgendaSidebar({
         <div className="k-panel-titles">
           <div className="k-panel-title">Agenda</div>
           <div className="k-panel-sub" id="agenda-subtitle">
-            {subject ? `Gjøremål for ${subject}` : 'Velg et fag for å starte'}
+            {subject ? `Gjøremål for ${subjectText}` : 'Velg et fag for å starte'}
           </div>
         </div>
         <button
@@ -126,7 +128,7 @@ export default function AgendaSidebar({
           aria-expanded={subjectMenuOpen ? 'true' : 'false'}
           onMouseDown={e => e.stopPropagation()}
           onClick={e => { e.stopPropagation(); setSubjectMenuOpen(v => !v); }}
-        >{subject || 'Fag'}</button>
+        >{subjectText || 'Fag'}</button>
         <select id="agenda-subject-select" hidden value={subject} onChange={() => {}}>
           <option value="">Velg fag...</option>
         </select>
@@ -154,7 +156,7 @@ export default function AgendaSidebar({
                   onSetSubject(s);
                   setSubjectMenuOpen(false);
                 }}
-              >{s}</button>
+              >{formatExpandedActivityLabel(s)}</button>
             ))
           )}
         </div>
@@ -166,7 +168,7 @@ export default function AgendaSidebar({
         )}
         {subject && items.length === 0 && (
           <div className="agenda-empty-state">
-            {editPermission ? `Ingen gjøremål for ${subject} enda. Trykk + for å legge til.` : `Ingen gjøremål for ${subject} enda.`}
+            {editPermission ? `Ingen gjøremål for ${subjectText} enda. Trykk + for å legge til.` : `Ingen gjøremål for ${subjectText} enda.`}
           </div>
         )}
         {subject && items.map((item, index) => (
@@ -228,7 +230,7 @@ export default function AgendaSidebar({
             className="k-btn k-btn--ny k-btn--liten"
             title="Husk denne lista som mal for faget"
             disabled={!editPermission || items.length === 0}
-            onClick={() => { onSaveTemplate(subject); alert(`Agendaen er lagret som mal for ${subject}.`); }}
+            onClick={() => { onSaveTemplate(subject); alert(`Agendaen er lagret som mal for ${subjectText}.`); }}
           >Lagre som mal</button>
           {hasTemplate && (
             <button
@@ -245,7 +247,7 @@ export default function AgendaSidebar({
             className="k-btn k-btn--slett k-btn--liten"
             style={{ marginLeft: 'auto' }}
             disabled={!editPermission || items.length === 0}
-            onClick={() => { if (confirm(`Tømme hele agendaen for ${subject}?`)) onClearAgenda(subject); }}
+            onClick={() => { if (confirm(`Tømme hele agendaen for ${subjectText}?`)) onClearAgenda(subject); }}
           >Tøm alt</button>
         </div>
       )}
