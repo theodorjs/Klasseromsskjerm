@@ -1,9 +1,11 @@
+import Ikon from './Ikon.jsx';
+
 export function getThemeModeIcon(modeValue) {
   const mode = String(modeValue);
-  if (mode === '0') return '☀';
-  if (mode === '1') return '☾';
-  if (mode === '2') return '✦';
-  return '🌈';
+  if (mode === '0') return 'sun';
+  if (mode === '1') return 'moon';
+  if (mode === '2') return 'sparkles';
+  return 'rainbow';
 }
 
 export function getThemeModeVisualIndex(modeValue) {
@@ -32,12 +34,12 @@ export default function ThemeSwitch({ themeMode, onSetTheme }) {
         aria-hidden="true"
         style={{ transform: `translateX(${visualIndex * 100}%)` }}
       >
-        <span className="theme-switch-thumb-icon" id="theme-switch-thumb-icon">{icon}</span>
+        <span className="theme-switch-thumb-icon" id="theme-switch-thumb-icon"><Ikon navn={icon} /></span>
       </div>
-      <button type="button" role="radio" aria-checked={mode === '3'} className={`theme-step${mode === '3' ? ' active' : ''}`} data-mode="3" aria-label="Fargerik modus" title="Fargerik modus" onClick={e => { e.stopPropagation(); onSetTheme('3'); }} onMouseDown={e => e.stopPropagation()}>🌈</button>
-      <button type="button" role="radio" aria-checked={mode === '0'} className={`theme-step${mode === '0' ? ' active' : ''}`} data-mode="0" aria-label="Lys modus" title="Lys modus" onClick={e => { e.stopPropagation(); onSetTheme('0'); }} onMouseDown={e => e.stopPropagation()}>☀</button>
-      <button type="button" role="radio" aria-checked={mode === '1'} className={`theme-step${mode === '1' ? ' active' : ''}`} data-mode="1" aria-label="Mørk modus" title="Mørk modus" onClick={e => { e.stopPropagation(); onSetTheme('1'); }} onMouseDown={e => e.stopPropagation()}>☾</button>
-      <button type="button" role="radio" aria-checked={mode === '2'} className={`theme-step${mode === '2' ? ' active' : ''}`} data-mode="2" aria-label="Stjernemodus" title="Stjernemodus" onClick={e => { e.stopPropagation(); onSetTheme('2'); }} onMouseDown={e => e.stopPropagation()}>✦</button>
+      <button type="button" role="radio" aria-checked={mode === '3'} className={`theme-step${mode === '3' ? ' active' : ''}`} data-mode="3" aria-label="Fargerik modus" title="Fargerik modus" onClick={e => { e.stopPropagation(); onSetTheme('3'); }} onMouseDown={e => e.stopPropagation()}><Ikon navn="rainbow" /></button>
+      <button type="button" role="radio" aria-checked={mode === '0'} className={`theme-step${mode === '0' ? ' active' : ''}`} data-mode="0" aria-label="Lys modus" title="Lys modus" onClick={e => { e.stopPropagation(); onSetTheme('0'); }} onMouseDown={e => e.stopPropagation()}><Ikon navn="sun" /></button>
+      <button type="button" role="radio" aria-checked={mode === '1'} className={`theme-step${mode === '1' ? ' active' : ''}`} data-mode="1" aria-label="Mørk modus" title="Mørk modus" onClick={e => { e.stopPropagation(); onSetTheme('1'); }} onMouseDown={e => e.stopPropagation()}><Ikon navn="moon" /></button>
+      <button type="button" role="radio" aria-checked={mode === '2'} className={`theme-step${mode === '2' ? ' active' : ''}`} data-mode="2" aria-label="Stjernemodus" title="Stjernemodus" onClick={e => { e.stopPropagation(); onSetTheme('2'); }} onMouseDown={e => e.stopPropagation()}><Ikon navn="sparkles" /></button>
     </div>
   );
 }

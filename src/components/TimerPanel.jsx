@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Ikon from './Ikon.jsx';
+import useSkjermVaaken from '../hooks/useSkjermVaaken.js';
 import TimeTimerDial from './TimeTimerDial.jsx';
 import { normalizeHexColor } from '../utils/color.js';
 import {
@@ -65,6 +67,8 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
   const chimedRef = useRef(false);
 
   const running = !!run && run.endAt !== null && !run.done;
+  // Skjermen skal ikke slukke mens klassen ser på den store skiva
+  useSkjermVaaken(open && big && !!run);
   const paused = !!run && run.endAt === null && !run.done;
   const done = !!run?.done;
   const totalMs = run?.totalMs ?? settings.durationMs;
@@ -232,7 +236,7 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
         style={pos && !big ? { left: pos.x, top: pos.y } : undefined}
       >
         <div className={`tt-device${done ? ' is-done' : ''}`}>
-          <button ref={closeBtnRef} type="button" className="tt-close" id="timer-close-btn" aria-label={big ? 'Tilbake til liten visning' : 'Lukk nedteller'} onClick={() => { setColorOpen(false); if (big) setBig(false); else onClose(); }}>✕</button>
+          <button ref={closeBtnRef} type="button" className="tt-close" id="timer-close-btn" aria-label={big ? 'Tilbake til liten visning' : 'Lukk nedteller'} onClick={() => { setColorOpen(false); if (big) setBig(false); else onClose(); }}><Ikon navn="x" /></button>
 
           <div
             className="tt-plate"
@@ -262,15 +266,15 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
             <div className="tt-controls" role="group" aria-label="Styr nedtelleren">
               {!running && (
                 <button type="button" className="k-btn k-btn--ny k-btn--fylt tt-main-btn" id="timer-start" onClick={start}>
-                  {paused ? '▶ Fortsett' : done ? '▶ Start på nytt' : '▶ Start'}
+                  <Ikon navn="play" /> {paused ? 'Fortsett' : done ? 'Start på nytt' : 'Start'}
                 </button>
               )}
               {running && (
-                <button type="button" className="k-btn k-btn--rediger tt-main-btn" id="timer-pause" onClick={pause}>❚❚ Pause</button>
+                <button type="button" className="k-btn k-btn--rediger tt-main-btn" id="timer-pause" onClick={pause}><Ikon navn="pause" /> Pause</button>
               )}
               <button type="button" className="k-btn k-btn--tilbake" id="timer-reset" onClick={reset} disabled={!run}>Nullstill</button>
               {!big && (
-                <button type="button" className="k-btn" id="timer-big" onClick={() => setBig(true)} title="Fyll skjermen med skiva">⤢ Stor</button>
+                <button type="button" className="k-btn" id="timer-big" onClick={() => setBig(true)} title="Fyll skjermen med skiva"><Ikon navn="maximize" /> Stor</button>
               )}
             </div>
           </div>
@@ -279,9 +283,9 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
             <div className="tt-row">
               <span className="tt-row-label">Varighet</span>
               <div className="tt-stepper" role="group" aria-label="Juster minutter">
-                <button type="button" className="tt-step" aria-label="Ett minutt mindre" onClick={() => nudge(-60000)}>−</button>
+                <button type="button" className="tt-step" aria-label="Ett minutt mindre" onClick={() => nudge(-60000)}><Ikon navn="minus" /></button>
                 <span className="tt-step-value">{running || paused ? readout : `${durationMinutes} min`}</span>
-                <button type="button" className="tt-step" aria-label="Ett minutt mer" onClick={() => nudge(60000)}>+</button>
+                <button type="button" className="tt-step" aria-label="Ett minutt mer" onClick={() => nudge(60000)}><Ikon navn="plus" /></button>
               </div>
             </div>
             <div className="tt-presets" role="group" aria-label="Hurtigvalg">
@@ -314,7 +318,7 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
                   onClick={() => setColorOpen(v => !v)}
                 >
                   <span className="tt-color-fill" aria-hidden="true" />
-                  <span className="tt-color-glyph" aria-hidden="true">🎨</span>
+                  <span className="tt-color-glyph" aria-hidden="true"><Ikon navn="palette" /></span>
                 </button>
                 {colorOpen && (
                   <div className="tt-color-pop">
@@ -343,7 +347,7 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
                 title={settings.sound ? 'Klokke når tiden er ute. Trykk for å slå av.' : 'Stille. Trykk for å slå på klokka.'}
                 onClick={() => { primeTimerAudio(); updateSettings({ sound: !settings.sound }); }}
               >
-                <span aria-hidden="true">{settings.sound ? '🔔' : '🔕'}</span>
+                <Ikon navn={settings.sound ? 'bell' : 'bell-off'} />
               </button>
             </div>
           </div>

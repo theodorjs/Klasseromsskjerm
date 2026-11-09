@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import Ikon, { FagSymbol } from './Ikon.jsx';
 import { normalizeSubjectLabel } from '../utils/schedule.js';
 import { getReadableAgendaTextColor, getSubjectDefaultColor } from '../utils/color.js';
 import { makeDraggablePanel } from '../utils/drag.js';
@@ -104,7 +105,7 @@ export default function AgendaSidebar({
           aria-label="Lukk agenda"
           onMouseDown={e => e.stopPropagation()}
           onClick={e => { e.stopPropagation(); onClose(); setSubjectMenuOpen(false); }}
-        >✕</button>
+        ><Ikon navn="x" /></button>
       </div>
 
       <div className="agenda-header">
@@ -116,7 +117,7 @@ export default function AgendaSidebar({
           title={subject ? 'Legg til gjøremål' : 'Velg et fag først'}
           disabled={!subject || !editPermission}
           onClick={() => { if (subject) onAddItem(subject); }}
-        >+</button>
+        ><Ikon navn="plus" /></button>
         <button
           type="button"
           className={`agenda-subject-btn${subject ? ' is-selected' : ''}`}
@@ -181,7 +182,7 @@ export default function AgendaSidebar({
             <span
               className="agenda-item-emoji"
               onClick={e => { e.stopPropagation(); if (editPermission) onEditItem(subject, item, index); }}
-            >{item.emoji || '📋'}</span>
+            ><FagSymbol verdi={item.emoji} reserve="clipboard-list" /></span>
             <span
               className="agenda-item-text"
               onClick={e => { e.stopPropagation(); if (editPermission) onEditItem(subject, item, index); }}
@@ -200,7 +201,7 @@ export default function AgendaSidebar({
                   draggable={false}
                   onPointerDown={e => e.stopPropagation()}
                   onClick={e => { e.stopPropagation(); onToggleItem(subject, index); }}
-                >✓</button>
+                ><Ikon navn="check" /></button>
                 <button
                   type="button"
                   className={`agenda-item-delete${editPermission ? '' : ' is-disabled'}`}
@@ -213,7 +214,7 @@ export default function AgendaSidebar({
                     if (!editPermission) return;
                     if (confirm('Slette denne aktiviteten?')) onDeleteItem(subject, index);
                   }}
-                >🗑</button>
+                ><Ikon navn="trash-2" /></button>
               </div>
             </div>
           </div>

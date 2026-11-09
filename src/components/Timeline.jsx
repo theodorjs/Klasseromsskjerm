@@ -11,6 +11,7 @@ import {
   getTempScheduleKey,
 } from '../utils/schedule.js';
 import { getSubjectDefaultColor } from '../utils/color.js';
+import { FagSymbol } from './Ikon.jsx';
 
 export default function Timeline({
   classes,
@@ -148,7 +149,7 @@ export default function Timeline({
                         const emoji = getStoredSubjectEmoji(state.className, activity, classes);
                         return (
                           <div key={i} className="activity-name">
-                            {emoji} {formatExpandedActivityLabel(activity)}
+                            <FagSymbol verdi={emoji} className="activity-symbol" /> {formatExpandedActivityLabel(activity)}
                           </div>
                         );
                       })}

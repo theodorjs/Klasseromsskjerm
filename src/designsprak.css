@@ -221,7 +221,7 @@ body.ui-light {
    ═══════════════════════════════════════════════════════════════════ */
 
 .timer-panel {
-    top: 90px; /* under statuslinjen */
+    top: calc(90px + var(--topp)); /* under statuslinjen */
     left: 50%;
     transform: translateX(-50%);
     min-height: 0;
@@ -232,7 +232,7 @@ body.ui-light {
 
 /* iPad i liggende format (768–820 px høyt): kompakt nedteller, så alle knappene får plass uten scrolling */
 @media (max-height: 880px) {
-    .timer-panel:not(.is-big) { top: 84px; max-height: calc(100vh - 92px); }
+    .timer-panel:not(.is-big) { top: calc(84px + var(--topp)); max-height: calc(100vh - 92px - var(--topp)); }
     .timer-panel:not(.is-big) .tt-device { padding: 14px 14px 12px; gap: 10px; }
     .timer-panel:not(.is-big) .tt-dial { width: 224px; }
     .timer-panel:not(.is-big) .tt-plate { gap: 4px; padding: 2px 0 2px; }
@@ -293,7 +293,7 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
 .timer-panel.is-big .tt-controls {
     position: fixed;
     left: 50%;
-    bottom: 20px;
+    bottom: calc(20px + var(--bunn));
     transform: translateX(-50%);
     display: flex;
     width: auto;
@@ -303,6 +303,8 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
 }
 .timer-panel.is-big .tt-controls .k-btn { min-height: 44px; font-size: 1rem; padding: 8px 18px; }
 .timer-panel.is-big .tt-plate { padding-bottom: 80px; }
+/* Lukkeknappen holder seg under iPadens klokkefelt */
+.timer-panel.is-big .tt-close { top: calc(10px + var(--topp)); }
 
 .tt-device {
     position: relative;
@@ -718,7 +720,7 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 14px 20px 16px;
+    padding: calc(14px + var(--topp)) 20px calc(16px + var(--bunn));
     color: var(--tekst);
     background: var(--instrument);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -1180,7 +1182,7 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: 3vmin 4vmin 1.5vmin;
+    padding: calc(3vmin + var(--topp)) 4vmin calc(1.5vmin + var(--bunn));
     box-sizing: border-box;
     color: var(--text-color);
     z-index: 200;
@@ -1264,7 +1266,7 @@ body.colorful-mode .vegg { color: #fff; }
 .vegg-exit {
     position: fixed;
     right: 10px;
-    top: 10px;
+    top: calc(10px + var(--topp));
     z-index: 9000;
     min-height: 44px;
     min-width: 44px;
@@ -1431,7 +1433,7 @@ body.under-the-hood-active .timer-mini { display: none !important; }
 /* ─── Notat ─────────────────────────────────────────────────────── */
 
 .note-panel {
-    top: 110px;
+    top: calc(110px + var(--topp));
     left: 50%;
     transform: translateX(-50%);
     width: 460px;
@@ -1478,7 +1480,7 @@ body.under-the-hood-active .timer-mini { display: none !important; }
 .agenda-sidebar {
     --fag: var(--instrument-2);
     --fag-tekst: var(--tekst);
-    top: 100px;
+    top: calc(100px + var(--topp));
     right: 40px;
     width: 390px;
     height: 600px;
@@ -1895,3 +1897,43 @@ body.ui-light .k-input, body.ui-light .k-select { color-scheme: light; }
 }
 
 .hover-box.active { display: flex; transform: translate(-50%, 0); opacity: 1; }
+
+/* ─── Ikoner: strektegninger i tekstfargen, i stedet for emoji ─────
+   Ikonet er 1em og følger skriftstørrelsen der det står. */
+
+.ikon { display: inline-block; flex: none; vertical-align: -0.14em; overflow: visible; }
+.k-btn .ikon { width: 1.15em; height: 1.15em; vertical-align: middle; }
+.symbol-tekst { line-height: 1; }
+
+.toolbox-main { font-size: 1.85rem; }
+.toolbox-fullscreen { font-size: 1.6rem; display: flex; align-items: center; justify-content: center; }
+.toolbox-item .icon { display: inline-flex; align-items: center; font-size: 1.45rem; color: var(--tekst); }
+.countdown-tool-btn { display: inline-flex; align-items: center; justify-content: center; font-size: 1.05rem; }
+.theme-switch-thumb-icon, .theme-step { font-size: 1.05rem; }
+.theme-switch-thumb-icon { display: inline-flex; }
+
+.tt-bell { font-size: 1.2rem; display: inline-flex; align-items: center; justify-content: center; }
+.tt-color-glyph { justify-content: center; }
+.tt-main-btn .ikon { width: 1em; height: 1em; }
+
+.k-close .ikon, .tt-close .ikon { width: 1.1em; height: 1.1em; }
+.agenda-item-check, .agenda-item-delete { display: inline-flex; align-items: center; justify-content: center; }
+.agenda-item-emoji { color: var(--tekst); }
+
+.k-emoji { display: inline-flex; align-items: center; justify-content: center; color: var(--tekst); }
+.k-emoji.is-active { color: var(--fokus); }
+.k-emoji-preview { color: var(--tekst); }
+
+.se-cell-emoji { display: inline-flex; }
+.se-chip-emoji { display: inline-flex; }
+.se-tool { display: inline-flex; align-items: center; justify-content: center; }
+.se-tool .ikon, .se-slot-remove .ikon, .se-frame-remove .ikon { width: 1em; height: 1em; }
+.se-slot-remove, .se-frame-remove, .se-chip-edit { display: inline-flex; align-items: center; justify-content: center; }
+.se-school { display: inline-flex; color: var(--tekst); }
+.se-legend dt .ikon { width: 1.1em; height: 1.1em; }
+.se-preview-ok, .se-preview-warn { display: inline-flex; align-items: center; gap: 6px; }
+
+.klasse-laas { display: flex; align-items: center; gap: 8px; }
+.subject-color-title { display: flex; align-items: center; gap: 10px; }
+.hover-box .activity-symbol { margin-right: 4px; }
+.tt-step { display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; }

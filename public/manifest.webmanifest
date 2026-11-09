@@ -1,7 +1,7 @@
 {
-  "name": "Klasseromsskjerm",
-  "short_name": "KlasseSkjerm",
-  "description": "Klasseromsskjerm med timeplan, timer, agenda, notater og klasseverktøy.",
+  "name": "Klasseskjerm",
+  "short_name": "Klasseskjerm",
+  "description": "Klasseskjerm med timeplan, timer, agenda, notater og klasseverktøy.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",

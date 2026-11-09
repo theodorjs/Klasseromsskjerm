@@ -4,6 +4,8 @@ import Dialog from './Dialog.jsx';
 import { isClassMultiGrade } from '../utils/schedule.js';
 import { getMinutesFromTime } from '../utils/time.js';
 import { getSubject } from '../data/subjects.js';
+import Ikon, { FagSymbol } from './Ikon.jsx';
+import SymbolVelger from './SymbolVelger.jsx';
 
 /* ─── Konstanter ─────────────────────────────────────────── */
 
@@ -111,7 +113,7 @@ function collectSubjects(currentClass, baseSubj) {
     byKey.set(key, {
       id: nextId++,
       name,
-      emoji: emoji || '📚',
+      emoji: emoji || 'book-open',
       color: color || '#4A90E2',
     });
   };
@@ -310,7 +312,7 @@ export default function ScheduleEditor({
   const [editSj, setEditSj] = useState(null);
   const [modal,  setModal]  = useState(null);
   const [fEdit,  setFEdit]  = useState(null);
-  const [newSj,  setNewSj]  = useState({ name: "", emoji: "📚", color: "#4A90E2" });
+  const [newSj,  setNewSj]  = useState({ name: "", emoji: "book-open", color: "#4A90E2" });
   const [newCn,  setNewCn]  = useState("");
   const [hjelp,  setHjelp]  = useState(false);
 
@@ -449,10 +451,10 @@ export default function ScheduleEditor({
       >
         {label && <span className="se-slot-label">{label}</span>}
         {erH
-          ? <span className="se-cell-emoji">🗑</span>
+          ? <span className="se-cell-emoji"><Ikon navn="trash-2" /></span>
           : sub
             ? <>
-                <span className="se-cell-emoji">{sub.emoji}</span>
+                <span className="se-cell-emoji"><FagSymbol verdi={sub.emoji} /></span>
                 <span className="se-cell-name" title={sub.name}>{shortName(sub.name)}</span>
               </>
             : <span className="se-cell-plus">+</span>
@@ -488,10 +490,10 @@ export default function ScheduleEditor({
           aria-label={`${day} ${frame.find(f => f.id === lid)?.label || ''}: ${sub ? sub.name : 'tom'}`}
         >
           {erH
-            ? <span className="se-cell-emoji">🗑</span>
+            ? <span className="se-cell-emoji"><Ikon navn="trash-2" /></span>
             : sub
               ? <>
-                  <span className="se-cell-emoji">{sub.emoji}</span>
+                  <span className="se-cell-emoji"><FagSymbol verdi={sub.emoji} /></span>
                   <span className="se-cell-name">{sub.name}</span>
                 </>
               : <span className="se-cell-plus">+</span>
@@ -501,12 +503,12 @@ export default function ScheduleEditor({
           <div className="se-cell-tools">
             {isMg && (
               <button type="button" className="se-tool" onClick={e => { e.stopPropagation(); splitCell(day, lid); setFocus(null); }}
-                title={parts ? `Del for ${parts[0]} og ${parts[1]}` : "Del cellen i to"} aria-label="Del per trinn">◫</button>
+                title={parts ? `Del for ${parts[0]} og ${parts[1]}` : "Del cellen i to"} aria-label="Del per trinn"><Ikon navn="columns-2" /></button>
             )}
             <button type="button" className="se-tool" onClick={e => { e.stopPropagation(); makeWeekAlt(day, lid); setFocus(null); }}
-              title="Veksle mellom partalls- og oddetallsuker" aria-label="Partall og oddetall">🗓</button>
+              title="Veksle mellom partalls- og oddetallsuker" aria-label="Partall og oddetall"><Ikon navn="calendar-range" /></button>
             <button type="button" className="se-tool" onClick={e => { e.stopPropagation(); makeParallel(day, lid); setFocus(null); }}
-              title="Flere fag samtidig (parallelt, på tvers av trinn)" aria-label="Flere fag samtidig">⇉</button>
+              title="Flere fag samtidig (parallelt, på tvers av trinn)" aria-label="Flere fag samtidig"><Ikon navn="layers" /></button>
           </div>
         )}
       </div>
@@ -526,7 +528,7 @@ export default function ScheduleEditor({
         <div key={i} className="se-slot-wrap">
           {renderSlot(day, lid, i, `Valg ${i + 1}`)}
           {count > 2 && (
-            <button type="button" className="se-slot-remove" onClick={e => { e.stopPropagation(); removeParallelSlot(day, lid, i); }} title="Fjern dette valget" aria-label="Fjern dette valget">✕</button>
+            <button type="button" className="se-slot-remove" onClick={e => { e.stopPropagation(); removeParallelSlot(day, lid, i); }} title="Fjern dette valget" aria-label="Fjern dette valget"><Ikon navn="x" /></button>
           )}
         </div>
       ));
@@ -543,9 +545,9 @@ export default function ScheduleEditor({
       <div className="se-cell-wrap se-cell-composite">
         <div className="se-cell-tools is-static">
           {isParallel(raw) && (
-            <button type="button" className="se-tool" onClick={() => addParallelSlot(day, lid)} title="Legg til fag i parallellen" aria-label="Legg til fag">+</button>
+            <button type="button" className="se-tool" onClick={() => addParallelSlot(day, lid)} title="Legg til fag i parallellen" aria-label="Legg til fag"><Ikon navn="plus" /></button>
           )}
-          <button type="button" className="se-tool" onClick={() => mergeCell(day, lid)} title="Slå sammen til én celle" aria-label="Slå sammen">⊟</button>
+          <button type="button" className="se-tool" onClick={() => mergeCell(day, lid)} title="Slå sammen til én celle" aria-label="Slå sammen"><Ikon navn="merge" /></button>
         </div>
         {badge && <span className="se-cell-badge">{badge}</span>}
         <div className="se-slots">{slots}</div>
@@ -621,8 +623,8 @@ export default function ScheduleEditor({
       {/* Topplinje: tilbake, klassenavn, lagre */}
       <header className="se-header">
         <div className="se-header-left">
-          <button type="button" className="k-btn k-btn--tilbake k-btn--liten" onClick={onBack}>← Tilbake</button>
-          <span className="se-school" aria-hidden="true">🏫</span>
+          <button type="button" className="k-btn k-btn--tilbake k-btn--liten" onClick={onBack}><Ikon navn="arrow-left" /> Tilbake</button>
+          <span className="se-school" aria-hidden="true"><Ikon navn="school" /></span>
           {editCn
             ? <input
                 className="se-input se-input-name"
@@ -632,7 +634,7 @@ export default function ScheduleEditor({
                 aria-label="Klassenavn"
               />
             : <button type="button" className="se-name" onClick={() => setEditCn(true)} title="Trykk for å endre navnet">
-                {cn} <span className="se-name-pen" aria-hidden="true">✎</span>
+                {cn} <span className="se-name-pen" aria-hidden="true"><Ikon navn="pencil" /></span>
               </button>
           }
           {isMg && parts && (
@@ -641,10 +643,10 @@ export default function ScheduleEditor({
         </div>
         <div className="se-header-right">
           <button type="button" className="k-btn k-btn--hjelp k-btn--liten" onClick={() => setHjelp(true)} aria-haspopup="dialog">
-            ? Slik bruker du timeplanen
+            <Ikon navn="circle-help" /> Slik bruker du timeplanen
           </button>
           <button type="button" className={`k-btn k-btn--ny k-btn--fylt${saved ? ' is-saved' : ''}`} onClick={handleSave}>
-            {saved ? "✓ Lagret" : "Lagre timeplanen"}
+            {saved ? <><Ikon navn="check" /> Lagret</> : "Lagre timeplanen"}
           </button>
         </div>
       </header>
@@ -662,7 +664,7 @@ export default function ScheduleEditor({
           <h3 className="k-group-title">Skoledagen</h3>
           <div className="se-group-row">
             <button type="button" className="k-btn k-btn--rediger k-btn--liten" onClick={() => { setFEdit(JSON.parse(JSON.stringify(frame))); setModal("frame"); }}>
-              🕗 Tider og pauser
+              <Ikon navn="clock" /> Tider og pauser
             </button>
           </div>
         </section>
@@ -676,7 +678,7 @@ export default function ScheduleEditor({
               title="Slå på, og trykk så på øktene du vil tømme"
               onClick={() => { setErase(e => !e); setActive(null); setFocus(null); }}
             >
-              🗑 {erase ? "Fjerner fag: trykk på økta" : "Fjern fag"}
+              <Ikon navn="trash-2" /> {erase ? "Fjerner fag: trykk på økta" : "Fjern fag"}
             </button>
           </div>
         </section>
@@ -727,10 +729,10 @@ export default function ScheduleEditor({
                   aria-pressed={active === s.id}
                   onClick={() => { setActive(p => p === s.id ? null : s.id); setErase(false); setFocus(null); }}
                 >
-                  <span className="se-chip-emoji">{s.emoji}</span>
+                  <span className="se-chip-emoji"><FagSymbol verdi={s.emoji} /></span>
                   <span className="se-chip-name">{s.name}</span>
                 </button>
-                <button type="button" className="se-chip-edit" onClick={() => setEditSj(s.id)} title={`Rediger ${s.name}`} aria-label={`Rediger ${s.name}`}>✎</button>
+                <button type="button" className="se-chip-edit" onClick={() => setEditSj(s.id)} title={`Rediger ${s.name}`} aria-label={`Rediger ${s.name}`}><Ikon navn="pencil" /></button>
               </div>
             ))}
             <button type="button" className="se-chip se-chip-new" onClick={() => setModal("newSubj")}>+ Nytt fag</button>
@@ -750,15 +752,15 @@ export default function ScheduleEditor({
           <h3 className="hjelp-tittel">Symbolene på en økt</h3>
           <Info>Symbolene vises når du holder over eller trykker på en fylt økt uten at et fag er valgt.</Info>
           <dl className="se-legend">
-            <div><dt>◫</dt><dd>Del økta per trinn (fådelt klasse)</dd></div>
-            <div><dt>🗓</dt><dd>Ulike fag i partalls- og oddetallsuker</dd></div>
-            <div><dt>⇉</dt><dd>Flere fag samtidig (parallell)</dd></div>
-            <div><dt>⊟</dt><dd>Slå sammen igjen</dd></div>
-            <div><dt>+</dt><dd>Ett fag til i parallellen</dd></div>
-            <div><dt>✕</dt><dd>Fjern et valg</dd></div>
+            <div><dt><Ikon navn="columns-2" /></dt><dd>Del økta per trinn (fådelt klasse)</dd></div>
+            <div><dt><Ikon navn="calendar-range" /></dt><dd>Ulike fag i partalls- og oddetallsuker</dd></div>
+            <div><dt><Ikon navn="layers" /></dt><dd>Flere fag samtidig (parallell)</dd></div>
+            <div><dt><Ikon navn="merge" /></dt><dd>Slå sammen igjen</dd></div>
+            <div><dt><Ikon navn="plus" /></dt><dd>Ett fag til i parallellen</dd></div>
+            <div><dt><Ikon navn="x" /></dt><dd>Fjern et valg</dd></div>
           </dl>
           <h3 className="hjelp-tittel">Farger</h3>
-          <Info>Fagfarger og emoji brukes også på tidslinjen, hovedskjermen og nedtellingsskiva. Trykk ✎ ved et fag for å endre dem.</Info>
+          <Info>Fagfargene brukes også på tidslinjen, hovedskjermen og nedtellingsskiva, og symbolet vises på tidslinjen. Trykk på blyanten ved et fag for å endre dem.</Info>
           <div className="k-dialog-actions">
             <button type="button" className="k-btn k-btn--tilbake" onClick={() => setHjelp(false)}>Lukk</button>
           </div>
@@ -776,11 +778,8 @@ export default function ScheduleEditor({
               <span>Fagnavn</span>
               <input className="se-input" value={s.name} onChange={e => upd("name", e.target.value)} placeholder="Fagnavn" />
             </label>
+            <SymbolVelger value={s.emoji} onPick={v => upd("emoji", v)} reserve="book-open" />
             <div className="se-field-row">
-              <label className="se-field se-field-emoji">
-                <span>Emoji</span>
-                <input className="se-input" value={s.emoji} onChange={e => upd("emoji", e.target.value)} placeholder="😀" />
-              </label>
               <label className="se-field">
                 <span>Farge</span>
                 <span className="se-color-row">
@@ -804,11 +803,8 @@ export default function ScheduleEditor({
             <span>Fagnavn</span>
             <input className="se-input" autoFocus placeholder="Fagnavn" value={newSj.name} onChange={e => setNewSj(p => ({ ...p, name: e.target.value }))} />
           </label>
+          <SymbolVelger value={newSj.emoji} onPick={v => setNewSj(p => ({ ...p, emoji: v }))} reserve="book-open" />
           <div className="se-field-row">
-            <label className="se-field se-field-emoji">
-              <span>Emoji</span>
-              <input className="se-input" placeholder="😀" value={newSj.emoji} onChange={e => setNewSj(p => ({ ...p, emoji: e.target.value }))} />
-            </label>
             <label className="se-field">
               <span>Farge</span>
               <span className="se-color-row">
@@ -829,7 +825,7 @@ export default function ScheduleEditor({
                 setActive(id);
                 setErase(false);
                 setModal(null);
-                setNewSj({ name: "", emoji: "📚", color: "#4A90E2" });
+                setNewSj({ name: "", emoji: "book-open", color: "#4A90E2" });
               }}
             >Legg til</button>
             <button type="button" className="k-btn" onClick={() => setModal(null)}>Avbryt</button>
@@ -870,8 +866,8 @@ export default function ScheduleEditor({
           <div className="se-preview">
             {newCn.trim() && (
               previewParts
-                ? <span className="se-preview-ok">✓ Gjenkjent: <b>{previewParts[0]}</b> og <b>{previewParts[1]}</b></span>
-                : <span className="se-preview-warn">⚠ Fant ikke to trinn. Delcellene merkes A / B.</span>
+                ? <span className="se-preview-ok"><Ikon navn="check" /> Gjenkjent: <b>{previewParts[0]}</b> og <b>{previewParts[1]}</b></span>
+                : <span className="se-preview-warn"><Ikon navn="triangle-alert" /> Fant ikke to trinn. Delcellene merkes A / B.</span>
             )}
           </div>
           <div className="se-modal-actions">
@@ -893,7 +889,7 @@ export default function ScheduleEditor({
                 <input className="se-input se-input-time" value={row.start} onChange={e => fUpd(row.id, "start", e.target.value)} placeholder="08:30" aria-label="Fra" />
                 <span className="se-frame-dash">–</span>
                 <input className="se-input se-input-time" value={row.end} onChange={e => fUpd(row.id, "end", e.target.value)} placeholder="09:30" aria-label="Til" />
-                <button type="button" className="se-frame-remove" onClick={() => fRem(row.id)} aria-label={`Fjern ${row.label}`}>✕</button>
+                <button type="button" className="se-frame-remove" onClick={() => fRem(row.id)} aria-label={`Fjern ${row.label}`}><Ikon navn="x" /></button>
               </div>
             ))}
           </div>

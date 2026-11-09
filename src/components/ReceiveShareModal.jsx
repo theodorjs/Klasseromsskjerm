@@ -44,7 +44,7 @@ export default function ReceiveShareModal({ state, hasExisting, canUndo, onAccep
     body = (
       <>
         <p className="k-dialog-tekst">
-          Timeplanen vises nå på denne skjermen. Du finner den igjen under 🏫 Klasse og timeplan.
+          Timeplanen vises nå på denne skjermen. Du finner den igjen under «Klasse og timeplan» i verktøykassa.
         </p>
         <Info>Endringer læreren gjør senere kommer ikke automatisk. Da trengs en ny lenke.</Info>
       </>

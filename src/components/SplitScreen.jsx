@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import ScheduleEditor from './ScheduleEditor.jsx';
 import SubjectColorPicker from './SubjectColorPicker.jsx';
 import { downloadBackup, parseBackupFile, applyBackup } from '../utils/backup.js';
+import Ikon from './Ikon.jsx';
 
 export default function SplitScreen({
   open,
@@ -100,7 +101,7 @@ export default function SplitScreen({
         </div>
         {!editPermission && (
           <p className="klasse-laas">
-            🔒 Logg inn med «Lås opp» i verktøykassen for å endre timeplan, fag og klasser.
+            <Ikon navn="lock" /> Logg inn med «Lås opp» i verktøykassen for å endre timeplan, fag og klasser.
           </p>
         )}
 
@@ -110,8 +111,8 @@ export default function SplitScreen({
               <section className="k-group" aria-label={`Verktøy for ${currentClassName}`}>
                 <h3 className="k-group-title">Denne klassen: {currentClassName}</h3>
                 <div className="k-group-grid">
-                  <button className="k-btn k-btn--rediger" id="edit-schedule-btn" onClick={() => setView('scheduleEditor')}>🖊 Rediger timeplan</button>
-                  <button className="k-btn k-btn--regnbue" id="subject-color-btn" onClick={() => setView('subjectColors')}>🎨 Fagfarger</button>
+                  <button className="k-btn k-btn--rediger" id="edit-schedule-btn" onClick={() => setView('scheduleEditor')}><Ikon navn="pencil" /> Rediger timeplan</button>
+                  <button className="k-btn k-btn--regnbue" id="subject-color-btn" onClick={() => setView('subjectColors')}><Ikon navn="palette" /> Fagfarger</button>
                   <button className="k-btn k-btn--navn" id="rename-class-btn" onClick={() => {
                     const oldName = currentClassName;
                     const input = prompt("Nytt navn på klassen:", oldName);
@@ -121,14 +122,14 @@ export default function SplitScreen({
                     if (newName === oldName) return;
                     if (classes[newName]) { alert("En klasse med dette navnet finnes allerede."); return; }
                     onRenameClass(oldName, newName);
-                  }}>✎ Gi nytt navn</button>
+                  }}><Ikon navn="pencil" /> Gi nytt navn</button>
                   <button className="k-btn k-btn--slett" id="delete-class-btn" onClick={() => {
                     const names = Object.keys(classes);
                     if (names.length <= 1) { alert("Du må ha minst én klasse."); return; }
                     if (confirm(`Slette klassen "${currentClassName}"?`)) {
                       onDeleteClass(currentClassName);
                     }
-                  }}>🗑 Slett klasse</button>
+                  }}><Ikon navn="trash-2" /> Slett klasse</button>
                 </div>
               </section>
             )}
@@ -152,10 +153,10 @@ export default function SplitScreen({
               <h3 className="k-group-title">Deling og sikkerhetskopi</h3>
               <div className="k-group-grid">
                 {currentClassName && classes[currentClassName] && (
-                  <button className="k-btn" id="share-class-btn" onClick={onOpenShare}>🔗 Del timeplan</button>
+                  <button className="k-btn" id="share-class-btn" onClick={onOpenShare}><Ikon navn="link" /> Del timeplan</button>
                 )}
-                <button className="k-btn" id="backup-download-btn" onClick={handleDownloadBackup}>⬇ Sikkerhetskopi</button>
-                <button className="k-btn" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}>⬆ Gjenopprett</button>
+                <button className="k-btn" id="backup-download-btn" onClick={handleDownloadBackup}><Ikon navn="download" /> Sikkerhetskopi</button>
+                <button className="k-btn" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}><Ikon navn="upload" /> Gjenopprett</button>
                 {canUndoImport && lastImportInfo && (
                   <button className="k-btn" id="undo-import-btn" onClick={() => {
                     const when = lastImportInfo.at
@@ -168,7 +169,7 @@ export default function SplitScreen({
                       onUndoImport();
                       setDataMessage({ text: 'Forrige timeplan er lagt tilbake.', kind: 'ok' });
                     }
-                  }}>↩ Angre mottatt</button>
+                  }}><Ikon navn="undo-2" /> Angre mottatt</button>
                 )}
               </div>
               <input
@@ -187,7 +188,7 @@ export default function SplitScreen({
           </p>
         )}
 
-        <button className="k-btn k-btn--tilbake" id="class-back-btn" onClick={onClose}>← Tilbake til skjermen</button>
+        <button className="k-btn k-btn--tilbake" id="class-back-btn" onClick={onClose}><Ikon navn="arrow-left" /> Tilbake til skjermen</button>
       </div>
     );
   }

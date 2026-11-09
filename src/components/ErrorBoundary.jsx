@@ -33,7 +33,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('Klasseromsskjerm krasjet:', error, info?.componentStack);
+    console.error('Klasseskjerm krasjet:', error, info?.componentStack);
   }
 
   /**
@@ -68,7 +68,7 @@ export default class ErrorBoundary extends Component {
             className="k-btn k-btn--hjelp"
             onClick={() => this.setState({ backupDone: downloadBackup() })}
           >
-            {this.state.backupDone ? '✓ Sikkerhetskopi lastet ned' : 'Last ned sikkerhetskopi'}
+            {this.state.backupDone ? 'Sikkerhetskopien er lastet ned' : 'Last ned sikkerhetskopi'}
           </button>
         </div>
         <button type="button" className="error-fallback-link" onClick={() => this.startFresh()}>

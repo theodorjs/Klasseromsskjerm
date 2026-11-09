@@ -1,47 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import Dialog from './Dialog.jsx';
 import Info from './Info.jsx';
+import Ikon from './Ikon.jsx';
+import SymbolVelger from './SymbolVelger.jsx';
 import { normalizeCountdownTimeEntry, isValidCountdownTime } from '../utils/schedule.js';
 
 /* Hver dialog monteres bare mens den er åpen (se wrapper-funksjonene nederst):
    da kan starttilstanden komme rett fra props, uten reset-effekter.
    Alle småvinduene bruker samme Dialog og de samme knappene: grønn fylt knapp
    for det ene du mest sannsynlig vil gjøre, blå for å gå tilbake, rød for å
-   slette. Emoji velges i et rutenett inne i dialogen, aldri i et løst vindu. */
-
-function EmojiVelger({ emojis, value, onPick, open, onToggle, id }) {
-  return (
-    <div className="k-field">
-      <span>Emoji</span>
-      <div className="k-emoji-row">
-        <span className="k-emoji-preview" aria-hidden="true">{value || '·'}</span>
-        <button
-          type="button"
-          id={id}
-          className="k-btn k-btn--hjelp k-btn--liten"
-          aria-expanded={open}
-          onClick={onToggle}
-        >
-          {open ? 'Skjul emoji' : 'Velg emoji'}
-        </button>
-      </div>
-      {open && (
-        <div className="k-emoji-grid" role="listbox" aria-label="Emoji">
-          {emojis.map(em => (
-            <button
-              key={em}
-              type="button"
-              role="option"
-              aria-selected={em === value}
-              className={`k-emoji${em === value ? ' is-active' : ''}`}
-              onClick={() => onPick(em)}
-            >{em}</button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+   slette. Symboler velges i et rutenett inne i dialogen, aldri i et løst vindu. */
 
 // ─── Endre én økt midlertidig (fra tidslinjen) ───────────────────────────────
 function EditModalInner({ displayActivity, hasTempActivity, onSave, onReset, onCancel }) {
@@ -83,13 +51,6 @@ function EditModalInner({ displayActivity, hasTempActivity, onSave, onReset, onC
 }
 
 // ─── Gjøremål i agendaen ─────────────────────────────────────────────────────
-const EMOJIS = [
-  "📚","📖","📝","✏️","🧠","🏫","👩‍🏫","👨‍🏫","🎒","📓",
-  "📐","📏","🔢","➗","🧮","🔬","🧪","🧬","🌍","🗺️",
-  "🎨","🖌️","🎭","🎶","🎵","💻","⌨️","🖥️","📊","📌",
-  "✅","📋","🗂️","🗣️","🇳🇴","🇬🇧","📣","🤝","👥","🧩",
-  "🧘","🏃‍♂️","🏃‍♀️","⚽","🥪","🍎","🥛","☕","💼","🛠️"
-];
 
 function ActivityModalInner({ item, itemIndex, subject, onSave, onCancel }) {
   const [name, setName] = useState(item?.name || '');
@@ -140,9 +101,8 @@ function ActivityModalInner({ item, itemIndex, subject, onSave, onCancel }) {
           />
         </label>
       </div>
-      <EmojiVelger
+      <SymbolVelger
         id="activity-emoji-input"
-        emojis={EMOJIS}
         value={emoji}
         open={emojiPickerOpen}
         onToggle={() => setEmojiPickerOpen(v => !v)}
@@ -290,13 +250,12 @@ function LoginModalInner({ onSuccess, onCancel }) {
   );
 }
 
-// ─── Farge og emoji for et fag ───────────────────────────────────────────────
-const SUBJECT_EMOJIS = ["📖","🔢","🧬","🌍","🎨","🌮","🏃‍♂️","🎶","✝️","🇳🇴","🇬🇧","🧘","🥪","🍎","⏸️","🎭","🧩","💻","🎬","🌟","🪐","🧠","🚀","🛰️"];
+// ─── Farge og symbol for et fag ───────────────────────────────────────────────
 
 function ColorDetailModalInner({ subject, currentColor, currentEmoji, onSave, onCancel }) {
   const [color, setColor] = useState(currentColor || '#ffffff');
   const [hexValue, setHexValue] = useState((currentColor || '#ffffff').toUpperCase());
-  const [emoji, setEmoji] = useState(currentEmoji || '🎨');
+  const [emoji, setEmoji] = useState(currentEmoji || 'palette');
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -362,16 +321,15 @@ function ColorDetailModalInner({ subject, currentColor, currentEmoji, onSave, on
         </div>
         <div className="k-chips">
           <button type="button" id="subject-color-copy" className="k-btn k-btn--hjelp k-btn--liten" onClick={handleCopy}>
-            {copied ? '✓ Kopiert' : '📋 Kopier koden'}
+            <Ikon navn={copied ? 'check' : 'copy'} /> {copied ? 'Kopiert' : 'Kopier koden'}
           </button>
           <button type="button" id="subject-color-paste" className="k-btn k-btn--hjelp k-btn--liten" onClick={handlePaste}>
             Lim inn kode
           </button>
         </div>
       </div>
-      <EmojiVelger
+      <SymbolVelger
         id="subject-emoji-btn"
-        emojis={SUBJECT_EMOJIS}
         value={emoji}
         open={emojiPickerOpen}
         onToggle={() => setEmojiPickerOpen(v => !v)}

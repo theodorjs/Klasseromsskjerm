@@ -2,7 +2,7 @@
  * Deling av en klasses timeplan via lenke (uten backend).
  *
  * Hele oppsettet til én klasse pakkes som JSON, komprimeres (deflate) og
- * legges base64url-kodet i URL-ens #-del:  …/Klasseromsskjerm/#del=1.<token>
+ * legges base64url-kodet i URL-ens #-del:  …/Klasseskjerm/#del=1.<token>
  *
  * #-delen sendes aldri til serveren, så ingen data forlater enheten før
  * mottakeren selv velger «Legg til». Payloaden inneholder bare timeplan,
@@ -144,7 +144,7 @@ export function buildSharePayload(classData, className) {
   });
   const payload = {
     v: SHARE_VERSION,
-    app: 'klasseromsskjerm',
+    app: 'klasseromsskjerm', // fast formatnavn, uavhengig av appens navn
     updatedAt: new Date().toISOString(),
     name,
     schedule,
@@ -238,7 +238,7 @@ function validateSubjectMap(map, field) {
 /** Returnerer en renset kopi av payloaden, eller kaster Error. */
 export function validateSharePayload(payload) {
   if (!isPlainObject(payload)) throw new Error('Lenken inneholder ikke en timeplan.');
-  if (payload.v !== SHARE_VERSION) throw new Error('Lenken er laget med en nyere versjon av Klasseromsskjerm. Oppdater siden og prøv igjen.');
+  if (payload.v !== SHARE_VERSION) throw new Error('Lenken er laget med en nyere versjon av Klasseskjerm. Oppdater siden og prøv igjen.');
   const name = normalizeName(payload.name);
   if (!name) throw new Error('Klassen mangler navn.');
   if (name.length > MAX_NAME_LENGTH) throw new Error('Klassenavnet er for langt.');

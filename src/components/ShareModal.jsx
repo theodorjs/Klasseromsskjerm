@@ -9,6 +9,7 @@ import {
   buildShareUrl,
   SHARE_URL_SOFT_LIMIT,
 } from '../utils/share.js';
+import Ikon from './Ikon.jsx';
 
 /** Over denne lengden blir QR-koden for tett til å skannes fra en tavle. */
 const QR_MAX_LENGTH = 1500;
@@ -135,7 +136,7 @@ export default function ShareModal({ open, classData, className, onClose }) {
               <canvas ref={canvasRef} className="share-qr" aria-label="QR-kode med delingslenke" />
             </div>
             <button type="button" className="k-btn k-btn--hjelp k-btn--liten" onClick={() => setBigQr(true)}>
-              ⤢ Vis stor på tavla
+              <Ikon navn="maximize" /> Vis stor på tavla
             </button>
           </div>
         )}
@@ -165,7 +166,7 @@ export default function ShareModal({ open, classData, className, onClose }) {
         <div className="k-dialog-actions">
           {!error && (
             <button ref={copyBtnRef} type="button" className="k-btn k-btn--ny k-btn--fylt" onClick={copyLink}>
-              {copied ? '✓ Kopiert' : 'Kopier lenke'}
+              <Ikon navn={copied ? 'check' : 'link'} /> {copied ? 'Kopiert' : 'Kopier lenke'}
             </button>
           )}
           {!error && canShare && (

@@ -3,6 +3,7 @@ import {
   getActivitySubjectParts,
   canonicalizeSubjectName,
 } from '../utils/schedule.js';
+import Ikon from './Ikon.jsx';
 
 function getUniqueSubjects(currentClass) {
   const subjects = new Set();
@@ -32,11 +33,11 @@ export default function SubjectColorPicker({ currentClass, onPickColor, onBack, 
 
   return (
     <div className="editor-container schedule-editor-container subject-color-editor-container">
-      <h2 className="subject-color-title">🎨 Fagfarger</h2>
-      <p style={{ color: '#aaa', marginBottom: 10 }}>Trykk på et fag for å endre farge og emoji</p>
+      <h2 className="subject-color-title"><Ikon navn="palette" /> Fagfarger</h2>
+      <p style={{ color: '#aaa', marginBottom: 10 }}>Trykk på et fag for å endre farge og symbol</p>
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-        <button className="k-btn k-btn--tilbake" onClick={onBack}>← Tilbake</button>
-        <button className="k-btn k-btn--regnbue" onClick={onGeneratePalette} title="Gir alle fagene nye farger som passer sammen">🎲 Generer palett</button>
+        <button className="k-btn k-btn--tilbake" onClick={onBack}><Ikon navn="arrow-left" /> Tilbake</button>
+        <button className="k-btn k-btn--regnbue" onClick={onGeneratePalette} title="Gir alle fagene nye farger som passer sammen"><Ikon navn="dices" /> Generer palett</button>
       </div>
       <div className="subject-grid">
         {subjects.map(subject => {

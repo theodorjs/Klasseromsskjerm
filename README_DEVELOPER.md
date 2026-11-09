@@ -1,7 +1,7 @@
-# Klasseromsskjerm - Developer Documentation
+# Klasseskjerm - Developer Documentation
 
 ## 📝 Prosjektets formål og funksjon
-**Klasseromsskjerm** er en interaktiv web-applikasjon designet for lærere for å styre skoledagen. Den fungerer som en sentral skjerm i klasserommet som viser:
+**Klasseskjerm** er en interaktiv web-applikasjon designet for lærere for å styre skoledagen. Den fungerer som en sentral skjerm i klasserommet som viser:
 - **Tidslinje:** En visuell oversikt over dagens fag og pauser.
 - **Nedtelling:** Viser gjenværende tid av nåværende aktivitet.
 - **Agenda:** En liste over gjøremål/mål for økta.

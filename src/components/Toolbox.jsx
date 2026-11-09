@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import ThemeSwitch from './ThemeSwitch.jsx';
+import Ikon from './Ikon.jsx';
 
 async function toggleFullscreen() {
   const root = document.documentElement;
@@ -80,7 +81,7 @@ export default function Toolbox({
       const container = containerRef.current;
       if (!container) return;
 
-      // Mål både 🧰-knappen OG den nedhengende lista
+      // Mål både verktøykasse-knappen OG den nedhengende lista
       const btnRect   = container.getBoundingClientRect();
       const itemsEl   = container.querySelector('.toolbox-items');
       const itemsRect = itemsEl?.getBoundingClientRect();
@@ -117,7 +118,10 @@ export default function Toolbox({
           setOpen(next);
           if (next) resetTimer();
         }}
-      >🧰</div>
+        role="button"
+        aria-label={open ? 'Lukk verktøykassa' : 'Åpne verktøykassa'}
+        aria-expanded={open}
+      ><Ikon navn="verktoykasse" /></div>
 
       <button
         className={`toolbox-fullscreen${isFullscreen ? ' is-fullscreen' : ''}`}
@@ -127,7 +131,7 @@ export default function Toolbox({
         title={isFullscreen ? 'Avslutt fullskjerm' : 'Fullskjerm'}
         onMouseDown={e => e.stopPropagation()}
         onClick={e => { e.stopPropagation(); toggleFullscreen(); resetTimer(); }}
-      >⛶</button>
+      ><Ikon navn={isFullscreen ? 'minimize' : 'maximize'} /></button>
 
       <div className="toolbox-items">
         {/* Theme Switch */}
@@ -141,7 +145,7 @@ export default function Toolbox({
           onOpenTimer();
           resetTimer();
         }}>
-          <span className="icon">⏰</span>
+          <span className="icon"><Ikon navn="timer" /></span>
           <span className="label">Timer</span>
         </div>
 
@@ -150,7 +154,7 @@ export default function Toolbox({
           onClick={e => e.stopPropagation()}
           onMouseDown={e => e.stopPropagation()}
         >
-          <span className="icon">⏳</span>
+          <span className="icon"><Ikon navn="hourglass" /></span>
           <span className="label">Nedtelling</span>
           <div className="countdown-tool-actions">
             <button
@@ -166,7 +170,7 @@ export default function Toolbox({
                 if (countdowns.length >= 3) { alert('Hver klasse kan ha maks tre nedtellinger.'); return; }
                 onAddCountdown();
               }}
-            >+</button>
+            ><Ikon navn="plus" /></button>
             <button
               type="button"
               className={`countdown-tool-btn${countdowns.length === 0 ? ' is-disabled' : ''}`}
@@ -180,7 +184,7 @@ export default function Toolbox({
                 if (!countdowns.length) return;
                 onToggleCountdownVisibility();
               }}
-            >{countdownsVisible ? '👁' : '🙈'}</button>
+            ><Ikon navn={countdownsVisible ? 'eye' : 'eye-off'} /></button>
           </div>
         </div>
 
@@ -190,7 +194,7 @@ export default function Toolbox({
           onOpenAgenda();
           closeToolbox();
         }}>
-          <span className="icon">📋</span>
+          <span className="icon"><Ikon navn="list-checks" /></span>
           <span className="label">Agenda</span>
         </div>
 
@@ -199,7 +203,7 @@ export default function Toolbox({
           e.stopPropagation();
           onOpenNote();
         }}>
-          <span className="icon">🗒️</span>
+          <span className="icon"><Ikon navn="notebook-pen" /></span>
           <span className="label">Notat</span>
         </div>
 
@@ -208,7 +212,7 @@ export default function Toolbox({
           e.stopPropagation();
           onOpenClass();
         }}>
-          <span className="icon">🏫</span>
+          <span className="icon"><Ikon navn="school" /></span>
           <span className="label">Klasse og timeplan</span>
         </div>
 
@@ -222,7 +226,7 @@ export default function Toolbox({
             closeToolbox();
           }
         }}>
-          <span className="icon">📅</span>
+          <span className="icon"><Ikon navn="calendar-clock" /></span>
           <span className="label">Velg tid</span>
         </div>
 
@@ -232,13 +236,13 @@ export default function Toolbox({
           closeToolbox();
           onEnterWallMode?.();
         }}>
-          <span className="icon">📺</span>
+          <span className="icon"><Ikon navn="tv" /></span>
           <span className="label">Veggskjerm</span>
         </div>
 
         {/* Lock */}
         <div className="toolbox-item" id="tool-lock" onClick={() => onToggleLock()}>
-          <span className="icon" id="lock-icon">{editPermission ? '🔓' : '🔒'}</span>
+          <span className="icon" id="lock-icon"><Ikon navn={editPermission ? 'lock-open' : 'lock'} /></span>
           <span className="label" id="lock-label">{editPermission ? 'Låst opp' : 'Lås opp'}</span>
         </div>
       </div>

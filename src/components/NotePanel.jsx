@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import Ikon from './Ikon.jsx';
 import { safeGetItem, safeSetItem, sanitizeNoteHtml } from '../utils/storage.js';
 import { makeDraggablePanel } from '../utils/drag.js';
 
@@ -114,7 +115,7 @@ export default function NotePanel({ open, onClose }) {
           aria-label="Lukk notat"
           onMouseDown={e => e.stopPropagation()}
           onClick={e => { e.stopPropagation(); onClose(); }}
-        >✕</button>
+        ><Ikon navn="x" /></button>
       </div>
       <div
         className="note-editor"

@@ -194,8 +194,8 @@ export default function App() {
     ? (currentClass?.subjectColors?.[colorModalSubject] || '#ffffff')
     : '#ffffff';
   const colorModalCurrentEmoji = colorModalSubject
-    ? (currentClass?.subjectEmojis?.[colorModalSubject] || '🎨')
-    : '🎨';
+    ? (currentClass?.subjectEmojis?.[colorModalSubject] || 'palette')
+    : 'palette';
 
   // Handler: open edit modal from timeline
   function handleOpenEditModal({ eventKey, legacyEventKey, displayActivity, hasTempActivity }) {

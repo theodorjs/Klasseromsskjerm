@@ -1,4 +1,5 @@
 import { SCHOOL_DAY_FRAMES, SCHOOL_MAIN_TIMES, subjectMap } from '../data/constants.js';
+import { normaliserSymbol } from '../ikoner/symboler.js';
 import { getMinutesFromTime, formatMinutesAsTime, getIsoWeekNumberForOslo } from './time.js';
 
 export function normalizeSubjectLabel(rawLabel) {
@@ -293,6 +294,10 @@ export function ensureClassData(classData) {
   classData.mainTimes = normalizeMainTimes(classData.mainTimes || []);
   classData.subjectColors = normalizeSubjectKeyMap(classData.subjectColors || {});
   classData.subjectEmojis = normalizeSubjectKeyMap(classData.subjectEmojis || {});
+  // Emoji fra eldre versjoner blir symbolnøkler; ukjente emoji står urørt
+  Object.keys(classData.subjectEmojis).forEach((name) => {
+    classData.subjectEmojis[name] = normaliserSymbol(classData.subjectEmojis[name]);
+  });
   classData.agendas = normalizeSubjectKeyMap(classData.agendas || {}, true);
   classData.templates = normalizeSubjectKeyMap(classData.templates || {}, true);
   classData.customCountdowns = normalizeCountdownEntries(classData.customCountdowns || []);
@@ -472,7 +477,7 @@ export function buildCurrentActivityLinesForState(state) {
 
 export function getStoredSubjectEmoji(className, activityLabel, classes) {
   const trimmed = normalizeSubjectLabel(activityLabel);
-  if (!trimmed) return '❓';
+  if (!trimmed) return 'circle-help';
   const classData = classes[className];
   const baseSubject = stripGradeSuffix(trimmed);
   if (classData && classData.subjectEmojis) {
@@ -480,7 +485,7 @@ export function getStoredSubjectEmoji(className, activityLabel, classes) {
     if (baseSubject && classData.subjectEmojis[baseSubject]) return classData.subjectEmojis[baseSubject];
   }
   const subjectInfo = getSubjectInfoFromActivityLabel(trimmed);
-  return subjectInfo?.emoji || '❓';
+  return subjectInfo?.emoji || 'circle-help';
 }
 
 export function getCountdownRemainingDisplay(targetDate, targetTime = '00:00') {

@@ -33,7 +33,7 @@ export function collectBackupData() {
     if (value !== null) extra[key] = value;
   });
   return {
-    app: 'klasseromsskjerm',
+    app: 'klasseromsskjerm', // fast formatnavn: eldre kopier skal fortsatt kunne leses
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     data,
@@ -43,7 +43,7 @@ export function collectBackupData() {
 
 export function buildBackupFilename(date = new Date()) {
   const pad = n => String(n).padStart(2, '0');
-  return `klasseromsskjerm-sikkerhetskopi-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.json`;
+  return `klasseskjerm-sikkerhetskopi-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.json`;
 }
 
 /** Laster ned sikkerhetskopien som fil. Returnerer true hvis det gikk. */
@@ -82,7 +82,7 @@ export function parseBackupFile(text) {
     throw new Error('Filen er ikke en gyldig sikkerhetskopi.');
   }
   if (!isPlainObject(parsed) || parsed.app !== 'klasseromsskjerm' || !isPlainObject(parsed.data)) {
-    throw new Error('Filen er ikke en sikkerhetskopi fra Klasseromsskjerm.');
+    throw new Error('Filen er ikke en sikkerhetskopi fra Klasseskjerm.');
   }
   const rawClasses = parsed.data.klasseromData;
   if (typeof rawClasses !== 'string') throw new Error('Sikkerhetskopien mangler klassedata.');
