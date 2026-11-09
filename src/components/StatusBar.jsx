@@ -4,7 +4,7 @@ export default function StatusBar({ currentDay, currentHour, currentMinute, date
   const weekNum = getIsoWeekNumberForOslo(new Date());
 
   return (
-    <div className="top-status-bar">
+    <div className={`top-status-bar${isSim ? ' er-simulert' : ''}`}>
       <div className="week-number" aria-live="polite">Uke {weekNum}</div>
       <div className="date-time">
         <span id="day-display" data-changed={isSim ? "true" : "false"}>{currentDay}</span>

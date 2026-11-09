@@ -1,52 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════════
    Vis for klassen
    ───────────────────────────────────────────────────────────────────
-   Ett trykk på «Vis for klassen» gir fullskjerm og en ren visning:
+   «Vis for klassen» i Verktøy gir fullskjerm og en ren visning:
    hva som skjer nå, nedtelleren og dagen, i stor skrift på glass.
    Verktøyene er borte. Tilbake-knappen dukker opp når noen rører
    musa eller skjermen, og forsvinner av seg selv. Esc går tilbake.
    Safari 14: ingen color-mix, ingen inset, ingen :has.
    ═══════════════════════════════════════════════════════════════════ */
-
-/* ─── Knappen i lærervisningen: instrument, med navn, alltid synlig ── */
-
-/* Står i verktøykassa, rett etter Verktøy-knappen (bredden på den varierer) */
-.presenter-knapp {
-    position: absolute;
-    top: 0;
-    left: calc(100% + 12px);
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    height: 60px;
-    padding: 0 20px 0 16px;
-    border: 1px solid var(--instrument-kant);
-    border-radius: var(--radius-m);
-    background: var(--instrument);
-    color: var(--tekst);
-    font: inherit;
-    font-size: 1.05rem;
-    font-weight: 800;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-    cursor: pointer;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28), inset 0 1px 0 var(--instrument-lys);
-    transition: transform 0.2s ease, filter 0.2s ease;
-    -webkit-tap-highlight-color: transparent;
-}
-.presenter-knapp .ikon { width: 1.55rem; height: 1.55rem; color: var(--tilbake); }
-.presenter-knapp:hover { filter: brightness(1.08); }
-.presenter-knapp:active { transform: scale(0.97); box-shadow: var(--trykk-inn); }
-.presenter-knapp:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
-
-body.under-the-hood-active .presenter-knapp,
-body.vegg-aktiv .presenter-knapp { display: none; }
-
-/* Telefon: bare symbolet, så knappen ikke dekker klokka */
-@media (max-width: 600px) {
-    .presenter-knapp { width: 60px; padding: 0; justify-content: center; }
-    .presenter-knapp span { display: none; }
-}
 
 /* ─── Mens klassen ser: alt annet enn visningen er skjult, men står i ro ── */
 

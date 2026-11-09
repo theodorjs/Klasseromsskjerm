@@ -181,12 +181,12 @@ export default function Presentasjon({
           <span className="presentasjon-hint" aria-hidden="true">Esc</span>
         </div>
         <div className="presentasjon-dato">
-          {currentDay} {dateStr} · Uke {ukenr}{isSim ? ' (simulert)' : ''}
+          <span className="presentasjon-dato-linje">{currentDay} {dateStr} · Uke {ukenr}{isSim ? ' (simulert)' : ''}</span>
           {visNedtellinger && (
             <span className="presentasjon-nedtellinger">
               {countdowns.map((item, i) => {
                 const d = getCountdownRemainingDisplay(item.targetDate, item.targetTime);
-                return <span key={item.id || i}>{item.title}: <b>{d.value}</b> {d.unit}</span>;
+                return <span key={item.id || i}>{item.title}: <b>{d.value}</b> {String(d.unit || '').toLowerCase()}</span>;
               })}
             </span>
           )}
@@ -243,7 +243,7 @@ export default function Presentasjon({
             )}
             </>
           )}
-          {nesteTekst && !(dagensTime && dagensTime.punkter.length > 4) && <div className="presentasjon-neste"><span>Neste:</span> {nesteTekst}</div>}
+          {nesteTekst && !(dagensTime && dagensTime.punkter.length > 2) && <div className="presentasjon-neste"><span>Neste:</span> {nesteTekst}</div>}
         </section>
 
         {nedteller && (

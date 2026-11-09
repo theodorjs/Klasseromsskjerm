@@ -385,7 +385,7 @@ export default function ElevPortrett({
       )}
 
       {visNedtellinger && (
-        <div className="ep-nedtellinger" aria-label="Nedtellinger">
+        <div className="ep-nedtellinger" aria-label="Dager til">
           {countdowns.map((item, i) => {
             const d = getCountdownRemainingDisplay(item.targetDate, item.targetTime);
             return (
