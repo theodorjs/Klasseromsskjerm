@@ -19,6 +19,9 @@ import ReceiveShareModal from './ReceiveShareModal.jsx';
 import { readShareTokenFromLocation, clearShareHashFromLocation, decodeShareToken } from '../utils/share.js';
 import { getCurrentSubjectColor } from '../utils/color.js';
 import WallScreen from './WallScreen.jsx';
+import Presentasjon from './Presentasjon.jsx';
+import Ikon from './Ikon.jsx';
+import usePresentasjon from '../hooks/usePresentasjon.js';
 import { readWallModePreference, WALL_MODE_KEY } from '../utils/wallMode.js';
 import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
 import {
@@ -113,6 +116,9 @@ export default function App() {
     } catch { /* adressen lar seg ikke endre; visningen bytter uansett */ }
     setWallMode(false);
   }
+
+  // Vis for klassen: fullskjerm og ren visning med ett trykk, Esc tilbake
+  const { presenterer, startPresentasjon, avsluttPresentasjon } = usePresentasjon();
 
   // Deling av timeplan via lenke
   const [shareOpen, setShareOpen] = useState(false);
@@ -296,6 +302,15 @@ export default function App() {
             onToggleCountdownVisibility={toggleCountdownVisibility}
             onEnterWallMode={enterWallMode}
           />
+          <button
+            type="button"
+            className="presenter-knapp"
+            id="vis-for-klassen"
+            onClick={startPresentasjon}
+            title="Fullskjerm for klassen, uten verktøyene. Esc for å gå tilbake."
+          >
+            <Ikon navn="presentation" /> <span>Vis for klassen</span>
+          </button>
           <MainContainer
             primaryState={primaryState}
             displayStates={displayStates}
@@ -428,6 +443,28 @@ export default function App() {
         open={noteOpen}
         onClose={() => setNoteOpen(false)}
       />
+
+      {presenterer && (
+        <Presentasjon
+          primaryState={primaryState}
+          displayStates={displayStates}
+          currentMinutes={currentMinutes}
+          currentDay={currentDay}
+          currentTime={currentTime}
+          dateStr={dateStr}
+          isWeekend={isWeekend}
+          classes={classes}
+          activeTimelineClassNames={activeTimelineClassNames}
+          tempScheduleChanges={tempScheduleChanges}
+          realMinutes={realMinutes}
+          isSim={isSim}
+          themeMode={themeMode}
+          countdowns={countdowns}
+          countdownsVisible={countdownsVisible}
+          subjectColor={currentSubject?.color || null}
+          onExit={avsluttPresentasjon}
+        />
+      )}
 
       {/* Modals */}
       <EditModal

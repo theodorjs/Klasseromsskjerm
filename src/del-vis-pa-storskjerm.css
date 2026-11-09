@@ -1,0 +1,317 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Vis for klassen
+   ───────────────────────────────────────────────────────────────────
+   Ett trykk på «Vis for klassen» gir fullskjerm og en ren visning:
+   hva som skjer nå, nedtelleren og dagen, i stor skrift på glass.
+   Verktøyene er borte. Tilbake-knappen dukker opp når noen rører
+   musa eller skjermen, og forsvinner av seg selv. Esc går tilbake.
+   Safari 14: ingen color-mix, ingen inset, ingen :has.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Knappen i lærervisningen: instrument, med navn, alltid synlig ── */
+
+.presenter-knapp {
+    position: fixed;
+    top: calc(20px + var(--topp));
+    left: 102px;
+    z-index: 8000;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 60px;
+    padding: 0 20px 0 16px;
+    border: 1px solid var(--instrument-kant);
+    border-radius: var(--radius-m);
+    background: var(--instrument);
+    color: var(--tekst);
+    font: inherit;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28), inset 0 1px 0 var(--instrument-lys);
+    transition: transform 0.2s ease, filter 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.presenter-knapp .ikon { width: 1.55rem; height: 1.55rem; color: var(--tilbake); }
+.presenter-knapp:hover { filter: brightness(1.08); }
+.presenter-knapp:active { transform: scale(0.97); box-shadow: var(--trykk-inn); }
+.presenter-knapp:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+
+/* «Vis for klassen» tar over for den gamle fullskjermknappen ved verktøykassa */
+.toolbox-fullscreen { display: none !important; }
+
+body.under-the-hood-active .presenter-knapp,
+body.vegg-aktiv .presenter-knapp { display: none; }
+
+/* ─── Mens klassen ser: alt annet enn visningen er skjult, men står i ro ── */
+
+body.presenterer #root > :not(.presentasjon):not(#stars):not(#stars2):not(#stars3):not(.noise-bg):not(.k-overlay) {
+    visibility: hidden !important;
+}
+/* Ingen overgang: lærervisningen skal være borte med en gang, ikke tone ut bak glasset */
+body.presenterer #root > :not(.presentasjon):not(#stars):not(#stars2):not(#stars3):not(.noise-bg):not(.k-overlay) * {
+    transition: none !important;
+}
+
+.presentasjon {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 7000;
+    display: flex;
+    flex-direction: column;
+    gap: 2.2vh;
+    padding: calc(2.4vh + var(--topp)) 3vw calc(2vh + var(--bunn));
+    box-sizing: border-box;
+    color: var(--text-color);
+    outline: none;
+    overflow: hidden;
+}
+body.colorful-mode .presentasjon { color: #fff; }
+.presentasjon.er-rolig { cursor: none; }
+
+/* Topp: Tilbake til venstre, datoen i midten, klokka til høyre */
+.presentasjon-topp {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 3vw;
+    flex: none;
+}
+.presentasjon-klokke { justify-self: end; }
+.presentasjon-dato {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.4vh;
+    font-size: clamp(1.1rem, 2.8vh, 2.1rem);
+    font-weight: 600;
+    opacity: 0.9;
+}
+.presentasjon-nedtellinger {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4vh 2vw;
+    font-size: 0.8em;
+    opacity: 0.9;
+}
+.presentasjon-nedtellinger b { font-weight: 900; }
+.presentasjon-klokke {
+    font-size: clamp(2.2rem, 7.4vh, 5.4rem);
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+}
+
+/* Midten: timen til venstre, nedtelleren til høyre */
+.presentasjon-hoved {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 2.6vw;
+}
+
+.presentasjon-time,
+.presentasjon-nedteller {
+    background: rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 40px;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+    box-sizing: border-box;
+    min-height: 0;
+}
+body.light-mode .presentasjon-time,
+body.light-mode .presentasjon-nedteller {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 16px 28px rgba(120, 138, 164, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.presentasjon-time {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 2.4vh;
+    padding: 4vh 3.5vw;
+    overflow: hidden;
+}
+.presentasjon.har-nedteller .presentasjon-time {
+    align-items: flex-start;
+    text-align: left;
+}
+
+.presentasjon-etikett {
+    font-size: clamp(1.2rem, 3.6vh, 2.6rem);
+    font-weight: 300;
+    opacity: 0.9;
+}
+.presentasjon-fag {
+    font-size: clamp(2.6rem, 14vh, 11rem);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+}
+.presentasjon.har-nedteller .presentasjon-fag { font-size: clamp(2.4rem, 11.5vh, 9rem); }
+.presentasjon-fag.er-flere,
+.presentasjon.har-nedteller .presentasjon-fag.er-flere {
+    font-size: clamp(1.8rem, 7vh, 5.4rem);
+    text-transform: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+}
+.presentasjon-igjen {
+    font-size: clamp(1.3rem, 4.6vh, 3.4rem);
+    font-weight: 800;
+    padding: 0.8vh 2.4vh;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+body.light-mode .presentasjon-igjen { background: rgba(28, 39, 53, 0.07); border-color: rgba(28, 39, 53, 0.14); }
+.presentasjon-neste {
+    font-size: clamp(1.1rem, 3.6vh, 2.6rem);
+    font-weight: 600;
+    opacity: 0.9;
+}
+.presentasjon-neste span { font-weight: 300; }
+
+/* Agendaen for timen, når læreren har lagt inn gjøremål */
+/* To fag i samme time (delt trinn): agendaene står side om side */
+.presentasjon-agenda {
+    display: flex;
+    gap: 3vw;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+.presentasjon-agenda ul { flex: 1 1 0; min-width: 0; }
+.presentasjon-agenda ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9vh;
+    font-size: clamp(1.1rem, 3.4vh, 2.4rem);
+    font-weight: 600;
+    text-align: left;
+}
+.presentasjon-agenda li { display: flex; align-items: center; gap: 0.6em; min-width: 0; }
+.presentasjon-agenda-navn { min-width: 0; overflow-wrap: break-word; word-break: break-word; }
+.presentasjon-agenda .presentasjon-agenda-fag { font-weight: 300; font-size: 0.8em; opacity: 0.85; }
+.presentasjon-agenda-symbol { display: inline-flex; width: 1.2em; justify-content: center; flex: none; }
+.presentasjon-agenda-symbol .ikon { width: 1.1em; height: 1.1em; }
+.presentasjon-agenda li.er-gjort .presentasjon-agenda-navn { text-decoration: line-through; opacity: 0.6; }
+.presentasjon-agenda-hake { width: 1em; height: 1em; color: var(--ny); flex: none; }
+
+/* Nedtelleren: skiva og store tall */
+.presentasjon-nedteller {
+    flex: 0 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2vh;
+    padding: 3vh 2.6vw;
+}
+.presentasjon-nedteller .tt-dial { width: min(50vh, 34vw); height: auto; }
+.presentasjon-avlesning {
+    font-size: clamp(3rem, 16vh, 12rem);
+    font-weight: 900;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+}
+.presentasjon-nedteller.er-ferdig .presentasjon-avlesning { font-size: clamp(2.2rem, 9vh, 6.5rem); }
+.presentasjon-status {
+    font-size: clamp(1.1rem, 3.4vh, 2.4rem);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.85;
+}
+
+/* Dagen nederst: samme tidslinje, men bare til å se på */
+.presentasjon .timeline {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    flex: none;
+    pointer-events: none;
+}
+
+/* Tilbake: alltid på samme sted øverst til venstre. Når ingen rører musa
+   eller skjermen, krymper den til en svak pil (under en promille av skjermen). */
+.presentasjon-styring {
+    justify-self: start;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.presentasjon-tilbake {
+    transition: opacity 0.4s ease, background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.presentasjon-tilbake .ikon { width: 1.25em; height: 1.25em; flex: none; }
+.presentasjon.er-rolig .presentasjon-tilbake {
+    opacity: 0.35;
+    width: 44px;
+    padding: 0;
+    gap: 0;
+    background-image: none;
+    background-color: transparent;
+    border-color: currentColor;
+    box-shadow: none;
+    color: inherit;
+}
+.presentasjon.er-rolig .presentasjon-tilbake-tekst,
+.presentasjon.er-rolig .presentasjon-hint { display: none; }
+.presentasjon.er-rolig .presentasjon-styring:focus-within .presentasjon-tilbake { opacity: 1; }
+.presentasjon-hint {
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-s);
+    opacity: 0.7;
+    white-space: nowrap;
+}
+@media (hover: none) {
+    .presentasjon-hint { display: none; }
+}
+
+/* Smal eller stående skjerm: timen over nedtelleren */
+@media (max-aspect-ratio: 1/1) {
+    .presentasjon-hoved { flex-direction: column; }
+    .presentasjon-time { flex: 1 1 auto; }
+    .presentasjon.har-nedteller .presentasjon-time { align-items: center; text-align: center; }
+    .presentasjon-nedteller { flex: 1 1 auto; }
+    .presentasjon-nedteller .tt-dial { width: min(30vh, 70vw); }
+    .presentasjon-avlesning { font-size: clamp(3rem, 9vh, 9rem); }
+}
+
+/* Fargerik tema: tallene på skiva følger den hvite teksten på glasset */
+body.colorful-mode .presentasjon-nedteller {
+    --tt-ink: currentColor;
+    --tt-tick: currentColor;
+}
