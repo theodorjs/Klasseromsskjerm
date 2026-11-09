@@ -20,6 +20,10 @@ import { readShareTokenFromLocation, clearShareHashFromLocation, decodeShareToke
 import { getCurrentSubjectColor } from '../utils/color.js';
 import WallScreen from './WallScreen.jsx';
 import ForsteMote from './ForsteMote.jsx';
+import { DagensTimeKort, PlanleggTimeDialog } from './DagensTime.jsx';
+import { useDagensTime, finnSynligTime, dagensDato } from '../hooks/useDagensTime.js';
+import { formatMinutesAsTime } from '../utils/time.js';
+import { formatExpandedActivityDisplay } from '../utils/schedule.js';
 import { readWallModePreference, WALL_MODE_KEY } from '../utils/wallMode.js';
 import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
 import {
@@ -93,6 +97,11 @@ export default function App() {
     canUndoImport,
     lastImportInfo,
   } = state;
+
+  // Dagens time: tittel, tid, mål og agenda på tavla
+  const dagensTime = useDagensTime();
+  const [planleggOpen, setPlanleggOpen] = useState(false);
+  const [planleggId, setPlanleggId] = useState(null);
 
   // Clock tick state
   const [tick, setTick] = useState(0);  // eslint-disable-line no-unused-vars
@@ -198,6 +207,28 @@ export default function App() {
     ? (currentClass?.subjectEmojis?.[colorModalSubject] || 'palette')
     : 'palette';
 
+  // Timen som står på tavla nå, og forslag til tid når en ny time settes opp
+  const synligTime = finnSynligTime(dagensTime.timer, dagensDato(), currentDay, currentMinutes);
+  const planleggEksisterende = planleggId ? (dagensTime.timer.find(t => t.id === planleggId) || null) : null;
+  function lagForslag() {
+    const okter = (primaryState?.normalizedDayEvents || []).filter(e => e.type === 'class');
+    const okt = okter.find(e => currentMinutes >= e.start && currentMinutes < e.end)
+      || okter.find(e => e.start > currentMinutes);
+    if (okt) {
+      return {
+        fra: formatMinutesAsTime(okt.start),
+        til: formatMinutesAsTime(okt.end),
+        fag: formatExpandedActivityDisplay(okt.displayActivity || okt.activity).split(' / ')[0],
+      };
+    }
+    const start = Math.min(23 * 60, Math.ceil((currentMinutes + 1) / 5) * 5);
+    return { fra: formatMinutesAsTime(start), til: formatMinutesAsTime(Math.min(start + 45, 23 * 60 + 59)), fag: '' };
+  }
+  function openPlanlegg(id) {
+    setPlanleggId(id ?? synligTime?.id ?? null);
+    setPlanleggOpen(true);
+  }
+
   // Handler: open edit modal from timeline
   function handleOpenEditModal({ eventKey, legacyEventKey, displayActivity, hasTempActivity }) {
     setEditModal({ eventKey, legacyEventKey, displayActivity, hasTempActivity });
@@ -281,6 +312,7 @@ export default function App() {
             themeMode={themeMode}
             onSetTheme={setThemeMode}
             onOpenTimer={() => setTimerPanelOpen(true)}
+            onOpenPlanlegg={() => openPlanlegg()}
             onOpenAgenda={() => setAgendaOpen(true)}
             onOpenNote={() => setNoteOpen(true)}
             onOpenClass={() => { setUnderTheHoodOpen(true); setUnderTheHoodView('classGrid'); }}
@@ -297,13 +329,23 @@ export default function App() {
             onToggleCountdownVisibility={toggleCountdownVisibility}
             onEnterWallMode={enterWallMode}
           />
-          <MainContainer
-            primaryState={primaryState}
-            displayStates={displayStates}
-            currentMinutes={currentMinutes}
-            isWeekend={isWeekend}
-            currentDay={currentDay}
-          />
+          {synligTime ? (
+            <DagensTimeKort
+              time={synligTime}
+              minutter={currentMinutes}
+              onEndre={() => openPlanlegg(synligTime.id)}
+              onSkjul={() => dagensTime.skjulTime(synligTime.id)}
+              onVekslePunkt={(i) => dagensTime.vekslePunkt(synligTime.id, i)}
+            />
+          ) : (
+            <MainContainer
+              primaryState={primaryState}
+              displayStates={displayStates}
+              currentMinutes={currentMinutes}
+              isWeekend={isWeekend}
+              currentDay={currentDay}
+            />
+          )}
         </div>
 
         <div
@@ -437,6 +479,17 @@ export default function App() {
       <NotePanel
         open={noteOpen}
         onClose={() => setNoteOpen(false)}
+      />
+
+      <PlanleggTimeDialog
+        open={planleggOpen}
+        eksisterende={planleggEksisterende}
+        forslag={planleggOpen ? lagForslag() : null}
+        minutter={currentMinutes}
+        dag={currentDay}
+        onLagre={(time) => { dagensTime.lagreTime(time); setPlanleggOpen(false); }}
+        onSlett={(id) => { dagensTime.slettTime(id); setPlanleggOpen(false); }}
+        onAvbryt={() => setPlanleggOpen(false)}
       />
 
       {/* Modals */}

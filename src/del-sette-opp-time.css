@@ -1,0 +1,259 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Dagens time: tittel, tid, læringsmål og agenda på tavla
+   Kortet er glass (elevene leser det, samme flate som «Akkurat nå»),
+   dialogen og de små knappene er instrument.
+   Safari 14: ingen color-mix(), ingen inset-snarvei.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Kortet på tavla ────────────────────────────────────────────── */
+
+#main-container.dagens-time {
+    width: min(1500px, 90vw);
+    max-width: none;
+    max-height: calc(100vh - 210px - var(--topp));
+    overflow: hidden;
+    align-items: stretch;
+    text-align: left;
+    gap: clamp(14px, 2.2vh, 28px);
+    padding: clamp(24px, 3.6vh, 44px) clamp(24px, 3.4vw, 60px);
+    color: inherit;
+    /* Litt over midten: tidslinja tar plass nederst */
+    top: calc(50% - 20px);
+}
+
+.dt-topp {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px 32px;
+    flex-wrap: wrap;
+    padding-right: 96px; /* plass til de små knappene */
+}
+
+.dt-tittel {
+    margin: 0;
+    font-size: clamp(2.2rem, 4.4vw, 5.4rem);
+    font-weight: 900;
+    line-height: 1.04;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+}
+
+.dt-tid {
+    display: flex;
+    align-items: baseline;
+    gap: 6px 18px;
+    flex-wrap: wrap;
+    font-variant-numeric: tabular-nums;
+}
+.dt-klokke { font-size: clamp(1.5rem, 2.7vw, 3.2rem); font-weight: 800; white-space: nowrap; }
+.dt-status { font-size: clamp(1.1rem, 1.9vw, 2.2rem); font-weight: 600; opacity: 0.8; white-space: nowrap; }
+
+.dt-framdrift {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(127, 140, 160, 0.28);
+    overflow: hidden;
+}
+.dt-framdrift span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: var(--navn);
+    transition: width 1s linear;
+}
+
+/* Læringsmålet: det viktigste etter tittelen */
+.dt-maal {
+    display: flex;
+    align-items: baseline;
+    gap: 8px 22px;
+    flex-wrap: wrap;
+    padding: clamp(12px, 1.8vh, 22px) clamp(16px, 1.6vw, 28px);
+    border-radius: var(--radius-l);
+    border-left: 8px solid var(--ny);
+    background: rgba(127, 140, 160, 0.14);
+}
+.dt-maal-merke {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    font-size: clamp(1rem, 1.5vw, 1.7rem);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.85;
+    white-space: nowrap;
+}
+.dt-maal-tekst {
+    flex: 1 1 60%;
+    font-size: clamp(1.8rem, 3.4vw, 4rem);
+    font-weight: 800;
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+}
+
+/* Agendaen: nummerert, punktet klassen er på er markert */
+.dt-agenda {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 0.8vh, 10px);
+}
+.dt-agenda.er-mange {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+}
+.dt-punkt {
+    appearance: none;
+    -webkit-appearance: none;
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 1.2vw, 22px);
+    width: 100%;
+    padding: clamp(4px, 0.8vh, 10px) clamp(10px, 1vw, 18px);
+    border: 2px solid transparent;
+    border-radius: var(--radius-m);
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: clamp(1.5rem, 2.6vw, 3rem);
+    font-weight: 700;
+    line-height: 1.15;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.dt-punkt:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+.dt-nr {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    font-size: 0.8em;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+.dt-punkt-tekst { min-width: 0; overflow-wrap: anywhere; }
+.dt-agenda li.er-ferdig .dt-punkt { opacity: 0.45; }
+.dt-agenda li.er-ferdig .dt-punkt-tekst { text-decoration: line-through; text-decoration-thickness: 3px; }
+.dt-agenda li.er-ferdig .dt-nr { background: var(--ny); border-color: var(--ny); color: var(--ny-tekst); }
+.dt-agenda li.er-naa .dt-punkt {
+    border-color: var(--navn);
+    background: rgba(127, 140, 160, 0.16);
+}
+.dt-agenda li.er-naa .dt-nr { background: var(--navn); border-color: var(--navn); color: var(--navn-tekst); }
+
+/* Små instrumentknapper for læreren: dempet til musa er over kortet */
+.dt-verktoy {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    gap: 8px;
+    opacity: 0.4;
+    transition: opacity 0.2s ease;
+    z-index: 2;
+}
+#main-container.dagens-time:hover .dt-verktoy,
+.dt-verktoy:focus-within { opacity: 1; }
+@media (hover: none) { .dt-verktoy { opacity: 0.75; } }
+.dt-knapp {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument-3);
+    color: var(--tekst);
+    font-size: 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    -webkit-tap-highlight-color: transparent;
+}
+.dt-knapp:active { box-shadow: var(--trykk-inn); }
+.dt-knapp:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+
+/* Stående iPad og smale skjermer: tid under tittelen */
+@media (max-width: 1100px) {
+    #main-container.dagens-time { width: 92vw; }
+    .dt-tittel { font-size: clamp(2rem, 6.4vw, 4rem); }
+    .dt-maal-tekst { font-size: clamp(1.6rem, 4.6vw, 3rem); }
+    .dt-punkt { font-size: clamp(1.35rem, 3.8vw, 2.4rem); }
+    .dt-agenda.er-mange { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ─── Verktøykassa: dagens time er det første valget ────────────── */
+
+.toolbox-item--time .icon { color: var(--ny); }
+
+/* ─── Dialogen ───────────────────────────────────────────────────── */
+
+.k-dialog.k-dialog--time {
+    max-width: 620px;
+    /* Fast øverst: når en melding dukker opp, vokser dialogen nedover i stedet
+       for å hoppe, så feltene står der læreren skal trykke */
+    align-self: flex-start;
+    margin-top: max(12px, 7vh);
+    max-height: calc(100vh - max(12px, 7vh) - 16px);
+}
+
+.dt-tidsrad {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+.dt-tidsfelt { flex: 0 0 128px; }
+.dt-tid-input { text-align: center; font-variant-numeric: tabular-nums; }
+.dt-tidsstrek { padding-bottom: 12px; font-size: 1.3rem; font-weight: 800; color: var(--tekst-dempet); }
+.dt-varighet { padding: 0 0 14px 6px; font-size: 0.95rem; font-weight: 700; color: var(--tekst-dempet); }
+
+.dt-hint { margin-left: 8px; font-weight: 600; color: var(--tekst-svak); }
+
+.dt-punktliste {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.dt-punktrad {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.dt-punktnr {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--instrument-2);
+    color: var(--tekst-dempet);
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+.k-close.dt-fjern {
+    position: static;
+    flex: none;
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
+    box-shadow: none;
+}
+.dt-nytt-punkt { align-self: flex-start; }
+
+/* Eksempeltekst skal ikke kunne forveksles med noe som alt er fylt inn */
+.k-dialog--time .k-input::placeholder { color: var(--tekst-svak); font-weight: 500; font-style: italic; }
