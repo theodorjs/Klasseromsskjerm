@@ -20,15 +20,17 @@
     line-height: 1;
     color: var(--tekst);
 }
-/* Fullskjerm-knappen står rett etter Verktøy-knappen, uansett bredde */
-.toolbox-fullscreen { left: calc(100% + 12px); }
-
 @media (max-width: 600px) {
     .toolbox-main { padding: 0; width: 60px; }
     .toolbox-main-label { display: none; }
 }
 
 /* ─── Velkomstkortet ─────────────────────────────────────────────── */
+
+/* Kortet har sitt eget «Nedteller»-valg; to like knapper oppå hverandre
+   (smale skjermer) skal det ikke bli */
+body.velkomst-aktiv .timer-launch { display: none; }
+
 
 .fm-kort {
     position: fixed;

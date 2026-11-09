@@ -46,8 +46,7 @@
     body.star-mode:not(.under-the-hood-active):not(.vegg-aktiv) { overflow: hidden; }
 
     /* Lukket verktøykasse: skjulte knapper skal ikke kunne nås eller måles */
-    .toolbox-container:not(.active) .toolbox-items,
-    .toolbox-container:not(.active) .toolbox-fullscreen { visibility: hidden; }
+    .toolbox-container:not(.active) .toolbox-items { visibility: hidden; }
 
     body.under-the-hood-active .elev-portrett {
         opacity: 0;
@@ -66,6 +65,8 @@
     }
 
     .ep-naa,
+    .ep-nedteller,
+    .ep-time,
     .ep-plan {
         background: var(--ep-glass);
         border: 1px solid var(--ep-glass-kant);
@@ -76,6 +77,8 @@
     }
 
     body.light-mode .ep-naa,
+    body.light-mode .ep-nedteller,
+    body.light-mode .ep-time,
     body.light-mode .ep-plan {
         box-shadow: 0 16px 28px rgba(120, 138, 164, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95);
     }
@@ -155,6 +158,135 @@
         opacity: 0.85;
         line-height: 1.25;
     }
+
+    /* Nedtelleren står i lista under; knappene nede til høyre ville dekket timeplanen */
+    body:not(.vegg-aktiv) .timer-mini,
+    body:not(.vegg-aktiv) .timer-launch { display: none !important; }
+
+    /* ── Nedtelleren læreren har startet (trykk for å styre den) ── */
+    .ep-nedteller {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 100%;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: clamp(14px, 3vw, 32px);
+        padding: clamp(12px, 1.8vw, 20px) clamp(18px, 3.2vw, 40px);
+    }
+    .ep-nedteller .tt-dial { width: clamp(84px, 13vw, 140px); height: auto; flex: none; }
+    .ep-nedteller-tekst { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .ep-nedteller-oppgave {
+        font-size: clamp(1.1rem, 3vw, 1.9rem);
+        font-weight: 800;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
+    .ep-nedteller-tid {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5em;
+        font-size: clamp(2.2rem, 7vw, 4.4rem);
+        font-weight: 900;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+    }
+    .ep-nedteller.er-ferdig .ep-nedteller-tid { font-size: clamp(1.8rem, 5.4vw, 3.4rem); color: var(--ny); }
+    .ep-nedteller-pause {
+        font-size: 0.4em;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.8;
+    }
+
+    /* ── Timen læreren har satt opp ── */
+    .ep-nedteller:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+
+    .ep-time {
+        flex: 0 0 auto;
+        max-height: 44vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(8px, 1.2vh, 14px);
+        padding: clamp(14px, 2.2vw, 26px) clamp(18px, 3.2vw, 40px);
+    }
+    .ep-time-topp {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+    }
+    .ep-time-tittel {
+        margin: 0;
+        font-size: clamp(1.6rem, 4.6vw, 2.8rem);
+        font-weight: 900;
+        line-height: 1.08;
+        overflow-wrap: anywhere;
+    }
+    .ep-time-tid {
+        font-size: clamp(1rem, 2.6vw, 1.5rem);
+        font-weight: 700;
+        opacity: 0.85;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .ep-time-maal {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        padding: 10px 16px;
+        border-radius: var(--radius-m);
+        border-left: 6px solid var(--ny);
+        background: rgba(127, 140, 160, 0.14);
+        font-size: clamp(1.15rem, 3.2vw, 1.9rem);
+        font-weight: 800;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+    }
+    .ep-time-maal-merke {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35em;
+        font-size: 0.7em;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.85;
+        white-space: nowrap;
+    }
+    .ep-time-punkter {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: clamp(1.05rem, 2.8vw, 1.6rem);
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .ep-time-punkter li {
+        display: flex;
+        align-items: center;
+        gap: 0.6em;
+        padding: 4px 10px;
+        border: 2px solid transparent;
+        border-radius: var(--radius-m);
+    }
+    .ep-time-punkt { min-width: 0; overflow-wrap: anywhere; }
+    .ep-time-punkter li.er-ferdig { opacity: 0.5; }
+    .ep-time-punkter li.er-ferdig .ep-time-punkt { text-decoration: line-through; }
+    .ep-time-punkter li.er-ferdig .dt-nr { background: var(--ny); border-color: var(--ny); color: var(--ny-tekst); }
+    .ep-time-punkter li.er-naa { border-color: var(--navn); background: rgba(127, 140, 160, 0.16); }
+    .ep-time-punkter li.er-naa .dt-nr { background: var(--navn); border-color: var(--navn); color: var(--navn-tekst); }
 
     /* ── Nedtellinger (i stedet for kortene i høyre hjørne) ── */
     .ep-nedtellinger {

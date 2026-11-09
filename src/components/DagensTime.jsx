@@ -3,36 +3,15 @@ import Dialog from './Dialog.jsx';
 import Info from './Info.jsx';
 import Ikon from './Ikon.jsx';
 import { getMinutesFromTime, formatMinutesAsTime } from '../utils/time.js';
-import { tolkKlokkeslett, dagensDato, VIS_FOER_START } from '../hooks/useDagensTime.js';
+import { tolkKlokkeslett, dagensDato, timeStatus, VIS_FOER_START } from '../hooks/useDagensTime.js';
 
 /* Dagens time på tavla (glass, for elevene) og dialogen der læreren setter
    den opp (instrument). Én dialog, fire ting: tittel, tid, mål, agenda. */
 
-function minTekst(n) {
-  const m = Math.max(0, Math.round(n));
-  if (m >= 60) {
-    const t = Math.floor(m / 60);
-    const r = m % 60;
-    return r ? `${t} t ${r} min` : `${t} t`;
-  }
-  return `${m} min`;
-}
-
 // ─── Kortet elevene ser ─────────────────────────────────────────────────────
 
 export function DagensTimeKort({ time, minutter, onEndre, onSkjul, onVekslePunkt }) {
-  const start = getMinutesFromTime(time.fra);
-  const slutt = getMinutesFromTime(time.til);
-  const paagaar = minutter >= start && minutter < slutt;
-  const foer = minutter < start;
-
-  let status = '';
-  if (paagaar) status = `${minTekst(slutt - minutter)} igjen`;
-  else if (foer) status = start - minutter <= 90 ? `Starter om ${minTekst(start - minutter)}` : `Starter kl. ${time.fra}`;
-
-  // Punktet klassen er på: det første som ikke er krysset av (bare mens timen pågår)
-  const naaIndex = paagaar ? time.punkter.findIndex(p => !p.ferdig) : -1;
-  const framdrift = paagaar ? Math.min(100, Math.max(0, ((minutter - start) / Math.max(1, slutt - start)) * 100)) : null;
+  const { status, naaIndex, framdrift } = timeStatus(time, minutter);
   const mangePunkter = time.punkter.length > 4;
 
   return (
@@ -375,7 +354,7 @@ function PlanleggTimeInner({ eksisterende, forslag, minutter, dag, onLagre, onSl
 
       <div className="k-dialog-actions">
         <button type="button" id="time-vis" className="k-btn k-btn--ny k-btn--fylt" onClick={() => lagre(true)}>
-          <Ikon navn="presentation" /> Vis på tavla
+          <Ikon navn="check" /> Vis på tavla
         </button>
         {langtFram && tidOk && (
           <button type="button" id="time-lagre-senere" className="k-btn k-btn--tilbake" onClick={() => lagre(false)}>

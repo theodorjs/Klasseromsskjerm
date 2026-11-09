@@ -27,7 +27,7 @@ function formatClock(ms) {
  * mot null. Fargen følger faget som pågår, med mulighet for egen farge.
  * Kjøringen lagres, så timeren overlever at siden lastes på nytt.
  */
-export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor, subjectName }) {
+export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor, subjectName, lessonTitle }) {
   const [settings, setSettings] = useState(loadTimerSettings);
   const [run, setRun] = useState(() => {
     const saved = loadTimerRun();
@@ -230,6 +230,8 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
   const readout = formatTimerReadout(remainingMs);
   const task = settings.task || '';
   const subjectDot = normalizeHexColor(subjectColor);
+  // Har læreren satt opp timen («Sett opp timen»), står tittelen dens øverst i stedet for faget
+  const bigHeading = lessonTitle || subjectName;
   const doneClock = done ? formatClock(run?.doneAt) : '';
   const durationMinutes = Math.round(settings.durationMs / 60000);
   const statusText = done
@@ -285,12 +287,12 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
           <button ref={closeBtnRef} type="button" className="tt-close" id="timer-close-btn" aria-label={big ? 'Tilbake til liten visning' : 'Lukk nedteller'} onClick={() => { setColorOpen(false); setTaskDraft(null); if (big) setBig(false); else onClose(); }}><Ikon navn="x" /></button>
 
           {/* Stor visning: faget som pågår og hva klassen skal gjøre står over nedtelleren */}
-          {big && (subjectName || task || taskDraft !== null) && (
+          {big && (bigHeading || task || taskDraft !== null) && (
             <div className="tt-big-context">
-              {subjectName && (
+              {bigHeading && (
                 <span className="tt-big-subject">
                   {subjectDot && <span className="tt-big-dot" style={{ background: subjectDot }} aria-hidden="true" />}
-                  {subjectName}
+                  {bigHeading}
                 </span>
               )}
               {taskDraft !== null ? (

@@ -10,11 +10,11 @@
 
 /* ─── Knappen i lærervisningen: instrument, med navn, alltid synlig ── */
 
+/* Står i verktøykassa, rett etter Verktøy-knappen (bredden på den varierer) */
 .presenter-knapp {
-    position: fixed;
-    top: calc(20px + var(--topp));
-    left: 102px;
-    z-index: 8000;
+    position: absolute;
+    top: 0;
+    left: calc(100% + 12px);
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -39,11 +39,14 @@
 .presenter-knapp:active { transform: scale(0.97); box-shadow: var(--trykk-inn); }
 .presenter-knapp:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
 
-/* «Vis for klassen» tar over for den gamle fullskjermknappen ved verktøykassa */
-.toolbox-fullscreen { display: none !important; }
-
 body.under-the-hood-active .presenter-knapp,
 body.vegg-aktiv .presenter-knapp { display: none; }
+
+/* Telefon: bare symbolet, så knappen ikke dekker klokka */
+@media (max-width: 600px) {
+    .presenter-knapp { width: 60px; padding: 0; justify-content: center; }
+    .presenter-knapp span { display: none; }
+}
 
 /* ─── Mens klassen ser: alt annet enn visningen er skjult, men står i ro ── */
 
@@ -53,6 +56,8 @@ body.presenterer #root > :not(.presentasjon):not(#stars):not(#stars2):not(#stars
 /* Ingen overgang: lærervisningen skal være borte med en gang, ikke tone ut bak glasset */
 body.presenterer #root > :not(.presentasjon):not(#stars):not(#stars2):not(#stars3):not(.noise-bg):not(.k-overlay) * {
     transition: none !important;
+    /* Også det som selv sier visibility: visible (elevvisningen på høykant) */
+    visibility: hidden !important;
 }
 
 .presentasjon {
@@ -221,6 +226,94 @@ body.light-mode .presentasjon-igjen { background: rgba(28, 39, 53, 0.07); border
 .presentasjon-agenda li.er-gjort .presentasjon-agenda-navn { text-decoration: line-through; opacity: 0.6; }
 .presentasjon-agenda-hake { width: 1em; height: 1em; color: var(--ny); flex: none; }
 
+/* Timen læreren har satt opp: tittel, mål og agenda, alltid venstrestilt */
+.presentasjon-time.har-time,
+.presentasjon.har-nedteller .presentasjon-time.har-time {
+    align-items: flex-start;
+    text-align: left;
+    gap: 2vh;
+}
+.presentasjon-fag.er-tittel,
+.presentasjon.har-nedteller .presentasjon-fag.er-tittel {
+    font-size: clamp(2.2rem, 9vh, 7rem);
+    line-height: 1.04;
+    text-transform: none;
+}
+.presentasjon-maal {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.6vh 1.4vw;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1.4vh 1.6vw;
+    border-radius: var(--radius-l);
+    border-left: 8px solid var(--ny);
+    background: rgba(127, 140, 160, 0.14);
+}
+.presentasjon-maal-merke {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    font-size: clamp(1rem, 2.6vh, 1.8rem);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.85;
+    white-space: nowrap;
+}
+.presentasjon-maal-tekst {
+    flex: 1 1 60%;
+    font-size: clamp(1.5rem, 5vh, 3.6rem);
+    font-weight: 800;
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+}
+.presentasjon-punkter {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8vh;
+    font-size: clamp(1.2rem, 4vh, 2.8rem);
+    font-weight: 700;
+    line-height: 1.15;
+}
+.presentasjon-punkter.er-mange {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2vw;
+    font-size: clamp(1.1rem, 3.2vh, 2.2rem);
+}
+.presentasjon-punkter li {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    min-width: 0;
+    padding: 0.3vh 0.8vw;
+    border: 2px solid transparent;
+    border-radius: var(--radius-m);
+}
+.presentasjon-punkt-tekst { min-width: 0; overflow-wrap: anywhere; }
+.presentasjon-punkter li.er-ferdig { opacity: 0.45; }
+.presentasjon-punkter li.er-ferdig .presentasjon-punkt-tekst { text-decoration: line-through; text-decoration-thickness: 3px; }
+.presentasjon-punkter li.er-ferdig .dt-nr { background: var(--ny); border-color: var(--ny); color: var(--ny-tekst); }
+.presentasjon-punkter li.er-naa { border-color: var(--navn); background: rgba(127, 140, 160, 0.16); }
+.presentasjon-punkter li.er-naa .dt-nr { background: var(--navn); border-color: var(--navn); color: var(--navn-tekst); }
+
+/* Oppgaven fra nedtelleren («Skriv oppgave») står over skiva */
+.presentasjon-oppgave {
+    max-width: min(50vh, 34vw);
+    text-align: center;
+    font-size: clamp(1.2rem, 3.8vh, 2.6rem);
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
 /* Nedtelleren: skiva og store tall */
 .presentasjon-nedteller {
     flex: 0 1 auto;
@@ -308,6 +401,29 @@ body.light-mode .presentasjon-igjen { background: rgba(28, 39, 53, 0.07); border
     .presentasjon-nedteller { flex: 1 1 auto; }
     .presentasjon-nedteller .tt-dial { width: min(30vh, 70vw); }
     .presentasjon-avlesning { font-size: clamp(3rem, 9vh, 9rem); }
+    .presentasjon-oppgave { max-width: 90vw; }
+    .presentasjon-punkter.er-mange { grid-template-columns: minmax(0, 1fr); }
+
+    /* Satt opp time og nedteller samtidig: timen får plassen, nedtelleren
+       legger seg på én rad (skive, tall, oppgave) under */
+    .presentasjon-time.har-time { flex: 1 1 0; gap: 1.4vh; padding: 3vh 5vw; }
+    .presentasjon-fag.er-tittel,
+    .presentasjon.har-nedteller .presentasjon-fag.er-tittel { font-size: clamp(2rem, 5.4vh, 5rem); }
+    .presentasjon-time.har-time .presentasjon-igjen { font-size: clamp(1.2rem, 3vh, 2.4rem); }
+    .presentasjon-maal-tekst { font-size: clamp(1.3rem, 3.2vh, 2.6rem); }
+    .presentasjon-punkter,
+    .presentasjon-punkter.er-mange { font-size: clamp(1.1rem, 2.8vh, 2.2rem); }
+    .presentasjon.har-nedteller .presentasjon-time.har-time ~ .presentasjon-nedteller {
+        flex: 0 0 auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1vh 4vw;
+        padding: 2.4vh 4vw;
+    }
+    .presentasjon-time.har-time ~ .presentasjon-nedteller .tt-dial { width: min(22vh, 40vw); }
+    .presentasjon-time.har-time ~ .presentasjon-nedteller .presentasjon-oppgave { flex: 1 0 100%; max-width: none; }
+    .presentasjon-time.har-time ~ .presentasjon-nedteller .presentasjon-avlesning { font-size: clamp(3rem, 10vh, 9rem); }
 }
 
 /* Fargerik tema: tallene på skiva følger den hvite teksten på glasset */

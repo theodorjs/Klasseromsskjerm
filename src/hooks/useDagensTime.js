@@ -96,6 +96,35 @@ export function finnSynligTime(timer, dato, dag, minutter) {
   return iVindu || festet;
 }
 
+/** «35 min», «1 t 10 min» */
+export function minTekst(n) {
+  const m = Math.max(0, Math.round(n));
+  if (m >= 60) {
+    const t = Math.floor(m / 60);
+    const r = m % 60;
+    return r ? `${t} t ${r} min` : `${t} t`;
+  }
+  return `${m} min`;
+}
+
+/**
+ * Hvor timen står akkurat nå: samme tekst på tavla, i «Vis for klassen» og
+ * på elevens iPad. naaIndex er agendapunktet klassen er på (første som ikke
+ * er krysset av), bare mens timen pågår.
+ */
+export function timeStatus(time, minutter) {
+  const start = getMinutesFromTime(time.fra);
+  const slutt = getMinutesFromTime(time.til);
+  const paagaar = minutter >= start && minutter < slutt;
+  const foer = minutter < start;
+  let status = '';
+  if (paagaar) status = `${minTekst(slutt - minutter)} igjen`;
+  else if (foer) status = start - minutter <= 90 ? `Starter om ${minTekst(start - minutter)}` : `Starter kl. ${time.fra}`;
+  const naaIndex = paagaar ? time.punkter.findIndex(p => !p.ferdig) : -1;
+  const framdrift = paagaar ? Math.min(100, Math.max(0, ((minutter - start) / Math.max(1, slutt - start)) * 100)) : null;
+  return { start, slutt, paagaar, foer, status, naaIndex, framdrift };
+}
+
 export function useDagensTime() {
   const [timer, setTimer] = useState(lesTimer);
 

@@ -26,7 +26,6 @@ import { useDagensTime, finnSynligTime, dagensDato } from '../hooks/useDagensTim
 import { formatMinutesAsTime } from '../utils/time.js';
 import { formatExpandedActivityDisplay } from '../utils/schedule.js';
 import Presentasjon from './Presentasjon.jsx';
-import Ikon from './Ikon.jsx';
 import usePresentasjon from '../hooks/usePresentasjon.js';
 import { readWallModePreference, WALL_MODE_KEY } from '../utils/wallMode.js';
 import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
@@ -335,16 +334,8 @@ export default function App() {
             onAddCountdown={() => setCountdownModal({ index: null })}
             onToggleCountdownVisibility={toggleCountdownVisibility}
             onEnterWallMode={enterWallMode}
+            onPresent={startPresentasjon}
           />
-          <button
-            type="button"
-            className="presenter-knapp"
-            id="vis-for-klassen"
-            onClick={startPresentasjon}
-            title="Fullskjerm for klassen, uten verktøyene. Esc for å gå tilbake."
-          >
-            <Ikon navn="presentation" /> <span>Vis for klassen</span>
-          </button>
           {synligTime ? (
             <DagensTimeKort
               time={synligTime}
@@ -378,6 +369,8 @@ export default function App() {
             countdowns={countdowns}
             countdownsVisible={countdownsVisible}
             onEditCountdown={(index) => setCountdownModal({ index })}
+            dagensTime={synligTime}
+            onOpenTimer={() => setTimerPanelOpen(true)}
           />
         </div>
 
@@ -404,8 +397,9 @@ export default function App() {
       <ForsteMote
         klassenavn={currentClassName}
         skjult={!!receiveState || underTheHoodOpen}
+        onOpenPlanlegg={() => openPlanlegg()}
         onOpenTimer={() => setTimerPanelOpen(true)}
-        onOpenAgenda={() => setAgendaOpen(true)}
+        onPresent={startPresentasjon}
         onOpenNote={() => setNoteOpen(true)}
         onOpenClass={() => { setUnderTheHoodOpen(true); setUnderTheHoodView('classGrid'); }}
       />
@@ -431,6 +425,7 @@ export default function App() {
         onRequestOpen={() => setTimerPanelOpen(true)}
         subjectColor={currentSubject?.color || null}
         subjectName={currentSubject?.name || null}
+        lessonTitle={synligTime?.tittel || null}
       />
 
       <TimePicker
@@ -542,6 +537,7 @@ export default function App() {
           countdowns={countdowns}
           countdownsVisible={countdownsVisible}
           subjectColor={currentSubject?.color || null}
+          dagensTime={synligTime}
           onExit={avsluttPresentasjon}
         />
       )}

@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Ikon from './Ikon.jsx';
 import { safeGetItem, safeSetItem } from '../utils/storage.js';
-import { vekslFullskjerm } from '../utils/fullskjerm.js';
 
 /* Første møte: en ny lærer som åpner appen for første gang skal på
    noen sekunder skjønne hva skjermen er og hva første steg er.
@@ -18,10 +17,18 @@ const VIS_VED_START = (() => {
   return !SPOR_AV_BRUK.some(key => safeGetItem(key));
 })();
 
-export default function ForsteMote({ klassenavn, skjult, onOpenTimer, onOpenAgenda, onOpenNote, onOpenClass }) {
+export default function ForsteMote({ klassenavn, skjult, onOpenPlanlegg, onOpenTimer, onPresent, onOpenNote, onOpenClass }) {
   const [synlig, setSynlig] = useState(VIS_VED_START);
+  const vises = synlig && !skjult;
 
-  if (!synlig || skjult) return null;
+  // Mens kortet står, er «Nedteller» et av valgene i det; den egne
+  // Nedteller-knappen nede til høyre venter til kortet er borte
+  useEffect(() => {
+    document.body.classList.toggle('velkomst-aktiv', vises);
+    return () => document.body.classList.remove('velkomst-aktiv');
+  }, [vises]);
+
+  if (!vises) return null;
 
   function ferdig() {
     safeSetItem(SETT_KEY, '1');
@@ -33,11 +40,13 @@ export default function ForsteMote({ klassenavn, skjult, onOpenTimer, onOpenAgen
     handling?.();
   }
 
+  // Rekkefølgen er arbeidsflyten for en ny lærer: sett opp timen, start
+  // nedtelleren, vis det for klassen. Samme navn og symbol som i Verktøy.
   const valg = [
-    { id: 'nedteller', ikon: 'timer', tittel: 'Nedteller', hint: 'Gi elevene en frist', handling: onOpenTimer, hoved: true },
-    { id: 'agenda', ikon: 'list-checks', tittel: 'Agenda', hint: 'Planen for timen', handling: onOpenAgenda },
+    { id: 'time', ikon: 'clipboard-list', tittel: 'Sett opp timen', hint: 'Mål og agenda på tavla', handling: onOpenPlanlegg, hoved: true },
+    { id: 'nedteller', ikon: 'timer', tittel: 'Nedteller', hint: 'Gi elevene en frist', handling: onOpenTimer },
+    { id: 'vis', ikon: 'presentation', tittel: 'Vis for klassen', hint: 'Fullskjerm uten verktøy', handling: onPresent },
     { id: 'notat', ikon: 'notebook-pen', tittel: 'Notat', hint: 'Skriv en beskjed', handling: onOpenNote },
-    { id: 'fullskjerm', ikon: 'maximize', tittel: 'Fullskjerm', hint: 'Fyll storskjermen', handling: vekslFullskjerm },
     { id: 'klasse', ikon: 'school', tittel: 'Klasse og timeplan', hint: 'Velg din klasse', handling: onOpenClass },
   ];
 

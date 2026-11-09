@@ -13,8 +13,9 @@ import {
   stripGradeSuffix,
   getCountdownRemainingDisplay,
 } from '../utils/schedule.js';
-import { getSubjectDefaultColor, getCurrentSubjectColor } from '../utils/color.js';
-import { TIMER_CLASSIC_RED, loadTimerSettings } from '../utils/timer.js';
+import { getSubjectDefaultColor, getCurrentSubjectColor, normalizeHexColor } from '../utils/color.js';
+import { TIMER_CLASSIC_RED, loadTimerSettings, readTimerStatus, formatTimerReadout } from '../utils/timer.js';
+import { timeStatus } from '../hooks/useDagensTime.js';
 
 /**
  * Stående skjerm (elevenes iPad, mobil): hovedskjermen og den liggende
@@ -223,6 +224,8 @@ export default function ElevPortrett({
   countdowns = [],
   countdownsVisible = true,
   onEditCountdown,
+  dagensTime = null,
+  onOpenTimer,
 }) {
   // Valgt fane gjelder bare den dagen den ble valgt
   const [valg, setValg] = useState({ dag: null, fane: null });
@@ -299,6 +302,16 @@ export default function ElevPortrett({
     }
   }
 
+  // Nedtelleren læreren har startet, og oppgaven som hører til
+  const timerInnstillinger = loadTimerSettings();
+  const timer = readTimerStatus();
+  const timerFarge = timerInnstillinger.colorOverride
+    || normalizeHexColor(getCurrentSubjectColor(primaryState)?.color)
+    || TIMER_CLASSIC_RED;
+
+  // Timen læreren har satt opp («Sett opp timen»)
+  const time = dagensTime ? timeStatus(dagensTime, currentMinutes) : null;
+
   const visNedtellinger = countdownsVisible !== false && countdowns.length > 0;
   const visIDag = fane === 'idag' || !neste;
   const planState = visIDag ? primaryState : neste.state;
@@ -317,6 +330,59 @@ export default function ElevPortrett({
           {underlinje && <div className="ep-under">{underlinje}</div>}
         </div>
       </section>
+
+      {timer && (
+        <button
+          type="button"
+          className={`ep-nedteller${timer.done ? ' er-ferdig' : ''}`}
+          onClick={onOpenTimer}
+          aria-label={`Nedteller: ${timer.done ? 'tiden er ute' : formatTimerReadout(timer.remainingMs)}. Åpne.`}
+        >
+          <TimeTimerDial
+            totalMs={timer.totalMs}
+            remainingMs={timer.remainingMs}
+            mode={timerInnstillinger.mode}
+            color={timerFarge}
+            done={timer.done}
+            size={120}
+            title={timer.done ? 'Tiden er ute' : `Nedteller, ${formatTimerReadout(timer.remainingMs)} igjen`}
+          />
+          <div className="ep-nedteller-tekst">
+            {timerInnstillinger.task && <div className="ep-nedteller-oppgave">{timerInnstillinger.task}</div>}
+            <div className="ep-nedteller-tid">
+              {timer.done ? 'Tiden er ute!' : formatTimerReadout(timer.remainingMs)}
+              {timer.paused && <span className="ep-nedteller-pause">Pause</span>}
+            </div>
+          </div>
+        </button>
+      )}
+
+      {dagensTime && (
+        <section className="ep-time" aria-label="Dagens time">
+          <div className="ep-time-topp">
+            {dagensTime.tittel && <h2 className="ep-time-tittel">{dagensTime.tittel}</h2>}
+            <span className="ep-time-tid">
+              {dagensTime.fra}–{dagensTime.til}{time.status ? ` · ${time.status}` : ''}
+            </span>
+          </div>
+          {dagensTime.maal && (
+            <div className="ep-time-maal">
+              <span className="ep-time-maal-merke"><Ikon navn="target" /> Mål</span>
+              <span>{dagensTime.maal}</span>
+            </div>
+          )}
+          {dagensTime.punkter.length > 0 && (
+            <ol className="ep-time-punkter" aria-label="Agenda">
+              {dagensTime.punkter.map((p, i) => (
+                <li key={i} className={`${p.ferdig ? 'er-ferdig' : ''}${i === time.naaIndex ? ' er-naa' : ''}`.trim() || undefined}>
+                  <span className="dt-nr">{p.ferdig ? <Ikon navn="check" strek={3} tittel="Gjort" /> : i + 1}</span>
+                  <span className="ep-time-punkt">{p.tekst}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
 
       {visNedtellinger && (
         <div className="ep-nedtellinger" aria-label="Nedtellinger">

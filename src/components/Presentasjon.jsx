@@ -13,28 +13,12 @@ import {
   getCountdownRemainingDisplay,
 } from '../utils/schedule.js';
 import { normalizeHexColor } from '../utils/color.js';
-import { loadTimerRun, loadTimerSettings, formatTimerReadout, TIMER_CLASSIC_RED } from '../utils/timer.js';
+import { readTimerStatus, loadTimerSettings, formatTimerReadout, TIMER_CLASSIC_RED } from '../utils/timer.js';
+import { timeStatus } from '../hooks/useDagensTime.js';
 
-/** Hvor lenge «Tiden er ute» står før skiva forsvinner (som i nedtelleren). */
-const FERDIG_STAAR_MS = 10 * 60 * 1000;
 /** Hvor lenge Tilbake-knappen står etter siste bevegelse, og første gang. */
 const STYRING_SYNLIG_MS = 2500;
 const STYRING_FORSTE_MS = 4500;
-
-/** Nedtelleren slik den er lagret nå: kjører, pause eller ferdig. Null når ingen timer går. */
-function lesNedteller(naa) {
-  const run = loadTimerRun();
-  if (!run) return null;
-  if (run.endAt !== null) {
-    if (run.endAt <= naa) {
-      if (naa - run.endAt > FERDIG_STAAR_MS) return null;
-      return { totalMs: run.totalMs, gjenstaarMs: 0, ferdig: true, pause: false };
-    }
-    return { totalMs: run.totalMs, gjenstaarMs: run.endAt - naa, ferdig: false, pause: false };
-  }
-  const rest = Math.max(0, run.pausedRemainingMs || 0);
-  return { totalMs: run.totalMs, gjenstaarMs: rest, ferdig: rest <= 0, pause: rest > 0 };
-}
 
 /** Gjøremålene i agendaen for faget som pågår (ett eller flere fag ved delte timer). */
 function agendaForTimen(classData, aktivitet) {
@@ -69,6 +53,7 @@ export default function Presentasjon({
   countdowns = [],
   countdownsVisible = true,
   subjectColor,
+  dagensTime = null,
   onExit,
 }) {
   const [naa, setNaa] = useState(() => Date.now());
@@ -152,9 +137,15 @@ export default function Presentasjon({
     }
   }
 
+  // ── Timen læreren har satt opp («Sett opp timen») ──
+  const time = dagensTime ? timeStatus(dagensTime, currentMinutes) : null;
+  const timeTittel = dagensTime ? (dagensTime.tittel || (etikett === 'Akkurat nå' ? aktivitet : '') || '') : '';
+
   // ── Nedtelleren ──
-  const nedteller = lesNedteller(naa);
+  const timer = readTimerStatus(naa);
+  const nedteller = timer && { totalMs: timer.totalMs, gjenstaarMs: timer.remainingMs, ferdig: timer.done, pause: timer.paused };
   const innstillinger = loadTimerSettings();
+  const oppgave = nedteller ? innstillinger.task : '';
   const skiveFarge = innstillinger.colorOverride || normalizeHexColor(subjectColor) || TIMER_CLASSIC_RED;
   const avlesning = nedteller ? formatTimerReadout(nedteller.gjenstaarMs) : '';
 
@@ -204,33 +195,60 @@ export default function Presentasjon({
       </div>
 
       <div className="presentasjon-hoved">
-        <section className="presentasjon-time" aria-label="Timen">
-          {etikett && <div className="presentasjon-etikett">{etikett}</div>}
-          {linjer
-            ? <div className="presentasjon-fag er-flere">{linjer.map((l, i) => <div key={i}>{l}</div>)}</div>
-            : <div className="presentasjon-fag">{aktivitet}</div>}
-          {gjenstaarTekst && <div className="presentasjon-igjen">{gjenstaarTekst}</div>}
-          {agenda.length > 0 && (
-            <div className="presentasjon-agenda">
-              {agenda.map(({ fag, punkter }) => (
-                <ul key={fag} aria-label={`Agenda: ${formatExpandedActivityLabel(fag)}`}>
-                  {agenda.length > 1 && <li className="presentasjon-agenda-fag">{formatExpandedActivityLabel(fag)}</li>}
-                  {punkter.map((p, i) => (
-                    <li key={i} className={p.completed ? 'er-gjort' : ''}>
-                      <span className="presentasjon-agenda-symbol"><FagSymbol verdi={p.emoji} reserve="clipboard-list" /></span>
-                      <span className="presentasjon-agenda-navn">{p.name}</span>
-                      {p.completed && <Ikon navn="check" className="presentasjon-agenda-hake" tittel="Gjort" />}
+        <section className={`presentasjon-time${dagensTime ? ' har-time' : ''}`} aria-label="Timen">
+          {dagensTime ? (
+            <>
+              <div className="presentasjon-etikett">{dagensTime.fra}–{dagensTime.til}</div>
+              {timeTittel && <div className="presentasjon-fag er-tittel">{timeTittel}</div>}
+              {time.status && <div className="presentasjon-igjen">{time.status}</div>}
+              {dagensTime.maal && (
+                <div className="presentasjon-maal">
+                  <span className="presentasjon-maal-merke"><Ikon navn="target" /> Mål</span>
+                  <span className="presentasjon-maal-tekst">{dagensTime.maal}</span>
+                </div>
+              )}
+              {dagensTime.punkter.length > 0 && (
+                <ol className={`presentasjon-punkter${dagensTime.punkter.length > 4 ? ' er-mange' : ''}`} aria-label="Agenda">
+                  {dagensTime.punkter.map((p, i) => (
+                    <li key={i} className={`${p.ferdig ? 'er-ferdig' : ''}${i === time.naaIndex ? ' er-naa' : ''}`.trim() || undefined}>
+                      <span className="dt-nr">{p.ferdig ? <Ikon navn="check" strek={3} tittel="Gjort" /> : i + 1}</span>
+                      <span className="presentasjon-punkt-tekst">{p.tekst}</span>
                     </li>
                   ))}
-                </ul>
-              ))}
-            </div>
+                </ol>
+              )}
+            </>
+          ) : (
+            <>
+            {etikett && <div className="presentasjon-etikett">{etikett}</div>}
+            {linjer
+              ? <div className="presentasjon-fag er-flere">{linjer.map((l, i) => <div key={i}>{l}</div>)}</div>
+              : <div className="presentasjon-fag">{aktivitet}</div>}
+            {gjenstaarTekst && <div className="presentasjon-igjen">{gjenstaarTekst}</div>}
+            {agenda.length > 0 && (
+              <div className="presentasjon-agenda">
+                {agenda.map(({ fag, punkter }) => (
+                  <ul key={fag} aria-label={`Agenda: ${formatExpandedActivityLabel(fag)}`}>
+                    {agenda.length > 1 && <li className="presentasjon-agenda-fag">{formatExpandedActivityLabel(fag)}</li>}
+                    {punkter.map((p, i) => (
+                      <li key={i} className={p.completed ? 'er-gjort' : ''}>
+                        <span className="presentasjon-agenda-symbol"><FagSymbol verdi={p.emoji} reserve="clipboard-list" /></span>
+                        <span className="presentasjon-agenda-navn">{p.name}</span>
+                        {p.completed && <Ikon navn="check" className="presentasjon-agenda-hake" tittel="Gjort" />}
+                      </li>
+                    ))}
+                  </ul>
+                ))}
+              </div>
+            )}
+            </>
           )}
-          {nesteTekst && <div className="presentasjon-neste"><span>Neste:</span> {nesteTekst}</div>}
+          {nesteTekst && !(dagensTime && dagensTime.punkter.length > 4) && <div className="presentasjon-neste"><span>Neste:</span> {nesteTekst}</div>}
         </section>
 
         {nedteller && (
           <section className={`presentasjon-nedteller${nedteller.ferdig ? ' er-ferdig' : ''}`} aria-label="Nedteller">
+            {oppgave && <div className="presentasjon-oppgave">{oppgave}</div>}
             <TimeTimerDial
               totalMs={nedteller.totalMs}
               remainingMs={nedteller.gjenstaarMs}
