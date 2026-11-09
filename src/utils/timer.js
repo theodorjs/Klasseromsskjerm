@@ -46,7 +46,11 @@ const DEFAULT_SETTINGS = {
   sound: true,
   colorOverride: null,  // hex eller null = følg faget
   durationMs: 10 * 60 * 1000,
+  task: '',             // hva klassen skal gjøre, vist over stor visning
 };
+
+/** Lengste oppgavetekst over den store nedtelleren: én til to linjer på tavla. */
+export const TIMER_TASK_MAX = 90;
 
 export function loadTimerSettings() {
   try {
@@ -58,6 +62,7 @@ export function loadTimerSettings() {
       sound: parsed.sound !== false,
       colorOverride: normalizeHexColor(parsed.colorOverride) || null,
       durationMs: clampDuration(parsed.durationMs),
+      task: typeof parsed.task === 'string' ? parsed.task.slice(0, TIMER_TASK_MAX) : '',
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

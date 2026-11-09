@@ -4,6 +4,7 @@ import './index.css'
 import './designsprak.css'
 import './del-forste-mote.css'
 import './del-start-nedteller.css'
+import './del-nedteller-storskjerm.css'
 import App from './components/App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
