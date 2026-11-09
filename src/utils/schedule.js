@@ -452,10 +452,14 @@ export function formatExpandedActivityDisplay(activityText) {
     .trim();
 }
 
-export function buildCurrentActivityLinesForState(state) {
+/**
+ * Hva som pågår for én klasse, som deler med etikett: { label, sep, text }.
+ * label er trinnet («8.») eller klassen («8»); parallelle fag har ingen etikett.
+ */
+function buildCurrentActivityParts(state) {
   if (!state) return [];
   if (state.currentActivity === "FRI") {
-    return [`${getClassInlineLabel(state.className)}: Fri`];
+    return [{ label: getClassInlineLabel(state.className), sep: ': ', text: 'Fri' }];
   }
 
   // Parallelle fag gjelder elever på tvers av trinn - vis dem som egne linjer
@@ -464,7 +468,8 @@ export function buildCurrentActivityLinesForState(state) {
     return String(state.currentActivity)
       .split('/')
       .map(part => formatExpandedActivityLabel(part.trim()))
-      .filter(Boolean);
+      .filter(Boolean)
+      .map(text => ({ label: '', sep: '', text }));
   }
 
   const labels = getClassMultiGradeLabels(state.classData, state.className);
@@ -472,13 +477,46 @@ export function buildCurrentActivityLinesForState(state) {
     const fields = parseEditorActivityFields(state.currentActivity, labels);
     const leftActivity = fields.left || fields.right || stripGradeSuffix(state.currentActivity);
     const rightActivity = fields.right || fields.left || stripGradeSuffix(state.currentActivity);
-    const lines = [];
-    if (labels[0]) lines.push(`${labels[0]} ${formatExpandedActivityLabel(leftActivity)}`.trim());
-    if (labels[1]) lines.push(`${labels[1]} ${formatExpandedActivityLabel(rightActivity)}`.trim());
-    return lines.filter(Boolean);
+    const parts = [];
+    if (labels[0]) parts.push({ label: labels[0], sep: ' ', text: formatExpandedActivityLabel(leftActivity) });
+    if (labels[1]) parts.push({ label: labels[1], sep: ' ', text: formatExpandedActivityLabel(rightActivity) });
+    return parts.filter(p => p.text);
   }
 
-  return [`${getClassInlineLabel(state.className)}: ${formatExpandedActivityDisplay(state.currentActivity)}`];
+  return [{ label: getClassInlineLabel(state.className), sep: ': ', text: formatExpandedActivityDisplay(state.currentActivity) }];
+}
+
+/**
+ * Slår sammen like fag: har alle trinn/klasser samme fag, står bare faget
+ * («Engelsk», ikke «8. Engelsk» og «9. Engelsk»). Har noen av dem samme fag,
+ * deler de én linje («8. og 9. Engelsk»). Parallelle fag står urørt.
+ */
+function mergeActivityParts(parts) {
+  const labelled = parts.filter(p => p.label);
+  if (parts.length > 1 && labelled.length === parts.length && parts.every(p => p.text === parts[0].text)) {
+    return [parts[0].text];
+  }
+  const lines = [];
+  const groups = new Map();
+  parts.forEach(p => {
+    if (!p.label) { lines.push({ parts: [p] }); return; }
+    const key = `${p.sep}|${p.text}`;
+    if (groups.has(key)) { groups.get(key).parts.push(p); return; }
+    const group = { parts: [p] };
+    groups.set(key, group);
+    lines.push(group);
+  });
+  return lines.map(({ parts: g }) => {
+    const first = g[0];
+    if (!first.label) return first.text;
+    const label = g.map(p => p.label).join(' og ');
+    return `${label}${first.sep}${first.text}`.trim();
+  });
+}
+
+/** Linjene under «Akkurat nå» for én eller flere klasser, med like fag slått sammen. */
+export function buildCurrentActivityLines(states) {
+  return mergeActivityParts((states || []).flatMap(buildCurrentActivityParts));
 }
 
 export function getStoredSubjectEmoji(className, activityLabel, classes) {

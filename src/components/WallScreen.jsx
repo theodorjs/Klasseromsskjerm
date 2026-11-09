@@ -3,7 +3,7 @@ import Timeline from './Timeline.jsx';
 import { formatDurationSmart, getIsoWeekNumberForOslo } from '../utils/time.js';
 import {
   formatExpandedActivityDisplay,
-  buildCurrentActivityLinesForState,
+  buildCurrentActivityLines,
   isClassMultiGrade,
 } from '../utils/schedule.js';
 import { getCurrentSubjectColor } from '../utils/color.js';
@@ -69,7 +69,10 @@ export default function WallScreen({
       label = 'Akkurat nå';
       const multi = displayStates.length > 1 || isClassMultiGrade(primaryState.classData, primaryState.className);
       if (multi) {
-        stackLines = (displayStates.length > 1 ? displayStates : [primaryState]).flatMap(s => buildCurrentActivityLinesForState(s));
+        const lines = buildCurrentActivityLines(displayStates.length > 1 ? displayStates : [primaryState]);
+        // Samme fag for alle trinn blir én linje, og den får full størrelse
+        if (lines.length === 1) activity = lines[0];
+        else stackLines = lines;
       } else {
         activity = currentActivity === 'FRI' ? 'Fri' : formatExpandedActivityDisplay(currentActivity);
       }

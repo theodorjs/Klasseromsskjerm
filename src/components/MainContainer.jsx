@@ -1,7 +1,7 @@
 import { formatDurationSmart, getMinutesFromTime } from '../utils/time.js';
 import {
   formatExpandedActivityDisplay,
-  buildCurrentActivityLinesForState,
+  buildCurrentActivityLines,
   isClassMultiGrade,
   getClassMultiGradeLabels
 } from '../utils/schedule.js';
@@ -40,9 +40,19 @@ export default function MainContainer({ primaryState, displayStates, currentMinu
     );
   } else {
     const shouldUseMultiLine = displayStates.length > 1 || isClassMultiGrade(classData, primaryState.className);
-    if (shouldUseMultiLine) {
-      const lines = (displayStates.length > 1 ? displayStates : [primaryState])
-        .flatMap(s => buildCurrentActivityLinesForState(s));
+    // Samme fag for alle trinn blir én linje, og den vises som et vanlig fag
+    const lines = shouldUseMultiLine
+      ? buildCurrentActivityLines(displayStates.length > 1 ? displayStates : [primaryState])
+      : null;
+    if (lines && lines.length === 1) {
+      content = (
+        <>
+          <div className="thin">Akkurat nå:</div>
+          <div id="current-activity" className="bold">{lines[0]}</div>
+          <div className="thin countdown" id="countdown-container">{getCountdownText()}</div>
+        </>
+      );
+    } else if (lines) {
       content = (
         <>
           <div className="thin">Akkurat nå:</div>
