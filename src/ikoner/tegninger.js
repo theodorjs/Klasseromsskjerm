@@ -1,7 +1,7 @@
 /* Ikontegninger for Klasseskjerm. Genereres ikke på nytt automatisk: rediger fritt.
  * Utgangspunkt: Lucide (lucide.dev), ISC-lisens, © Lucide Contributors 2022 og Cole Bemis 2013–2022 (Feather, MIT).
  * Hver tegning er en liste med [element, attributter] i et 24 × 24-rutenett, tegnet med strek (currentColor).
- * «verktoykasse» er tegnet for Klasseskjerm i samme stil. */
+ * «verktoykasse», «elev» og «stige» er tegnet for Klasseskjerm i samme stil. */
 
 export const TEGNINGER = {
   'verktoykasse': [["rect", {"x": "2", "y": "8", "width": "20", "height": "13", "rx": "2"}], ["path", {"d": "M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"}], ["path", {"d": "M2 14h20"}], ["path", {"d": "M10 13v3h4v-3"}]],
@@ -103,6 +103,9 @@ export const TEGNINGER = {
   'apple': [["path", {"d": "M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"}], ["path", {"d": "M10 2c1 .5 2 2 2 5"}]],
   'milk': [["path", {"d": "M8 2h8"}], ["path", {"d": "M9 2v2.789a4 4 0 0 1-.672 2.219l-.656.984A4 4 0 0 0 7 10.212V20a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-9.789a4 4 0 0 0-.672-2.219l-.656-.984A4 4 0 0 1 15 4.788V2"}], ["path", {"d": "M7 15a6.472 6.472 0 0 1 5 0 6.47 6.47 0 0 0 5 0"}]],
   'coffee': [["path", {"d": "M10 2v2"}], ["path", {"d": "M14 2v2"}], ["path", {"d": "M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"}], ["path", {"d": "M6 2v2"}]],
+  'cooking-pot': [["path", {"d": "M2 12h20"}], ["path", {"d": "M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"}], ["path", {"d": "m4 8 16-4"}], ["path", {"d": "m8.86 6.78-.45-1.81a2 2 0 0 1 1.45-2.43l1.94-.48a2 2 0 0 1 2.43 1.46l.45 1.8"}]],
+  'elev': [["path", {"d": "M12 2.5 21 6l-9 3.5L3 6z"}], ["path", {"d": "M21 6v4.5"}], ["path", {"d": "M8.5 8.1v2.4a3.5 3.5 0 0 0 7 0V8.1"}], ["path", {"d": "M5 21.5a7 5.5 0 0 1 14 0"}]],
+  'stige': [["path", {"d": "M8 2 6 22"}], ["path", {"d": "m16 2 2 20"}], ["path", {"d": "M7.6 6h8.8"}], ["path", {"d": "M7.15 10.5h9.7"}], ["path", {"d": "M6.7 15h10.6"}], ["path", {"d": "M6.25 19.5h11.5"}]],
   'chef-hat': [["path", {"d": "M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"}], ["path", {"d": "M6 17h12"}]],
   'utensils': [["path", {"d": "M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"}], ["path", {"d": "M7 2v20"}], ["path", {"d": "M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"}]],
   'hammer': [["path", {"d": "m15 12-8.373 8.373a1 1 0 1 1-3-3L12 9"}], ["path", {"d": "m18 15 4-4"}], ["path", {"d": "m21.5 11.5-1.914-1.914A2 2 0 0 1 19 8.172V7l-2.26-2.26a6 6 0 0 0-4.202-1.756L9 2.96l.92.82A6.18 6.18 0 0 1 12 8.4V10l2 2h1.172a2 2 0 0 1 1.414.586L18.5 14.5"}]],

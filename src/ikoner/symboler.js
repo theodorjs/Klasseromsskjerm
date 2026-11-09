@@ -25,10 +25,10 @@ export const SYMBOLVALG = [
   ['person-standing', 'Bevegelse'], ['heart-pulse', 'Helse'], ['flower', 'Ro'],
   ['users', 'Gruppe'], ['handshake', 'Samarbeid'], ['megaphone', 'Beskjed'], ['clipboard-list', 'Liste'],
   ['square-check', 'Ferdig'], ['pin', 'Viktig'], ['folder', 'Mappe'], ['backpack', 'Sekk'],
-  ['school', 'Skole'], ['graduation-cap', 'Utdanning'],
+  ['school', 'Skole'], ['graduation-cap', 'Utdanning'], ['elev', 'Elev'],
   ['sandwich', 'Matpakke'], ['apple', 'Frukt'], ['milk', 'Melk'], ['coffee', 'Kaffe'],
-  ['chef-hat', 'Matlaging'], ['utensils', 'Måltid'],
-  ['hammer', 'Verktøy'], ['wrench', 'Skiftenøkkel'], ['briefcase', 'Arbeid'], ['rocket', 'Rakett'],
+  ['chef-hat', 'Matlaging'], ['cooking-pot', 'Gryte'], ['utensils', 'Måltid'],
+  ['hammer', 'Verktøy'], ['stige', 'Stige'], ['wrench', 'Skiftenøkkel'], ['briefcase', 'Arbeid'], ['rocket', 'Rakett'],
   ['star', 'Stjerne'], ['trophy', 'Premie'], ['party-popper', 'Feiring'], ['cake', 'Bursdag'],
   ['smile', 'Smil'], ['pause', 'Pause'], ['sun', 'Sol'], ['tent-tree', 'Ute'], ['bus', 'Tur'],
 ];
@@ -49,6 +49,8 @@ const FRA_EMOJI = {
   '💼': 'briefcase', '🛠': 'hammer', '🌮': 'utensils', '✝': 'church', '⏸': 'pause', '🎬': 'clapperboard',
   '🌟': 'star', '⭐': 'star', '🪐': 'atom', '🚀': 'rocket', '🛰': 'rocket', '✨': 'sparkles', '🎯': 'target',
   '💬': 'message-circle', '🍳': 'chef-hat', '🧭': 'compass', '🤸': 'person-standing', '😊': 'smile',
+  '🥘': 'cooking-pot', '🍲': 'cooking-pot', '🧑‍🎓': 'elev', '👨‍🎓': 'elev', '👩‍🎓': 'elev', '🎓': 'graduation-cap',
+  '🪜': 'stige',
 };
 
 /** Gjør en lagret verdi (nøkkel eller gammel emoji) om til en symbolnøkkel, eller null. */
