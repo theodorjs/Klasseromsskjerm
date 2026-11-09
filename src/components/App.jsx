@@ -300,6 +300,7 @@ export default function App() {
             primaryState={primaryState}
             displayStates={displayStates}
             currentMinutes={currentMinutes}
+            currentSeconds={currentSeconds}
             isWeekend={isWeekend}
             currentDay={currentDay}
           />

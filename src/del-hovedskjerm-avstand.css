@@ -1,0 +1,156 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Hovedtavla på avstand
+   ───────────────────────────────────────────────────────────────────
+   Leses fra bakerste rad på tre sekunder: hva skjer NÅ (størst),
+   hvor lenge er det IGJEN (tall + skive i fagfargen), hva kommer
+   NESTE (med klokkeslett). Glass, som før; bare én ting per linje.
+   Ingen color-mix og ingen inset-forkortelse (Safari 14 på veggen).
+   ═══════════════════════════════════════════════════════════════════ */
+
+body #main-container.hs-tavle {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: min(5vw, 7vh);
+    width: min(92vw, 1680px);
+    max-width: none;
+    box-sizing: border-box;
+    padding: min(4.6vh, 3vw) min(4.4vw, 6vh);
+    border-radius: 44px;
+    color: var(--tekst);
+    text-align: left;
+}
+body.colorful-mode #main-container.hs-tavle { color: #fff; }
+
+/* Uten skive (før skolestart, etter skoleslutt) står teksten i midten */
+body #main-container.hs-tavle:not(.har-skive) { width: auto; min-width: min(60vw, 900px); max-width: min(92vw, 1680px); text-align: center; }
+#main-container.hs-tavle:not(.har-skive) .hs-tekst { align-items: center; }
+
+.hs-skive { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; }
+.hs-skive .tt-dial { width: min(54vh, 31vw, 620px); height: auto; }
+
+.hs-tekst {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: min(1.6vh, 1.2vw);
+}
+
+.hs-etikett {
+    font-size: min(4.4vh, 2.6vw);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.72;
+}
+
+/* Det som pågår: så stort som plassen tillater (krympes i JS når navnet er langt) */
+body #main-container.hs-tavle #current-activity,
+body #main-container.hs-tavle #countdown-container {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    text-shadow: none;
+}
+.hs-fag {
+    width: 100%;
+    font-size: min(16vh, 9.4vw);
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    max-height: 2.08em;           /* maks to linjer; ellers krymper skriften */
+    overflow: hidden;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+.hs-fag.is-stack { font-size: min(9.5vh, 5.6vw); max-height: none; }
+/* Etter skoletid er det ingen hast: mindre overskrift, og neste skoledag under */
+.hs-fri .hs-fag { font-size: min(10vh, 5.6vw); white-space: nowrap; }
+.hs-fag.is-stack .hs-fag-linje { white-space: nowrap; }
+
+/* Hvor lenge det er igjen: tallet er det nest største på skjermen */
+.hs-igjen {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 min(2.4vh, 1.4vw);
+    margin-top: min(0.6vh, 0.4vw);
+    line-height: 1;
+}
+.hs-igjen-tall {
+    font-size: min(14vh, 8.2vw);
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+}
+.hs-igjen-enhet {
+    font-size: min(6vh, 3.5vw);
+    font-weight: 700;
+    opacity: 0.85;
+}
+.hs-for .hs-igjen { justify-content: center; }
+
+/* Hva som kommer etterpå, med klokkeslett */
+.hs-neste {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 0.45em;
+    margin-top: min(1.6vh, 1vw);
+    padding-top: min(2.4vh, 1.5vw);
+    border-top: 3px solid var(--instrument-kant);
+    font-size: min(5.6vh, 3.3vw);
+    font-weight: 800;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+}
+#main-container.hs-tavle:not(.har-skive) .hs-neste { justify-content: center; }
+body.colorful-mode .hs-neste { border-top-color: rgba(255, 255, 255, 0.35); }
+.hs-neste-etikett {
+    font-size: 0.62em;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.72;
+}
+.hs-neste > * { flex-shrink: 0; }   /* raden krymper skriften i JS i stedet for å kutte navnet */
+.hs-neste-fag { display: inline-flex; align-items: center; gap: 0.35em; }
+.hs-neste-merke {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25em;
+    height: 1.25em;
+    border-radius: var(--radius-m);
+    font-size: 1em;
+}
+.hs-neste-merke .ikon, .hs-neste-merke .symbol { width: 0.78em; height: 0.78em; }
+.hs-neste-merke.is-noytral { background: var(--instrument-3); color: var(--tekst); }
+body.colorful-mode .hs-neste-merke.is-noytral { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.hs-neste-tid { font-weight: 700; opacity: 0.8; font-variant-numeric: tabular-nums; }
+
+/* Stående skjerm og smale vinduer: skiva over teksten */
+@media (orientation: portrait), (max-width: 900px) {
+    body #main-container.hs-tavle {
+        flex-direction: column;
+        width: min(92vw, 900px);
+        text-align: center;
+        gap: 2.4vh;
+        padding: 3.6vh 5vw;
+    }
+    .hs-skive .tt-dial { width: min(30vh, 52vw); }
+    .hs-tekst { align-items: center; width: 100%; }
+    .hs-etikett { font-size: min(3.4vh, 4.6vw); }
+    .hs-fag { font-size: min(9vh, 13vw); }
+    .hs-fag.is-stack { font-size: min(6vh, 8vw); }
+    .hs-fri .hs-fag { font-size: min(7vh, 10vw); }
+    .hs-igjen { justify-content: center; }
+    .hs-igjen-tall { font-size: min(8vh, 12vw); }
+    .hs-igjen-enhet { font-size: min(3.6vh, 5vw); }
+    .hs-neste { justify-content: center; font-size: min(3.4vh, 5vw); }
+}
