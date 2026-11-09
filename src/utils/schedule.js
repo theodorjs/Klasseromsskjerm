@@ -298,6 +298,12 @@ export function ensureClassData(classData) {
   Object.keys(classData.subjectEmojis).forEach((name) => {
     classData.subjectEmojis[name] = normaliserSymbol(classData.subjectEmojis[name]);
   });
+  // Arbeidslivsfag hadde hammer (🛠️) som standard før; standarden er nå stige.
+  // Gjøres bare én gang, så en lærer som senere velger hammer selv, får beholde den.
+  if (!(classData.symbolVersjon >= 2)) {
+    if (classData.subjectEmojis.Arbeidslivsfag === 'hammer') classData.subjectEmojis.Arbeidslivsfag = 'stige';
+    classData.symbolVersjon = 2;
+  }
   classData.agendas = normalizeSubjectKeyMap(classData.agendas || {}, true);
   classData.templates = normalizeSubjectKeyMap(classData.templates || {}, true);
   classData.customCountdowns = normalizeCountdownEntries(classData.customCountdowns || []);

@@ -25,7 +25,7 @@ export const SUBJECTS = [
   { name: "Språkfag",                 short: "Språk",       color: "#F08A24", emoji: "message-circle" },
   { name: "Mat og helse",             short: "M&H",         color: "#FF3300", emoji: "chef-hat" },
   { name: "Utdanningsvalg",           short: "UDV",         color: "#3B7EA6", emoji: "compass" },
-  { name: "Arbeidslivsfag",           short: "Arbeidsliv",  color: "#5E35B1", emoji: "hammer" },
+  { name: "Arbeidslivsfag",           short: "Arbeidsliv",  color: "#5E35B1", emoji: "stige" },
   { name: "Andakt",                   short: "Andakt",      color: "#7D308E", emoji: "church" },
   { name: "Folkhelse & livsmestring", short: "F.H.L.M",     color: "#CC3399", emoji: "heart-pulse", aliases: ["Folkehelse og livsmestring"] },
   { name: "Fysak",                    short: "Fys",         color: "#76D3A9", emoji: "person-standing", aliases: ["Fys.ak."] },
