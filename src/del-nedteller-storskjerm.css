@@ -1,0 +1,193 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Nedteller på storskjermen («Stor»)
+   ───────────────────────────────────────────────────────────────────
+   Bakerste rad skal lese tiden uten å myse: på en liggende tavle står
+   skiva til venstre og tallene så store som plassen tillater til høyre.
+   Faget som pågår og oppgaven klassen jobber med står øverst, så
+   nedtelleren aldri skjuler hva timen handler om.
+   Når tiden er ute: rolig grønn tone, stort hake-merke og «Tiden er ute».
+   Ingen blinking.
+   Lastes etter designsprak.css og vinner ved lik spesifisitet.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Liten visning: skiva og tallene står i en kolonne, som før */
+.tt-face {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.tt-done-mark { display: none; }
+.tt-readout-when { display: none; }
+
+/* ─── Stor visning: felles ─────────────────────────────────────────── */
+
+.timer-panel.is-big .tt-plate {
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    padding: calc(13vh + var(--topp)) 40px calc(96px + var(--bunn));
+}
+
+.timer-panel.is-big .tt-face {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    justify-content: center;
+    gap: 2vh;
+}
+
+/* Fag og oppgave øverst */
+.tt-big-context {
+    position: absolute;
+    top: calc(22px + var(--topp));
+    left: 40px;
+    right: 96px; /* klar av lukkeknappen */
+    z-index: 2;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.25em 0.9em;
+    font-size: clamp(1.4rem, 4.6vh, 3.2rem);
+    line-height: 1.15;
+    color: var(--tekst);
+}
+.tt-big-subject {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-weight: 900;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+.tt-big-dot {
+    display: inline-block;
+    width: 0.62em;
+    height: 0.62em;
+    border-radius: 50%;
+    flex: none;
+    box-shadow: 0 0 0 3px var(--instrument-kant);
+}
+.tt-big-task {
+    flex: 1 1 18em;
+    min-width: 0;
+    font-weight: 600;
+    color: var(--tekst);
+    opacity: 0.88;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: break-word;
+}
+.tt-big-task-form { flex: 1 1 18em; min-width: 0; display: flex; }
+.tt-big-task-input.k-input {
+    font-size: 0.7em;
+    font-weight: 600;
+    min-height: 1.6em;
+    padding: 0.2em 0.5em;
+}
+
+/* Knappene nederst: små, så tiden får plassen */
+.timer-panel.is-big .tt-controls { z-index: 3; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 32px); }
+.timer-panel.is-big .tt-controls .k-btn .ikon { flex: none; }
+
+/* ─── Stor visning, liggende tavle: skiva til venstre, tallene til høyre ─ */
+
+@media (min-aspect-ratio: 5/4) {
+    .timer-panel.is-big .tt-face {
+        flex-direction: row;
+        gap: 4.5vw;
+    }
+    .timer-panel.is-big .tt-dial {
+        width: min(60vh, 34vw);
+        flex: none;
+    }
+    .timer-panel.is-big .tt-readout {
+        align-items: center;
+        min-width: 0;
+    }
+    .timer-panel.is-big .tt-readout-time {
+        font-size: min(36vh, 22vw);
+        line-height: 0.9;
+        letter-spacing: -0.01em;
+    }
+    .timer-panel.is-big .tt-readout.is-long .tt-readout-time { font-size: min(24vh, 14vw); }
+    .timer-panel.is-big .tt-readout-status { font-size: clamp(1.3rem, 3.6vh, 2.6rem); margin-top: 1vh; }
+    .timer-panel.is-big .tt-done-mark { width: min(56vh, 32vw); height: min(56vh, 32vw); font-size: min(56vh, 32vw); }
+}
+
+/* ─── Stor visning, stående skjerm: alt i én kolonne ─────────────────── */
+
+@media (max-aspect-ratio: 5/4) {
+    .timer-panel.is-big .tt-dial { width: min(46vh, 84vw); flex: none; }
+    .timer-panel.is-big .tt-readout-time { font-size: min(17vh, 24vw); line-height: 0.95; }
+    .timer-panel.is-big .tt-readout.is-long .tt-readout-time { font-size: min(12vh, 16vw); }
+    .timer-panel.is-big .tt-readout-status { font-size: clamp(1.2rem, 2.6vh, 2rem); }
+    .timer-panel.is-big .tt-done-mark { width: min(40vh, 70vw); height: min(40vh, 70vw); font-size: min(40vh, 70vw); }
+}
+
+/* Pause: tallene dempes og «Pause» står tydelig, så klassen ser at tiden står stille */
+.timer-panel.is-big .tt-device.is-paused .tt-readout-time { opacity: 0.5; }
+.timer-panel.is-big .tt-device.is-paused .tt-readout-status { color: var(--tekst); font-weight: 900; }
+
+/* ─── Tiden er ute (stor visning) ───────────────────────────────────── */
+
+@keyframes tt-big-done-inn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes tt-big-done-merke {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Rolig grønn tone over hele flaten, tonet inn én gang */
+.timer-panel.is-big .tt-device.is-done::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--ny-tint);
+    pointer-events: none;
+    animation: tt-big-done-inn 1.2s ease-out both;
+}
+
+.timer-panel.is-big .tt-device.is-done .tt-dial { display: none; }
+.timer-panel.is-big .tt-device.is-done .tt-done-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    color: var(--ny);
+    animation: tt-big-done-merke 0.9s ease-out both;
+}
+.timer-panel.is-big .tt-device.is-done .tt-readout-time { display: none; }
+.timer-panel.is-big .tt-device.is-done .tt-readout-status {
+    color: var(--tekst);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    text-align: center;
+    margin: 0;
+}
+@media (min-aspect-ratio: 5/4) {
+    .timer-panel.is-big .tt-device.is-done .tt-readout-status { font-size: min(15vh, 8.4vw); max-width: 56vw; text-wrap: balance; }
+}
+@media (max-aspect-ratio: 5/4) {
+    .timer-panel.is-big .tt-device.is-done .tt-readout-status { font-size: min(10vh, 13vw); }
+}
+.timer-panel.is-big .tt-device.is-done .tt-readout-when {
+    display: block;
+    margin-top: 2vh;
+    font-size: clamp(1.2rem, 3.4vh, 2.4rem);
+    font-weight: 700;
+    color: var(--tekst-dempet);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .timer-panel.is-big .tt-device.is-done::before,
+    .timer-panel.is-big .tt-device.is-done .tt-done-mark { animation: none; }
+}

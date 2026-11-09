@@ -9,11 +9,18 @@ import {
   clampDuration, formatTimerReadout, formatDurationLabel,
   loadTimerPosition, saveTimerPosition, clampTimerPosition,
   primeTimerAudio, playTimerChime,
-  TIMER_PRESETS_MIN, TIMER_CLASSIC_RED, MAX_DURATION_MS,
+  TIMER_PRESETS_MIN, TIMER_CLASSIC_RED, MAX_DURATION_MS, TIMER_TASK_MAX,
 } from '../utils/timer.js';
 
 /** Hvor lenge «Tiden er ute» står etter at en reload fant en utløpt timer. */
 const DONE_GRACE_MS = 10 * 60 * 1000;
+
+/** «14:23» for klokkeslettet tiden gikk ut. */
+function formatClock(ms) {
+  if (!Number.isFinite(ms)) return '';
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
 
 /**
  * Nedteller i TimeTimer-stil. Skiva er full når timeren starter og krymper
@@ -27,13 +34,16 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
     if (!saved) return null;
     if (saved.endAt !== null && saved.endAt <= Date.now()) {
       // Utløp mens siden var lukket: vis «ferdig» en stund, ellers start blankt
-      return Date.now() - saved.endAt < DONE_GRACE_MS ? { ...saved, done: true } : null;
+      return Date.now() - saved.endAt < DONE_GRACE_MS ? { ...saved, done: true, doneAt: saved.endAt } : null;
     }
     return saved;
   });
   const [now, setNow] = useState(() => Date.now());
   const [colorOpen, setColorOpen] = useState(false);
   const [big, setBig] = useState(false);
+  // Oppgaveteksten over stor visning skrives rett på tavla
+  const [taskDraft, setTaskDraft] = useState(null);
+  const taskCancelRef = useRef(false);
   // Panelet kan dras rundt i lite format; plassen huskes per enhet
   const [pos, setPos] = useState(loadTimerPosition);
   const panelRef = useRef(null);
@@ -85,7 +95,7 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
   useEffect(() => {
     finishRef.current = () => {
       if (!run || run.done) return;
-      const finished = { ...run, endAt: null, pausedRemainingMs: 0, done: true };
+      const finished = { ...run, endAt: null, pausedRemainingMs: 0, done: true, doneAt: Date.now() };
       setRun(finished);
       saveTimerRun({ totalMs: finished.totalMs, endAt: Date.now(), pausedRemainingMs: 0 });
       if (settings.sound && !chimedRef.current) {
@@ -132,14 +142,15 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
     if (!open) return undefined;
     function onKey(e) {
       if (e.key !== 'Escape' || e.defaultPrevented) return;
-      // Lukk ett lag om gangen: fargevelger, stor visning, så panelet
+      // Lukk ett lag om gangen: oppgavefelt, fargevelger, stor visning, så panelet
+      if (taskDraft !== null) { setTaskDraft(null); return; }
       if (colorOpen) { setColorOpen(false); return; }
       if (big) { setBig(false); return; }
       onClose();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose, big, colorOpen]);
+  }, [open, onClose, big, colorOpen, taskDraft]);
 
   const updateSettings = useCallback((patch) => {
     setSettings(prev => {
@@ -200,11 +211,20 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
     setDuration(Math.max(floor, settings.durationMs + deltaMs));
   }
 
+  function saveTask(text) {
+    updateSettings({ task: String(text || '').replace(/\s+/g, ' ').trim().slice(0, TIMER_TASK_MAX) });
+    setTaskDraft(null);
+  }
+
   const readout = formatTimerReadout(remainingMs);
+  const task = settings.task || '';
+  const subjectDot = normalizeHexColor(subjectColor);
+  const doneClock = done ? formatClock(run?.doneAt) : '';
   const durationMinutes = Math.round(settings.durationMs / 60000);
   const statusText = done
     ? 'Tiden er ute'
-    : running ? 'Teller ned' : paused ? 'Pause' : `Klar: ${formatDurationLabel(settings.durationMs)}`;
+    // På storskjermen er klokkeslettet nyttigere for klassen enn «teller ned»
+    : running ? (big ? `Slutter kl. ${formatClock(run.endAt)}` : 'Teller ned') : paused ? 'Pause' : `Klar: ${formatDurationLabel(settings.durationMs)}`;
 
   const colorLabel = settings.colorOverride
     ? 'Egen farge'
@@ -235,8 +255,37 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
         aria-label="Nedteller"
         style={pos && !big ? { left: pos.x, top: pos.y } : undefined}
       >
-        <div className={`tt-device${done ? ' is-done' : ''}`}>
-          <button ref={closeBtnRef} type="button" className="tt-close" id="timer-close-btn" aria-label={big ? 'Tilbake til liten visning' : 'Lukk nedteller'} onClick={() => { setColorOpen(false); if (big) setBig(false); else onClose(); }}><Ikon navn="x" /></button>
+        <div className={`tt-device${done ? ' is-done' : ''}${paused ? ' is-paused' : ''}`}>
+          <button ref={closeBtnRef} type="button" className="tt-close" id="timer-close-btn" aria-label={big ? 'Tilbake til liten visning' : 'Lukk nedteller'} onClick={() => { setColorOpen(false); setTaskDraft(null); if (big) setBig(false); else onClose(); }}><Ikon navn="x" /></button>
+
+          {/* Stor visning: faget som pågår og hva klassen skal gjøre står over nedtelleren */}
+          {big && (subjectName || task || taskDraft !== null) && (
+            <div className="tt-big-context">
+              {subjectName && (
+                <span className="tt-big-subject">
+                  {subjectDot && <span className="tt-big-dot" style={{ background: subjectDot }} aria-hidden="true" />}
+                  {subjectName}
+                </span>
+              )}
+              {taskDraft !== null ? (
+                <form className="tt-big-task-form" onSubmit={e => { e.preventDefault(); saveTask(taskDraft); }}>
+                  <input
+                    className="k-input tt-big-task-input"
+                    value={taskDraft}
+                    maxLength={TIMER_TASK_MAX}
+                    autoFocus
+                    placeholder="F.eks. Les side 42 i stillhet"
+                    aria-label="Hva skal klassen gjøre?"
+                    onChange={e => setTaskDraft(e.target.value)}
+                    onBlur={e => { if (!taskCancelRef.current) saveTask(e.target.value); taskCancelRef.current = false; }}
+                    onKeyDown={e => { if (e.key === 'Escape') { e.preventDefault(); taskCancelRef.current = true; setTaskDraft(null); } }}
+                  />
+                </form>
+              ) : task ? (
+                <span className="tt-big-task">{task}</span>
+              ) : null}
+            </div>
+          )}
 
           <div
             className="tt-plate"
@@ -247,20 +296,25 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
             onDoubleClick={() => { if (!big) resetPosition(); }}
             title={big ? undefined : 'Dra for å flytte nedtelleren. Dobbelttrykk for å legge den tilbake.'}
           >
-            <TimeTimerDial
-              totalMs={totalMs}
-              remainingMs={remainingMs}
-              mode={settings.mode}
-              color={discColor}
-              size={300}
-              done={done}
-              title={`Nedteller, ${readout} igjen`}
-            />
+            <div className="tt-face">
+              <TimeTimerDial
+                totalMs={totalMs}
+                remainingMs={remainingMs}
+                mode={settings.mode}
+                color={discColor}
+                size={300}
+                done={done}
+                title={`Nedteller, ${readout} igjen`}
+              />
+              {/* Ferdig på storskjermen: et rolig hake-merke i stedet for den tomme skiva */}
+              {done && <span className="tt-done-mark" aria-hidden="true"><Ikon navn="circle-check" strek={1.6} /></span>}
 
-            <div className="tt-readout">
-              <span className="tt-readout-time">{done ? '0:00' : readout}</span>
-              {/* Bare statusordene leses opp, aldri sekundtelleren */}
-              <span className="tt-readout-status" role="status" aria-live="polite">{statusText}</span>
+              <div className={`tt-readout${readout.length > 5 ? ' is-long' : ''}`}>
+                <span className="tt-readout-time">{done ? '0:00' : readout}</span>
+                {/* Bare statusordene leses opp, aldri sekundtelleren */}
+                <span className="tt-readout-status" role="status" aria-live="polite">{statusText}</span>
+                {big && done && doneClock && <span className="tt-readout-when">Gikk ut kl. {doneClock}</span>}
+              </div>
             </div>
 
             <div className="tt-controls" role="group" aria-label="Styr nedtelleren">
@@ -272,7 +326,15 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
               {running && (
                 <button type="button" className="k-btn k-btn--rediger tt-main-btn" id="timer-pause" onClick={pause}><Ikon navn="pause" /> Pause</button>
               )}
+              {big && (running || paused) && (
+                <button type="button" className="k-btn" id="timer-plus1" onClick={() => nudge(60000)} aria-label="Ett minutt mer"><Ikon navn="plus" /> 1 min</button>
+              )}
               <button type="button" className="k-btn k-btn--tilbake" id="timer-reset" onClick={reset} disabled={!run}>Nullstill</button>
+              {big && (
+                <button type="button" className="k-btn" id="timer-task" onClick={() => { taskCancelRef.current = false; setTaskDraft(task); }}>
+                  <Ikon navn="pencil" /> {task ? 'Endre oppgave' : 'Skriv oppgave'}
+                </button>
+              )}
               {!big && (
                 <button type="button" className="k-btn" id="timer-big" onClick={() => setBig(true)} title="Fyll skjermen med skiva"><Ikon navn="maximize" /> Stor</button>
               )}
