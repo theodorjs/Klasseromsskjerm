@@ -1,0 +1,456 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Elevens iPad: stående skjerm
+   ───────────────────────────────────────────────────────────────────
+   På høykant byttes hovedkortet og den liggende tidslinja ut med
+   ElevPortrett: «Akkurat nå» med tid igjen øverst, dagens plan som en
+   liste med klokkeslett under. Det eleven leser er glass; fanene er
+   det eneste eleven tar på, og de er instrument.
+   Ingen color-mix() og ingen inset-forkortelse (Safari 14 på veggen).
+   ═══════════════════════════════════════════════════════════════════ */
+
+.elev-portrett { display: none; }
+
+@media (orientation: portrait) and (max-aspect-ratio: 5/6) {
+    body:not(.vegg-aktiv) #main-container,
+    body:not(.vegg-aktiv) #split-bottom #timeline,
+    body:not(.vegg-aktiv) .countdown-stack {
+        display: none !important;
+    }
+
+    .elev-portrett {
+        --ep-glass: rgba(255, 255, 255, 0.1);
+        --ep-glass-kant: rgba(255, 255, 255, 0.2);
+        --ep-rad: rgba(255, 255, 255, 0.07);
+        --ep-rad-kant: rgba(255, 255, 255, 0.12);
+        --ep-gutter: clamp(14px, 2.4vw, 28px);
+
+        display: flex;
+        flex-direction: column;
+        gap: clamp(10px, 1.6vh, 20px);
+        position: fixed;
+        top: calc(clamp(72px, 9.4vw, 96px) + var(--topp));
+        bottom: clamp(12px, 1.5vh, 24px);
+        left: var(--ep-gutter);
+        right: var(--ep-gutter);
+        z-index: 400;
+        color: var(--tekst);
+        text-align: left;
+        pointer-events: auto;
+        opacity: 1;
+        visibility: visible;
+        /* Kommer tilbake først når tidslinje-halvdelene har lagt seg */
+        transition: opacity 0.3s ease 0.8s, visibility 0s linear 0.8s;
+    }
+
+    /* Siden skal ikke kunne dras opp og ned; lista ruller selv */
+    body.star-mode:not(.under-the-hood-active):not(.vegg-aktiv) { overflow: hidden; }
+
+    /* Lukket verktøykasse: skjulte knapper skal ikke kunne nås eller måles */
+    .toolbox-container:not(.active) .toolbox-items,
+    .toolbox-container:not(.active) .toolbox-fullscreen { visibility: hidden; }
+
+    body.under-the-hood-active .elev-portrett {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+    }
+
+    body.colorful-mode .elev-portrett { color: #fff; }
+
+    body.light-mode .elev-portrett {
+        --ep-glass: rgba(255, 255, 255, 0.34);
+        --ep-glass-kant: rgba(255, 255, 255, 0.7);
+        --ep-rad: rgba(255, 255, 255, 0.5);
+        --ep-rad-kant: rgba(28, 39, 53, 0.1);
+    }
+
+    .ep-naa,
+    .ep-plan {
+        background: var(--ep-glass);
+        border: 1px solid var(--ep-glass-kant);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        border-radius: clamp(20px, 3vw, 32px);
+        box-sizing: border-box;
+    }
+
+    body.light-mode .ep-naa,
+    body.light-mode .ep-plan {
+        box-shadow: 0 16px 28px rgba(120, 138, 164, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    }
+
+    /* ── Akkurat nå ── */
+    .ep-naa {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(14px, 3vw, 36px);
+        padding: clamp(16px, 2.6vw, 30px) clamp(18px, 3.2vw, 40px);
+        min-height: clamp(150px, 20vh, 300px);
+    }
+
+    .ep-skive { flex: 0 0 auto; display: flex; }
+    .ep-skive .tt-dial { width: clamp(120px, 24vw, 260px); height: auto; }
+
+    .ep-naa-tekst {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: clamp(4px, 0.8vh, 10px);
+    }
+
+    .ep-naa.har-skive .ep-naa-tekst { align-items: flex-start; text-align: left; }
+
+    .ep-etikett {
+        font-size: clamp(1rem, 2.6vw, 1.7rem);
+        font-weight: 600;
+        opacity: 0.8;
+    }
+
+    .ep-hoved {
+        font-size: clamp(2rem, 6.6vw, 4.4rem);
+        font-weight: 900;
+        line-height: 1.02;
+        text-transform: uppercase;
+        overflow-wrap: break-word;
+        word-break: break-word;
+        max-width: 100%;
+    }
+
+    .ep-hoved.er-stabel {
+        font-size: clamp(1.6rem, 5vw, 3.3rem);
+        display: flex;
+        flex-direction: column;
+        gap: 0.12em;
+    }
+
+    .ep-naa:not(.har-skive) { min-height: 0; }
+    .ep-naa:not(.har-skive) .ep-hoved { font-size: clamp(2.2rem, 7.4vw, 5rem); }
+
+    .ep-igjen {
+        display: inline-block;
+        margin-top: 0.15em;
+        padding: 0.18em 0.6em;
+        border-radius: 999px;
+        font-size: clamp(1.3rem, 4vw, 2.6rem);
+        font-weight: 800;
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        font-variant-numeric: tabular-nums;
+    }
+
+    body.light-mode .ep-igjen {
+        background: rgba(28, 39, 53, 0.08);
+        border-color: rgba(28, 39, 53, 0.14);
+    }
+
+    .ep-under {
+        font-size: clamp(1rem, 2.5vw, 1.6rem);
+        font-weight: 600;
+        opacity: 0.85;
+        line-height: 1.25;
+    }
+
+    /* ── Nedtellinger (i stedet for kortene i høyre hjørne) ── */
+    .ep-nedtellinger {
+        flex: 0 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .ep-nedtelling {
+        appearance: none;
+        -webkit-appearance: none;
+        min-height: 48px;
+        padding: 8px 18px;
+        border-radius: 999px;
+        border: 1px solid var(--ep-glass-kant);
+        background: var(--ep-glass);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        color: inherit;
+        font: inherit;
+        font-size: clamp(1rem, 2.4vw, 1.4rem);
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .ep-nedtelling b { font-weight: 900; }
+    .ep-nedtelling-tittel { margin-right: 0.4em; opacity: 0.85; }
+
+    /* ── Plan ── */
+    .ep-plan {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: clamp(12px, 2vw, 22px);
+        gap: clamp(8px, 1.2vh, 14px);
+    }
+
+    .ep-plan-topp {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 0 clamp(4px, 0.8vw, 8px);
+    }
+
+    .ep-plan-tittel {
+        margin: 0;
+        font-size: clamp(1.4rem, 3.6vw, 2.3rem);
+        font-weight: 900;
+        line-height: 1.1;
+        display: flex;
+        align-items: baseline;
+        gap: 0.4em;
+    }
+
+    .ep-plan-dag {
+        font-weight: 500;
+        font-size: 0.7em;
+        opacity: 0.75;
+    }
+
+    /* Fanene er instrument: matt flate, innfelt valgt knapp */
+    .ep-faner {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        border-radius: var(--radius-m);
+        background: var(--instrument-2);
+        border: 1px solid var(--instrument-kant);
+        box-shadow: var(--trykk-inn);
+    }
+
+    .ep-fane {
+        appearance: none;
+        -webkit-appearance: none;
+        min-height: 48px;
+        min-width: 112px;
+        padding: 8px 18px;
+        border: 0;
+        border-radius: calc(var(--radius-m) - 4px);
+        background: transparent;
+        color: var(--tekst-dempet);
+        font: inherit;
+        font-size: clamp(1rem, 2.2vw, 1.3rem);
+        font-weight: 800;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .ep-fane.er-valgt {
+        background: var(--noytral-knapp);
+        color: var(--noytral-knapp-tekst);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22), inset 0 1px 0 var(--instrument-lys);
+    }
+
+    .ep-fane:focus-visible,
+    .ep-nedtelling:focus-visible,
+    .ep-rad.er-redigerbar:focus-visible {
+        outline: 3px solid var(--fokus);
+        outline-offset: 2px;
+    }
+
+    .ep-liste {
+        list-style: none;
+        margin: 0;
+        padding: 0 2px 2px 0;
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(5px, 0.7vh, 9px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    .ep-li {
+        display: flex;
+        flex: 1 1 0;
+        min-height: clamp(52px, 6.4vh, 72px);
+        max-height: clamp(84px, 9.5vh, 128px);
+    }
+
+    .ep-li.li-pause { flex-grow: 0.6; min-height: clamp(44px, 4.6vh, 56px); }
+    .ep-li.li-naa { flex-grow: 1.5; max-height: none; }
+
+    .ep-rad {
+        position: relative;
+        overflow: hidden;
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        gap: clamp(10px, 2vw, 22px);
+        padding: 6px clamp(10px, 2vw, 22px);
+        border-radius: clamp(14px, 2vw, 20px);
+        background: var(--ep-rad);
+        border: 1px solid var(--ep-rad-kant);
+        box-sizing: border-box;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        width: 100%;
+    }
+
+    button.ep-rad {
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+    }
+
+    .ep-rad > * { position: relative; }
+
+    .ep-rad-fyll {
+        position: absolute !important;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        opacity: 0.32;
+        pointer-events: none;
+        background: var(--tilbake);
+        transition: width 1s linear;
+    }
+
+    .ep-rad.er-naa {
+        border: 3px solid currentColor;
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    }
+
+    body.light-mode .ep-rad.er-naa { background: rgba(255, 255, 255, 0.75); }
+
+    .ep-rad.er-ferdig { opacity: 0.5; }
+    .ep-rad.er-pause { background: transparent; border-style: dashed; }
+    .ep-rad.er-pause.er-naa { border-style: solid; background: rgba(255, 255, 255, 0.12); }
+
+    .ep-tid {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        min-width: 3.1em;
+        font-size: clamp(1.05rem, 2.6vw, 1.7rem);
+        font-weight: 800;
+        line-height: 1.05;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .ep-tid-til {
+        font-size: 0.68em;
+        font-weight: 500;
+        opacity: 0.75;
+    }
+
+    .ep-symbol {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: clamp(38px, 5.6vw, 58px);
+        height: clamp(38px, 5.6vw, 58px);
+        border-radius: clamp(10px, 1.4vw, 16px);
+        background: rgba(255, 255, 255, 0.16);
+        color: #fff;
+        font-size: clamp(1.25rem, 3.2vw, 2rem);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    body.light-mode .ep-symbol:not(.har-farge) { background: rgba(28, 39, 53, 0.1); color: var(--tekst); }
+    .ep-symbol.har-farge { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
+
+    .ep-rad.er-pause .ep-symbol {
+        background: transparent;
+        box-shadow: none;
+        color: inherit;
+        width: clamp(30px, 4.4vw, 44px);
+        height: clamp(30px, 4.4vw, 44px);
+        font-size: clamp(1.1rem, 2.6vw, 1.6rem);
+    }
+
+    .ep-symbol .symbol-tekst { line-height: 1; }
+
+    .ep-navn {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 2px;
+        font-size: clamp(1.15rem, 3.4vw, 2.2rem);
+        font-weight: 800;
+        line-height: 1.1;
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+
+    .ep-rad.er-delt .ep-navn { font-size: clamp(1rem, 2.8vw, 1.8rem); }
+    .ep-rad.er-pause .ep-navn { font-size: clamp(1rem, 2.6vw, 1.6rem); font-weight: 600; }
+    .ep-rad.er-naa .ep-navn { font-size: clamp(1.3rem, 4vw, 2.6rem); }
+    .ep-rad.er-naa.er-delt .ep-navn { font-size: clamp(1.15rem, 3.3vw, 2.15rem); }
+
+    .ep-gjoremal {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin-top: 4px;
+        font-size: clamp(0.95rem, 2.2vw, 1.35rem);
+        font-weight: 600;
+    }
+
+    .ep-gjoremal-punkt { display: flex; align-items: center; gap: 0.4em; }
+    .ep-gjoremal-punkt.er-gjort { opacity: 0.6; text-decoration: line-through; }
+
+    .ep-status {
+        flex: 0 0 auto;
+        font-size: clamp(0.95rem, 2.4vw, 1.5rem);
+        font-weight: 800;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .ep-status-naa {
+        padding: 0.3em 0.75em;
+        border-radius: 999px;
+        background-color: var(--tilbake);
+        /* Mørkner fagfargen litt så hvit tekst alltid kan leses (uten color-mix) */
+        background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3));
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+        font-size: clamp(1rem, 2.7vw, 1.75rem);
+    }
+
+    .ep-status-ferdig { font-size: clamp(1.3rem, 3vw, 2rem); display: flex; }
+    .ep-status-neste { opacity: 0.85; font-weight: 700; }
+
+    .ep-tom {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(1.2rem, 3vw, 2rem);
+        font-weight: 700;
+        opacity: 0.8;
+        text-align: center;
+        padding: 24px;
+    }
+}
+
+/* Smale telefoner: tid og symbol tar mindre plass */
+@media (orientation: portrait) and (max-width: 520px) {
+    .ep-naa.har-skive { flex-direction: column; text-align: center; }
+    .ep-naa.har-skive .ep-naa-tekst { align-items: center; text-align: center; }
+    .ep-status-naa { white-space: normal; text-align: center; }
+    .ep-fane { min-width: 0; }
+}

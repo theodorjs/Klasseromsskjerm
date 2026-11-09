@@ -6,6 +6,7 @@ import { getClassScheduleState, normalizeActiveTimelineClassNames, getTempSchedu
 import Stars from './Stars.jsx';
 import StatusBar from './StatusBar.jsx';
 import MainContainer from './MainContainer.jsx';
+import ElevPortrett from './ElevPortrett.jsx';
 import Timeline from './Timeline.jsx';
 import Toolbox from './Toolbox.jsx';
 import TimePicker from './TimePicker.jsx';
@@ -302,6 +303,22 @@ export default function App() {
             currentMinutes={currentMinutes}
             isWeekend={isWeekend}
             currentDay={currentDay}
+          />
+          <ElevPortrett
+            primaryState={primaryState}
+            displayStates={displayStates}
+            currentMinutes={currentMinutes}
+            currentSeconds={currentSeconds}
+            currentDay={currentDay}
+            isWeekend={isWeekend}
+            classes={classes}
+            currentClassName={currentClassName}
+            tempScheduleChanges={tempScheduleChanges}
+            editPermission={editPermission}
+            onOpenEditModal={handleOpenEditModal}
+            countdowns={countdowns}
+            countdownsVisible={countdownsVisible}
+            onEditCountdown={(index) => setCountdownModal({ index })}
           />
         </div>
 
