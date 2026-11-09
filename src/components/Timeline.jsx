@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useLayoutEffect, useEffect } from 'react';
 import { getMinutesFromTime, formatMinutesAsTime } from '../utils/time.js';
 import {
   getClassScheduleState,
@@ -31,8 +31,35 @@ export default function Timeline({
   const timelineStates = timelineClassNames
     .map(className => getClassScheduleState(className, currentDay, currentMinutes, classes, tempScheduleChanges))
     .filter(Boolean);
+  const hasRows = timelineStates.some(st => st.normalizedDayEvents.length > 0);
 
-  if (timelineStates.length === 0 || timelineStates.every(s => s.normalizedDayEvents.length === 0)) {
+  const rootRef = useRef(null);
+
+  // Pauser viser navnet når det får plass, ellers bare symbolet (ikke «aus»).
+  // Merket settes rett på elementet, så det kan måles på nytt ved hver endring.
+  const fitBreakLabels = useCallback(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    root.querySelectorAll('.event-box.break').forEach((box) => {
+      const text = box.querySelector('.event-text');
+      if (!text) return;
+      box.removeAttribute('data-smal');
+      const cs = getComputedStyle(box);
+      const room = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      if (text.scrollWidth > room + 0.5) box.setAttribute('data-smal', '');
+    });
+  }, []);
+  useLayoutEffect(fitBreakLabels);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(() => fitBreakLabels());
+    observer.observe(root);
+    document.fonts?.ready?.then(fitBreakLabels).catch(() => {});
+    return () => observer.disconnect();
+  }, [fitBreakLabels, hasRows]);
+
+  if (!hasRows) {
     const noScheduleText = ["Lørdag", "Søndag"].includes(currentDay)
       ? "Ingen undervisning i dag"
       : "Ingen timeplan for valgt dag.";
@@ -50,7 +77,7 @@ export default function Timeline({
   const isDarkMode = !isLightMode;
 
   return (
-    <div className={`timeline${multipleClasses ? '' : ''}`} id="timeline">
+    <div className={`timeline${multipleClasses ? '' : ''}`} id="timeline" ref={rootRef}>
       {timelineStates.map((state, stateIdx) => {
         const schoolDayDuration = Math.max(1, state.schoolDayEnd - state.schoolDayStart);
         const markerPos = markerTime >= state.schoolDayStart && markerTime < state.schoolDayEnd
@@ -81,6 +108,8 @@ export default function Timeline({
                 const activities = displayActivity.split('/').map(a => a.trim()).filter(Boolean);
                 const isActive = markerTime >= event.start && markerTime < event.end;
                 const hoverKey = `${stateIdx}-${eventIdx}`;
+                const activityText = formatExpandedActivityDisplay(displayActivity);
+                const isBreak = event.type === "break";
 
                 let boxStyle = {};
                 if (hasTempActivity && event.type === "class") {
@@ -131,6 +160,7 @@ export default function Timeline({
                   <div key={eventIdx} style={{ display: 'contents' }}>
                     <div
                       className={`event-box${event.type === "break" ? " break" : ""}${editPermission ? " editable" : ""}${isActive ? " active" : ""}`}
+                      title={isBreak ? activityText : undefined}
                       style={{ width: `calc(${widthPercent}% - 2px)`, ...boxStyle }}
                       data-start-time={event.start}
                       data-end-time={event.end}
@@ -139,7 +169,12 @@ export default function Timeline({
                       onMouseLeave={() => setActiveHoverIdx(null)}
                       onClick={handleBoxClick}
                     >
-                      {formatExpandedActivityDisplay(displayActivity)}
+                      {isBreak ? (
+                        <>
+                          <FagSymbol verdi={getStoredSubjectEmoji(state.className, activities[0], classes)} reserve="pause" className="event-symbol" />
+                          <span className="event-text">{activityText}</span>
+                        </>
+                      ) : activityText}
                     </div>
                     <div
                       className={`hover-box${activeHoverIdx === hoverKey ? ' active' : ''}`}

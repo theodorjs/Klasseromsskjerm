@@ -1937,3 +1937,10 @@ body.ui-light .k-input, body.ui-light .k-select { color-scheme: light; }
 .subject-color-title { display: flex; align-items: center; gap: 10px; }
 .hover-box .activity-symbol { margin-right: 4px; }
 .tt-step { display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+
+/* Pauser på tidslinja: navnet når det får plass, ellers bare symbolet (se Timeline.jsx) */
+.event-box .event-text { white-space: nowrap; flex: 0 0 auto; }
+.event-box .event-symbol { display: none; font-size: 1.1rem; flex: 0 1 auto; max-width: calc(100% - 2px); }
+.event-box[data-smal] { padding: 0; }
+.event-box[data-smal] .event-text { display: none; }
+.event-box[data-smal] .event-symbol { display: inline-block; }
