@@ -25,6 +25,7 @@ export default function Toolbox({
   themeMode,
   onSetTheme,
   onOpenTimer,
+  onOpenPlanlegg,
   onOpenAgenda,
   onOpenNote,
   onOpenClass,
@@ -137,6 +138,16 @@ export default function Toolbox({
         {/* Theme Switch */}
         <div className="toolbox-item theme-switch-tool" id="tool-mode" onClick={e => e.stopPropagation()}>
           <ThemeSwitch themeMode={themeMode} onSetTheme={mode => { onSetTheme(mode); resetTimer(); }} />
+        </div>
+
+        {/* Sett opp dagens time: tittel, tid, mål og agenda */}
+        <div className="toolbox-item toolbox-item--time" id="tool-plan" role="button" onClick={e => {
+          e.stopPropagation();
+          closeToolbox();
+          onOpenPlanlegg?.();
+        }}>
+          <span className="icon"><Ikon navn="presentation" /></span>
+          <span className="label">Sett opp timen</span>
         </div>
 
         {/* Timer */}
