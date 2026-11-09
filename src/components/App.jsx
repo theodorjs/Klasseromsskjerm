@@ -24,6 +24,9 @@ import { DagensTimeKort, PlanleggTimeDialog } from './DagensTime.jsx';
 import { useDagensTime, finnSynligTime, dagensDato } from '../hooks/useDagensTime.js';
 import { formatMinutesAsTime } from '../utils/time.js';
 import { formatExpandedActivityDisplay } from '../utils/schedule.js';
+import Presentasjon from './Presentasjon.jsx';
+import Ikon from './Ikon.jsx';
+import usePresentasjon from '../hooks/usePresentasjon.js';
 import { readWallModePreference, WALL_MODE_KEY } from '../utils/wallMode.js';
 import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
 import {
@@ -123,6 +126,9 @@ export default function App() {
     } catch { /* adressen lar seg ikke endre; visningen bytter uansett */ }
     setWallMode(false);
   }
+
+  // Vis for klassen: fullskjerm og ren visning med ett trykk, Esc tilbake
+  const { presenterer, startPresentasjon, avsluttPresentasjon } = usePresentasjon();
 
   // Deling av timeplan via lenke
   const [shareOpen, setShareOpen] = useState(false);
@@ -329,7 +335,16 @@ export default function App() {
             onToggleCountdownVisibility={toggleCountdownVisibility}
             onEnterWallMode={enterWallMode}
           />
-          {synligTime ? (
+          <button
+            type="button"
+            className="presenter-knapp"
+            id="vis-for-klassen"
+            onClick={startPresentasjon}
+            title="Fullskjerm for klassen, uten verktøyene. Esc for å gå tilbake."
+          >
+            <Ikon navn="presentation" /> <span>Vis for klassen</span>
+          </button>
+                    {synligTime ? (
             <DagensTimeKort
               time={synligTime}
               minutter={currentMinutes}
@@ -491,6 +506,27 @@ export default function App() {
         onSlett={(id) => { dagensTime.slettTime(id); setPlanleggOpen(false); }}
         onAvbryt={() => setPlanleggOpen(false)}
       />
+      {presenterer && (
+        <Presentasjon
+          primaryState={primaryState}
+          displayStates={displayStates}
+          currentMinutes={currentMinutes}
+          currentDay={currentDay}
+          currentTime={currentTime}
+          dateStr={dateStr}
+          isWeekend={isWeekend}
+          classes={classes}
+          activeTimelineClassNames={activeTimelineClassNames}
+          tempScheduleChanges={tempScheduleChanges}
+          realMinutes={realMinutes}
+          isSim={isSim}
+          themeMode={themeMode}
+          countdowns={countdowns}
+          countdownsVisible={countdownsVisible}
+          subjectColor={currentSubject?.color || null}
+          onExit={avsluttPresentasjon}
+        />
+      )}
 
       {/* Modals */}
       <EditModal
