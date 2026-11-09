@@ -3,8 +3,10 @@
  * (full ved start, tom ved null), tall rundt kanten og en liten nav i midten.
  *
  * To skalaer:
- *   'fit'     – hele sirkelen tilsvarer total tid (5 min eller 60 min gir begge full skive)
- *   'fixed60' – sirkelen er alltid 60 minutter, som en fysisk TimeTimer
+ *   'fit'     – hele sirkelen tilsvarer total tid (5 min eller 60 min gir begge full skive).
+ *               Bare streker, ingen tall: tallene ville betydd noe nytt for hver varighet
+ *               (og blitt 0,5, 1,5 … på korte tider). Nøyaktig tid står i avlesningen.
+ *   'fixed60' – sirkelen er alltid 60 minutter, som en fysisk TimeTimer, med tall
  *
  * Tegnes som SVG og skalerer med `size`. Fargene på plate, tall og streker
  * styres av CSS-variablene --tt-ink og --tt-tick, så den følger lyst/mørkt tema.
@@ -53,6 +55,7 @@ export default function TimeTimerDial({
   const scale = buildDialScale(totalMs, mode);
   const remainingUnits = Math.max(0, remainingMs / 1000 / scale.unitSeconds);
   const fraction = scale.total > 0 ? Math.min(1, remainingUnits / scale.total) : 0;
+  const showLabels = mode !== 'fit';
 
   const ticks = [];
   const labels = [];
@@ -73,7 +76,7 @@ export default function TimeTimerDial({
         className={isMajor ? 'tt-tick tt-tick-major' : 'tt-tick'}
       />
     );
-    if (isMajor) {
+    if (isMajor && showLabels) {
       const p = polar(R_LABEL, f);
       const shown = Number.isInteger(value) ? value : value.toFixed(1).replace('.', ',');
       labels.push(
@@ -102,7 +105,9 @@ export default function TimeTimerDial({
         <path d={sectorPath(fraction)} fill={color} className="tt-disc" />
       )}
       {/* Enheten står under navet, så tallene aldri er tvetydige */}
-      <text x={CX} y={CY + 64} className="tt-unit" textAnchor="middle" dominantBaseline="central">{scale.unitLabel}</text>
+      {showLabels && (
+        <text x={CX} y={CY + 64} className="tt-unit" textAnchor="middle" dominantBaseline="central">{scale.unitLabel}</text>
+      )}
       {/* Nav med «skrue» */}
       <circle cx={CX} cy={CY} r={26} className="tt-hub" />
       <circle cx={CX} cy={CY} r={9} className="tt-knob" />

@@ -304,7 +304,7 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
             <div className="tt-row tt-row-skive">
               <span className="tt-row-label">Skive</span>
               <div className="tt-segment" role="group" aria-label="Skala på skiva">
-                <button type="button" aria-pressed={settings.mode === 'fit'} className={`tt-seg${settings.mode === 'fit' ? ' is-active' : ''}`} title="Hele skiva tilsvarer tiden du har valgt" onClick={() => updateSettings({ mode: 'fit' })}>Valgt tid</button>
+                <button type="button" aria-pressed={settings.mode === 'fit'} className={`tt-seg${settings.mode === 'fit' ? ' is-active' : ''}`} title="Hele skiva tilsvarer tiden du har valgt. Bare streker, uten tall." onClick={() => updateSettings({ mode: 'fit' })}>Valgt tid</button>
                 <button type="button" aria-pressed={settings.mode === 'fixed60'} className={`tt-seg${settings.mode === 'fixed60' ? ' is-active' : ''}`} title="Skiva er alltid 60 minutter, som den fysiske" onClick={() => updateSettings({ mode: 'fixed60' })}>60 min</button>
               </div>
               <div className="tt-color">
