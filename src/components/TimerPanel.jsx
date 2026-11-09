@@ -164,6 +164,17 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
     persistRun({ totalMs: total, endAt: Date.now() + base, pausedRemainingMs: null, done: false });
   }
 
+  // Hurtigvalg: ett trykk velger tiden og starter med en gang
+  function startWith(ms) {
+    primeTimerAudio();
+    chimedRef.current = false;
+    const total = clampDuration(ms);
+    updateSettings({ durationMs: total });
+    const t = Date.now();
+    setNow(t);
+    persistRun({ totalMs: total, endAt: t + total, pausedRemainingMs: null, done: false });
+  }
+
   function pause() {
     if (!running) return;
     persistRun({ ...run, endAt: null, pausedRemainingMs: Math.max(0, run.endAt - Date.now()) });
@@ -211,9 +222,24 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
     : (subjectName ? `Følger faget: ${subjectName}` : 'Klassisk rød (ingen time nå)');
 
   const showMini = !open && (running || paused || done);
+  // Ingen timer i gang: en synlig knapp på forsiden, så ingen må lete i verktøykassa
+  const showLaunch = !open && !run;
 
   return (
     <>
+      {showLaunch && (
+        <button
+          type="button"
+          className="timer-launch"
+          id="timer-launch"
+          onClick={onRequestOpen}
+          aria-label="Nedteller. Velg tid og start."
+        >
+          <span className="timer-launch-ikon" aria-hidden="true"><Ikon navn="timer" /></span>
+          <span className="timer-launch-tekst">Nedteller</span>
+        </button>
+      )}
+
       {showMini && (
         <button
           type="button"
@@ -235,7 +261,7 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
         aria-label="Nedteller"
         style={pos && !big ? { left: pos.x, top: pos.y } : undefined}
       >
-        <div className={`tt-device${done ? ' is-done' : ''}`}>
+        <div className={`tt-device${done ? ' is-done' : ''}${running ? ' is-running' : ''}`}>
           <button ref={closeBtnRef} type="button" className="tt-close" id="timer-close-btn" aria-label={big ? 'Tilbake til liten visning' : 'Lukk nedteller'} onClick={() => { setColorOpen(false); if (big) setBig(false); else onClose(); }}><Ikon navn="x" /></button>
 
           <div
@@ -260,13 +286,16 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
             <div className="tt-readout">
               <span className="tt-readout-time">{done ? '0:00' : readout}</span>
               {/* Bare statusordene leses opp, aldri sekundtelleren */}
-              <span className="tt-readout-status" role="status" aria-live="polite">{statusText}</span>
+              <span className="tt-readout-status" role="status" aria-live="polite">
+                {running && <span className="tt-live-dot" aria-hidden="true" />}
+                {statusText}
+              </span>
             </div>
 
             <div className="tt-controls" role="group" aria-label="Styr nedtelleren">
               {!running && (
                 <button type="button" className="k-btn k-btn--ny k-btn--fylt tt-main-btn" id="timer-start" onClick={start}>
-                  <Ikon navn="play" /> {paused ? 'Fortsett' : done ? 'Start på nytt' : 'Start'}
+                  <Ikon navn="play" /> {paused ? 'Fortsett' : done ? 'Start på nytt' : `Start ${formatDurationLabel(settings.durationMs)}`}
                 </button>
               )}
               {running && (
@@ -280,27 +309,34 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
           </div>
 
           <div className="tt-settings">
+            {!running && !paused && (
+              <div className="tt-hurtig">
+                <span className="tt-row-label tt-hurtig-label" id="tt-hurtig-label">Start med ett trykk</span>
+                <div className="tt-presets tt-presets--start" role="group" aria-labelledby="tt-hurtig-label">
+                  {TIMER_PRESETS_MIN.map(min => (
+                    <button
+                      key={min}
+                      type="button"
+                      className="tt-preset tt-preset--start"
+                      aria-label={`Start ${min} ${min === 1 ? 'minutt' : 'minutter'}`}
+                      onClick={() => startWith(min * 60000)}
+                    >
+                      <span className="tt-preset-tall"><Ikon navn="play" className="tt-preset-play" />{min}</span>
+                      <span className="tt-preset-enhet">min</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="tt-row">
-              <span className="tt-row-label">Varighet</span>
+              <span className="tt-row-label">{running || paused ? 'Juster' : 'Varighet'}</span>
               <div className="tt-stepper" role="group" aria-label="Juster minutter">
                 <button type="button" className="tt-step" aria-label="Ett minutt mindre" onClick={() => nudge(-60000)}><Ikon navn="minus" /></button>
                 <span className="tt-step-value">{running || paused ? readout : `${durationMinutes} min`}</span>
                 <button type="button" className="tt-step" aria-label="Ett minutt mer" onClick={() => nudge(60000)}><Ikon navn="plus" /></button>
               </div>
             </div>
-            <div className="tt-presets" role="group" aria-label="Hurtigvalg">
-              {TIMER_PRESETS_MIN.map(min => (
-                <button
-                  key={min}
-                  type="button"
-                  className={`tt-preset${!run && durationMinutes === min && settings.durationMs % 60000 === 0 ? ' is-active' : ''}`}
-                  aria-label={`${min} ${min === 1 ? 'minutt' : 'minutter'}`}
-                  aria-pressed={!run && durationMinutes === min && settings.durationMs % 60000 === 0}
-                  onClick={() => setDuration(min * 60000)}
-                >{min}</button>
-              ))}
-            </div>
-
             <div className="tt-row tt-row-skive">
               <span className="tt-row-label">Skive</span>
               <div className="tt-segment" role="group" aria-label="Skala på skiva">
