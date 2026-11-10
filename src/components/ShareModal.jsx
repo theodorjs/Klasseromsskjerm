@@ -125,7 +125,7 @@ export default function ShareModal({ open, classData, className, onClose }) {
       <Dialog open={open} onClose={handleClose} laast={bigQr} title={`Del timeplanen for «${displayName}»`} titleId="share-modal-title" className="share-modal">
         <Info>
           Alle som åpner lenken får timeplan, pauser og fagfarger på sin egen skjerm med ett trykk.
-          Lenken er et øyeblikksbilde: del den på nytt etter endringer. Agenda, notater og nedtellinger følger ikke med.
+          Lenken er et øyeblikksbilde: del den på nytt etter endringer. Agenda, notater og «Dager til» følger ikke med.
         </Info>
 
         {error && <p className="k-feil" role="alert">{error}</p>}

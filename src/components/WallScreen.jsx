@@ -107,7 +107,7 @@ export default function WallScreen({
         <div className="vegg-clock" aria-live="off">{currentTime}</div>
         <div className="vegg-date">{currentDay} {dateStr} · Uke {weekNum}{isSim ? ' (simulert)' : ''}</div>
         {countdownsVisible && countdowns.length > 0 && (
-          <div className="vegg-countdowns" aria-label="Nedtellinger">
+          <div className="vegg-countdowns" aria-label="Dager til">
             {countdowns.map((item, i) => {
               const d = getCountdownRemainingDisplay(item.targetDate, item.targetTime);
               return (

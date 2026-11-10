@@ -9,6 +9,7 @@ import './del-sette-opp-time.css'
 import './del-vis-pa-storskjerm.css'
 import './del-hovedskjerm-avstand.css'
 import './del-ipad-elev.css'
+import './del-ipad-overlapp.css'
 import App from './components/App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 

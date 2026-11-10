@@ -93,21 +93,6 @@ export default function Toolbox({
         aria-expanded={open}
       ><Ikon navn="verktoykasse" /><span className="toolbox-main-label">Verktøy</span></div>
 
-      {/* Vis for klassen står alltid rett etter Verktøy: fullskjerm og ren elevvisning med ett trykk */}
-      {onPresent && (
-        <button
-          type="button"
-          className="presenter-knapp"
-          id="vis-for-klassen"
-          aria-label="Vis for klassen"
-          onMouseDown={e => e.stopPropagation()}
-          onClick={e => { e.stopPropagation(); closeToolbox(); onPresent(); }}
-          title="Fullskjerm for klassen, uten verktøyene. Esc for å gå tilbake."
-        >
-          <Ikon navn="presentation" /> <span>Vis for klassen</span>
-        </button>
-      )}
-
       <div className="toolbox-items">
         {/* Theme Switch */}
         <div className="toolbox-item theme-switch-tool" id="tool-mode" onClick={e => e.stopPropagation()}>
@@ -134,25 +119,39 @@ export default function Toolbox({
           <span className="label">Nedteller</span>
         </div>
 
+        {/* Vis for klassen: fullskjerm og ren elevvisning, Esc for å gå tilbake */}
+        {onPresent && (
+          <div className="toolbox-item" id="vis-for-klassen" role="button"
+            title="Fullskjerm for klassen, uten verktøyene. Esc for å gå tilbake."
+            onClick={e => {
+              e.stopPropagation();
+              closeToolbox();
+              onPresent();
+            }}>
+            <span className="icon"><Ikon navn="presentation" /></span>
+            <span className="label">Vis for klassen</span>
+          </div>
+        )}
+
         {/* Countdown */}
         <div className="toolbox-item countdown-tool" id="tool-countdown"
           onClick={e => e.stopPropagation()}
           onMouseDown={e => e.stopPropagation()}
         >
-          <span className="icon"><Ikon navn="hourglass" /></span>
-          <span className="label">Nedtelling</span>
+          <span className="icon"><Ikon navn="calendar-days" /></span>
+          <span className="label">Dager til</span>
           <div className="countdown-tool-actions">
             <button
               type="button"
               className={`countdown-tool-btn${countdowns.length >= 3 ? ' is-disabled' : ''}`}
               id="countdown-add-btn"
-              aria-label="Opprett ny nedtelling"
-              title={countdowns.length >= 3 ? 'Maks tre nedtellinger per klasse' : 'Opprett ny nedtelling'}
+              aria-label="Legg til en dato å telle dager til"
+              title={countdowns.length >= 3 ? 'Maks tre datoer per klasse' : 'Legg til en dato å telle dager til'}
               disabled={countdowns.length >= 3}
               onMouseDown={e => e.stopPropagation()}
               onClick={e => {
                 e.stopPropagation();
-                if (countdowns.length >= 3) { alert('Hver klasse kan ha maks tre nedtellinger.'); return; }
+                if (countdowns.length >= 3) { alert('Hver klasse kan ha maks tre datoer i «Dager til».'); return; }
                 onAddCountdown();
               }}
             ><Ikon navn="plus" /></button>
@@ -160,8 +159,8 @@ export default function Toolbox({
               type="button"
               className={`countdown-tool-btn${countdowns.length === 0 ? ' is-disabled' : ''}`}
               id="countdown-visibility-btn"
-              aria-label={countdownsVisible ? 'Skjul nedtellinger' : 'Vis nedtellinger'}
-              title={countdownsVisible ? 'Skjul nedtellinger' : 'Vis nedtellinger'}
+              aria-label={countdownsVisible ? 'Skjul «Dager til»' : 'Vis «Dager til»'}
+              title={countdownsVisible ? 'Skjul «Dager til»' : 'Vis «Dager til»'}
               disabled={countdowns.length === 0}
               onMouseDown={e => e.stopPropagation()}
               onClick={e => {

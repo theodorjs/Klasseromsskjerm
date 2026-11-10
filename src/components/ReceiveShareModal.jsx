@@ -69,7 +69,7 @@ export default function ReceiveShareModal({ state, hasExisting, canUndo, onAccep
         {hasExisting && (
           <Info felt>
             Du har allerede en klasse med dette navnet. Timeplan, pauser og fagfarger erstattes.
-            Agenda og nedtellinger beholdes, og du kan angre etterpå.
+            Agenda og «Dager til» beholdes, og du kan angre etterpå.
           </Info>
         )}
       </>

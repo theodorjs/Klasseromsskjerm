@@ -116,11 +116,17 @@ function ActivityModalInner({ item, itemIndex, subject, onSave, onCancel }) {
   );
 }
 
-// ─── Nedtelling til en dato ──────────────────────────────────────────────────
+// ─── Dager til en dato ───────────────────────────────────────────────────────
+const DAGER_TIL_TIMER = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const DAGER_TIL_MINUTTER = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
+
 function CountdownModalInner({ editingIndex, existingItem, onSave, onDelete, onCancel }) {
+  const lagretTid = normalizeCountdownTimeEntry(existingItem?.targetTime || '');
+  const [startTime, startMinutt] = isValidCountdownTime(lagretTid) ? lagretTid.split(':') : ['08', '00'];
   const [title, setTitle] = useState(existingItem?.title || '');
   const [targetDate, setTargetDate] = useState(existingItem?.targetDate || '');
-  const [targetTime, setTargetTime] = useState(existingItem?.targetTime || '');
+  const [time, setTime] = useState(startTime);
+  const [minutt, setMinutt] = useState(startMinutt);
   const titleRef = useRef(null);
 
   useEffect(() => {
@@ -128,8 +134,9 @@ function CountdownModalInner({ editingIndex, existingItem, onSave, onDelete, onC
     return () => clearTimeout(id);
   }, []);
 
-  const normalizedTime = normalizeCountdownTimeEntry(targetTime);
-  const canSave = !!title.trim() && !!targetDate && isValidCountdownTime(normalizedTime);
+  // Et klokkeslett som er lagret fra før (for eksempel 08:32) skal ikke gå tapt
+  const minutter = DAGER_TIL_MINUTTER.includes(minutt) ? DAGER_TIL_MINUTTER : [...DAGER_TIL_MINUTTER, minutt].sort();
+  const canSave = !!title.trim() && !!targetDate;
 
   function handleSave() {
     if (!canSave) return;
@@ -137,15 +144,15 @@ function CountdownModalInner({ editingIndex, existingItem, onSave, onDelete, onC
       id: existingItem?.id || `countdown-${Date.now()}`,
       title: title.trim(),
       targetDate,
-      targetTime: normalizedTime,
+      targetTime: `${time}:${minutt}`,
     }, editingIndex);
   }
 
   return (
-    <Dialog onClose={onCancel} title={existingItem ? 'Rediger nedtelling' : 'Ny nedtelling'}>
+    <Dialog onClose={onCancel} title={existingItem ? 'Dager til: endre dato' : 'Dager til: ny dato'}>
       <Info>Vises på hovedskjermen som «X dager til …». Hver klasse kan ha inntil tre.</Info>
       <label className="k-field">
-        <span>Hva telles det ned til?</span>
+        <span>Hva er det dager til?</span>
         <input
           type="text"
           id="countdown-title-input"
@@ -158,33 +165,29 @@ function CountdownModalInner({ editingIndex, existingItem, onSave, onDelete, onC
           required
         />
       </label>
-      <div className="k-field-row">
+      <label className="k-field">
+        <span>Dato</span>
+        <input
+          type="date"
+          id="countdown-date-input"
+          className="k-input dager-til-dato"
+          value={targetDate}
+          onChange={e => setTargetDate(e.target.value)}
+          required
+        />
+      </label>
+      <div className="tid-rad" role="group" aria-label="Klokkeslett">
         <label className="k-field">
-          <span>Dato</span>
-          <input
-            type="date"
-            id="countdown-date-input"
-            className="k-input"
-            value={targetDate}
-            onChange={e => setTargetDate(e.target.value)}
-            required
-          />
+          <span>Time</span>
+          <select id="countdown-hour-select" className="k-select" value={time} onChange={e => setTime(e.target.value)}>
+            {DAGER_TIL_TIMER.map(h => <option key={h} value={h}>{h}</option>)}
+          </select>
         </label>
-        <label className="k-field" style={{ flex: '0 0 120px' }}>
-          <span>Klokkeslett</span>
-          <input
-            type="text"
-            id="countdown-time-input"
-            className="k-input"
-            placeholder="08:30"
-            inputMode="numeric"
-            maxLength={5}
-            pattern="([01][0-9]|2[0-3]):[0-5][0-9]"
-            title="Bruk 24-timersformat, for eksempel 08:30"
-            value={targetTime}
-            onChange={e => setTargetTime(e.target.value)}
-            required
-          />
+        <label className="k-field">
+          <span>Minutt</span>
+          <select id="countdown-minute-select" className="k-select" value={minutt} onChange={e => setMinutt(e.target.value)}>
+            {minutter.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
         </label>
       </div>
       <div className="k-dialog-actions">
@@ -224,7 +227,7 @@ function LoginModalInner({ onSuccess, onCancel }) {
 
   return (
     <Dialog onClose={onCancel} title="Lås opp for læreren">
-      <Info>Passordet låser opp redigering av timeplan, agenda og nedtellinger på denne skjermen.</Info>
+      <Info>Passordet låser opp redigering av timeplan, agenda og «Dager til» på denne skjermen.</Info>
       <label className="k-field">
         <span>Passord</span>
         <input
