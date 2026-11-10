@@ -1,26 +1,29 @@
-import TimeTimerDial from './TimeTimerDial.jsx';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import Timeline from './Timeline.jsx';
+import Ikon from './Ikon.jsx';
+import useRolig from '../hooks/useRolig.js';
 import { formatDurationSmart, getIsoWeekNumberForOslo } from '../utils/time.js';
 import {
   formatExpandedActivityDisplay,
   buildCurrentActivityLines,
   isClassMultiGrade,
+  getCountdownRemainingDisplay,
 } from '../utils/schedule.js';
 import { getCurrentSubjectColor } from '../utils/color.js';
-import { TIMER_CLASSIC_RED, loadTimerSettings } from '../utils/timer.js';
-import { getCountdownRemainingDisplay } from '../utils/schedule.js';
-import { useEffect } from 'react';
+
+/** Faget krympes ikke under denne andelen av størrelsen i CSS. */
+const MIN_FAG_SKALA = 0.4;
 
 /**
- * Egen visning for en liten skjerm langt unna (den gamle iPaden på veggen):
- * klokke, hva som skjer nå, hvor lenge det er igjen som en TimeTimer-skive,
- * og dagens tidslinje. Ingen verktøy, ingen meny.
+ * Egen visning for en liten skjerm langt unna (den gamle iPaden på veggen).
+ * Klokka og faget skal kunne leses bakerst i rommet, så de er størst.
+ * Tid igjen, neste time, dag, dato og «Dager til» står mindre.
+ * Ingen nedteller-skive, ingen verktøy; dagens tidslinje nederst.
  */
 export default function WallScreen({
   primaryState,
   displayStates,
   currentMinutes,
-  currentSeconds,
   currentDay,
   currentTime,
   dateStr,
@@ -36,27 +39,25 @@ export default function WallScreen({
   onExit,
 }) {
   const weekNum = getIsoWeekNumberForOslo(new Date());
-  // Skiva følger samme skala som nedtelleren (full ved start, eller alltid 60 min)
-  const dialMode = loadTimerSettings().mode;
+  const { synlig: knappSynlig, bareVisFoerst } = useRolig();
+  const fagRef = useRef(null);
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape' && !e.defaultPrevented) onExit?.(); }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onExit]);
+
   const subject = getCurrentSubjectColor(primaryState);
-  const discColor = subject?.color || TIMER_CLASSIC_RED;
 
   let label = '';
   let activity = null;
   let stackLines = null;
   let remainingText = '';
   let nextText = '';
-  let dial = null;
 
   if (primaryState) {
     const { schoolDayEnd, firstClassTime, currentActivity, activeEvent, normalizedDayEvents } = primaryState;
-    const nowSec = currentMinutes * 60 + (currentSeconds || 0);
 
     if (isWeekend) {
       activity = 'Endelig helg!';
@@ -78,22 +79,10 @@ export default function WallScreen({
       }
 
       if (activeEvent) {
-        const totalMs = Math.max(1, activeEvent.end - activeEvent.start) * 60 * 1000;
-        const remainingMs = Math.max(0, activeEvent.end * 60 - nowSec) * 1000;
         const minutesLeft = Math.max(0, activeEvent.end - currentMinutes);
-        const isBreak = activeEvent.type === 'break';
-        remainingText = isBreak
+        remainingText = activeEvent.type === 'break'
           ? `Neste time om ${formatDurationSmart(minutesLeft)}`
           : `${formatDurationSmart(minutesLeft)} igjen`;
-        dial = (
-          <TimeTimerDial
-            totalMs={totalMs}
-            remainingMs={remainingMs}
-            mode={dialMode}
-            color={discColor}
-            title={`${formatDurationSmart(minutesLeft)} igjen av ${activeEvent.displayActivity || activeEvent.activity}`}
-          />
-        );
       }
 
       const next = normalizedDayEvents.find(e => e.start > currentMinutes && e.type === 'class');
@@ -101,10 +90,33 @@ export default function WallScreen({
     }
   }
 
+  const fagNokkel = stackLines ? stackLines.join('|') : String(activity ?? '');
+
+  // Faget står på én linje per trinn og krymper til det får plass i bredden
+  useLayoutEffect(() => {
+    const el = fagRef.current;
+    if (!el) return undefined;
+    function tilpass() {
+      el.style.fontSize = '';
+      const full = parseFloat(getComputedStyle(el).fontSize);
+      const bredde = el.clientWidth;
+      const trengs = el.scrollWidth;
+      if (bredde > 0 && trengs > bredde + 0.5) {
+        const skala = Math.max(MIN_FAG_SKALA, (bredde / trengs) * 0.98);
+        el.style.fontSize = `${Math.floor(full * skala)}px`;
+      }
+    }
+    tilpass();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(tilpass);
+    observer.observe(el.parentElement || el);
+    document.fonts?.ready?.then(tilpass).catch(() => {});
+    return () => observer.disconnect();
+  }, [fagNokkel]);
+
   return (
     <div className="vegg" id="vegg">
-      <div className="vegg-top">
-        <div className="vegg-clock" aria-live="off">{currentTime}</div>
+      <div className="vegg-info">
         <div className="vegg-date">{currentDay} {dateStr} · Uke {weekNum}{isSim ? ' (simulert)' : ''}</div>
         {countdownsVisible && countdowns.length > 0 && (
           <div className="vegg-countdowns" aria-label="Dager til">
@@ -121,15 +133,21 @@ export default function WallScreen({
       </div>
 
       <div className="vegg-now">
-        {dial && <div className="vegg-dial">{dial}</div>}
-        <div className="vegg-text">
-          {label && <div className="vegg-label">{label}</div>}
-          {stackLines
-            ? <div className="vegg-activity is-stack">{stackLines.map((line, i) => <div key={i}>{line}</div>)}</div>
-            : <div className="vegg-activity">{activity}</div>}
-          {remainingText && <div className="vegg-remaining">{remainingText}</div>}
-          {nextText && <div className="vegg-next">{nextText}</div>}
+        <div className="vegg-clock" aria-live="off">{currentTime}</div>
+        {label && <div className="vegg-label">{label}</div>}
+        <div
+          ref={fagRef}
+          className={`vegg-activity${stackLines ? ' is-stack' : ''}`}
+          style={subject?.color ? { '--fagfarge': subject.color } : undefined}
+        >
+          {stackLines ? stackLines.map((line, i) => <div key={i}>{line}</div>) : activity}
         </div>
+        {(remainingText || nextText) && (
+          <div className="vegg-meta">
+            {remainingText && <span className="vegg-remaining">{remainingText}</span>}
+            {nextText && <span className="vegg-next">{nextText}</span>}
+          </div>
+        )}
       </div>
 
       <Timeline
@@ -145,8 +163,14 @@ export default function WallScreen({
         onOpenEditModal={() => {}}
       />
 
-      <button type="button" className="vegg-exit" onClick={onExit} title="Tilbake til vanlig visning">
-        Avslutt veggskjerm
+      <button
+        type="button"
+        className={`k-btn k-btn--tilbake vegg-exit${knappSynlig ? '' : ' er-rolig'}`}
+        title="Tilbake til vanlig visning (Esc)"
+        aria-label="Avslutt veggskjerm"
+        {...bareVisFoerst(onExit)}
+      >
+        <Ikon navn="x" /><span className="vegg-exit-tekst">Avslutt veggskjerm</span>
       </button>
     </div>
   );

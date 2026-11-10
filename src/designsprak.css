@@ -1182,67 +1182,112 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: calc(3vmin + var(--topp)) 4vmin calc(1.5vmin + var(--bunn));
+    padding: calc(2.5vmin + var(--topp)) 4vmin calc(1.5vmin + var(--bunn));
     box-sizing: border-box;
     color: var(--text-color);
     z-index: 200;
     text-align: center;
 }
-.vegg-top { display: flex; flex-direction: column; align-items: center; }
-.vegg-clock {
-    font-size: clamp(3rem, 17vmin, 11rem);
-    font-weight: 900;
-    line-height: 1;
-    letter-spacing: 0.01em;
-    font-variant-numeric: tabular-nums;
+body.colorful-mode .vegg { color: #fff; }
+
+/* Øverst, lite: dag, dato, uke og «Dager til». Holder seg unna
+   Avslutt-knappen også mens den står med tekst. */
+.vegg-info {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4vmin;
+    padding: 0 210px;
+}
+@media (max-width: 900px) {
+    .vegg-info { align-items: flex-start; text-align: left; padding: 0 210px 0 0; }
+    .vegg-info .vegg-countdowns { justify-content: flex-start; }
 }
 .vegg-date {
-    margin-top: 0.6vmin;
-    font-size: clamp(1rem, 3.6vmin, 2rem);
+    font-size: clamp(1rem, 3.2vmin, 1.8rem);
     font-weight: 600;
     opacity: 0.85;
 }
+.vegg-countdowns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4vmin 2.4vmin;
+    font-size: clamp(0.9rem, 2.8vmin, 1.5rem);
+    font-weight: 600;
+    opacity: 0.85;
+}
+.vegg-countdown b { font-weight: 900; }
+
+/* Midten: klokka og faget størst, leses bakerst i rommet */
 .vegg-now {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3vmin;
+    gap: 1vmin;
     width: 100%;
     flex: 1;
     min-height: 0;
     padding: 1vmin 0 2vmin;
 }
-.vegg-dial { flex: 0 1 auto; display: flex; align-items: center; justify-content: center; min-height: 0; }
-.vegg-dial .tt-dial { width: min(56vmin, 36vh, 480px); height: auto; }
-.vegg-text { display: flex; flex-direction: column; align-items: center; gap: 1.2vmin; max-width: 100%; }
-
-@media (orientation: landscape) {
-    .vegg-now { flex-direction: row; gap: 6vmin; }
-    .vegg-dial .tt-dial { width: min(52vh, 38vw); }
-    .vegg-text { align-items: flex-start; text-align: left; flex: 1; min-width: 0; }
-}
-.vegg-label { font-size: clamp(1rem, 3.4vmin, 2rem); font-weight: 300; opacity: 0.85; }
-.vegg-activity {
-    font-size: clamp(1.8rem, 10vmin, 6rem);
+.vegg-clock {
+    font-size: clamp(3.5rem, min(24vmin, 21vh), 15rem);
     font-weight: 900;
-    line-height: 1;
-    text-transform: uppercase;
-    overflow-wrap: break-word; word-break: break-word;
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
 }
-.vegg-activity.is-stack { font-size: clamp(1.4rem, 6.5vmin, 4rem); text-transform: none; display: flex; flex-direction: column; gap: 0.6vmin; }
+.vegg-label { font-size: clamp(1rem, 3.2vmin, 1.8rem); font-weight: 300; opacity: 0.85; margin-top: 1vmin; }
+.vegg-activity {
+    width: 100%;
+    font-size: clamp(2rem, min(15vmin, 14vh), 10rem);
+    font-weight: 900;
+    line-height: 1.02;
+    text-transform: uppercase;
+    white-space: nowrap;      /* én linje; WallScreen krymper skriften til den får plass */
+    overflow: hidden;
+}
+.vegg-activity.is-stack {
+    font-size: clamp(1.6rem, min(9vmin, 8.5vh), 6rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5vmin;
+}
+/* Fagfargen som en kort strek under faget: kjennes igjen før navnet leses */
+.vegg-activity::after {
+    content: '';
+    display: block;
+    width: 2.2em;
+    height: 0.09em;
+    min-height: 4px;
+    margin: 0.12em auto 0;
+    border-radius: 999px;
+    background: var(--fagfarge, transparent);
+}
+.vegg-meta {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 1vmin 3vmin;
+    margin-top: 1vmin;
+    font-size: clamp(1rem, 3.6vmin, 2rem);
+    font-weight: 700;
+}
 .vegg-remaining {
-    font-size: clamp(1.3rem, 5.2vmin, 3rem);
-    font-weight: 800;
-    padding: 0.8vmin 2.4vmin;
+    padding: 0.5vmin 2vmin;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 body.light-mode .vegg-remaining { background: rgba(28, 39, 53, 0.08); border-color: rgba(28, 39, 53, 0.14); }
-body.colorful-mode .vegg { color: #fff; }
-.vegg-next { font-size: clamp(1rem, 3.6vmin, 2rem); font-weight: 600; opacity: 0.85; }
-/* Tidslinjen ligger i flyten, så innholdet over krymper i stedet for å overlappe */
+.vegg-next { font-weight: 600; opacity: 0.85; }
+
+/* Nederst: tidslinja i samme størrelse som på hovedskjermen, men i flyten
+   så innholdet over krymper i stedet for å overlappe */
 .vegg .timeline {
     position: relative;
     bottom: auto;
@@ -1250,39 +1295,46 @@ body.colorful-mode .vegg { color: #fff; }
     transform: none;
     flex: 0 0 auto;
     width: 98%;
+    max-width: 95vw;
     margin: 1vmin auto 0;
+    font-size: 1rem;
 }
-.vegg-countdowns {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.6vmin 2.4vmin;
-    margin-top: 0.8vmin;
-    font-size: clamp(0.9rem, 3vmin, 1.6rem);
-    font-weight: 600;
-    opacity: 0.9;
-}
-.vegg-countdown b { font-weight: 900; }
+
+/* Avslutt: starter med tekst, krymper til et kryss i en rund knapp
+   når ingen rører skjermen (samme oppførsel som Tilbake i «Vis for klassen») */
 .vegg-exit {
     position: fixed;
-    right: 10px;
-    top: calc(10px + var(--topp));
+    right: 14px;
+    top: calc(14px + var(--topp));
     z-index: 9000;
+    box-sizing: border-box;
+    height: 44px;
     min-height: 44px;
     min-width: 44px;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    background: rgba(0, 0, 0, 0.45);
-    color: #fff;
-    font: inherit;
-    font-size: 0.85rem;
-    font-weight: 700;
-    opacity: 0.6;
-    cursor: pointer;
+    border-radius: 22px;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.4s ease, padding 0.4s ease, gap 0.4s ease, background-color 0.4s ease, border-color 0.4s ease;
 }
-body.light-mode .vegg-exit { background: rgba(255, 255, 255, 0.75); color: #1C2735; border-color: rgba(28, 39, 53, 0.25); }
-.vegg-exit:hover, .vegg-exit:focus-visible, .vegg-exit:active { opacity: 1; }
+.vegg-exit .ikon { width: 1.25em; height: 1.25em; flex: none; }
+.vegg-exit-tekst {
+    display: inline-block;
+    max-width: 12em;
+    overflow: hidden;
+    transition: max-width 0.4s ease, opacity 0.3s ease;
+}
+.vegg-exit.er-rolig {
+    opacity: 0.35;
+    padding: 0;
+    gap: 0;
+    background-image: none;
+    background-color: transparent;
+    border-color: currentColor;
+    box-shadow: none;
+    color: inherit;
+}
+.vegg-exit.er-rolig .vegg-exit-tekst { max-width: 0; opacity: 0; }
+.vegg-exit.er-rolig:focus-visible { opacity: 1; }
 body.vegg-aktiv .toolbox-container,
 body.vegg-aktiv .top-status-bar,
 body.vegg-aktiv .countdown-stack { display: none !important; }

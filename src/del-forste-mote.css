@@ -19,7 +19,21 @@
     font-weight: 800;
     line-height: 1;
     color: var(--tekst);
+    display: inline-block;
+    max-width: 8em;
+    overflow: hidden;
+    white-space: nowrap;
 }
+
+/* Verktøy starter med navnet, og krymper til bare kofferten når ingen
+   rører mus, skjerm eller tastatur (useRolig). Åpen kasse holder navnet. */
+.toolbox-main {
+    transition: padding 0.4s ease, gap 0.4s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.toolbox-main-label { transition: max-width 0.4s ease, opacity 0.3s ease; }
+.toolbox-container.er-rolig:not(.active) .toolbox-main { padding: 0; gap: 0; }
+.toolbox-container.er-rolig:not(.active) .toolbox-main-label { max-width: 0; opacity: 0; }
+
 @media (max-width: 600px) {
     .toolbox-main { padding: 0; width: 60px; }
     .toolbox-main-label { display: none; }

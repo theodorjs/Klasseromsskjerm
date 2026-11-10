@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ThemeSwitch from './ThemeSwitch.jsx';
 import Ikon from './Ikon.jsx';
+import useRolig from '../hooks/useRolig.js';
 
 export default function Toolbox({
   themeMode,
@@ -25,6 +26,8 @@ export default function Toolbox({
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
   const timerRef = useRef(null);
+  // Starter med navnet «Verktøy», krymper til bare kofferten når ingen rører skjermen
+  const { synlig: navnSynlig } = useRolig();
 
   const countdowns = currentClass?.customCountdowns || [];
   const countdownsVisible = currentClass?.countdownsVisible !== false;
@@ -79,7 +82,7 @@ export default function Toolbox({
   }, [open, timePickerOpen]);
 
   return (
-    <div className={`toolbox-container${open ? ' active' : ''}`} id="toolbox-container" ref={containerRef}>
+    <div className={`toolbox-container${open ? ' active' : ''}${navnSynlig ? '' : ' er-rolig'}`} id="toolbox-container" ref={containerRef}>
       <div
         className={`toolbox-main${open ? ' active' : ''}`}
         id="toolbox-main"
@@ -90,6 +93,7 @@ export default function Toolbox({
         }}
         role="button"
         aria-label={open ? 'Lukk verktøykassa' : 'Åpne verktøykassa'}
+        title="Verktøy"
         aria-expanded={open}
       ><Ikon navn="verktoykasse" /><span className="toolbox-main-label">Verktøy</span></div>
 

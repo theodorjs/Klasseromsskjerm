@@ -3,6 +3,7 @@ import Ikon, { FagSymbol } from './Ikon.jsx';
 import TimeTimerDial from './TimeTimerDial.jsx';
 import Timeline from './Timeline.jsx';
 import useSkjermVaaken from '../hooks/useSkjermVaaken.js';
+import useRolig from '../hooks/useRolig.js';
 import { formatDurationSmart, getIsoWeekNumberForOslo } from '../utils/time.js';
 import {
   formatExpandedActivityDisplay,
@@ -57,10 +58,8 @@ export default function Presentasjon({
   onExit,
 }) {
   const [naa, setNaa] = useState(() => Date.now());
-  const [styringSynlig, setStyringSynlig] = useState(true);
-  const skjulTimer = useRef(null);
-  const synligRef = useRef(true);
-  const ignorerKlikk = useRef(false);
+  // Tilbake-knappen krymper og musepekeren skjules når ingen rører skjermen
+  const { synlig: styringSynlig, bareVisFoerst } = useRolig({ forsteMs: STYRING_FORSTE_MS, synligMs: STYRING_SYNLIG_MS });
   const rotRef = useRef(null);
 
   useSkjermVaaken(true);
@@ -69,26 +68,6 @@ export default function Presentasjon({
   useEffect(() => {
     const id = setInterval(() => setNaa(Date.now()), 250);
     return () => clearInterval(id);
-  }, []);
-
-  // Tilbake-knappen og musepekeren skjules når ingen rører skjermen
-  useEffect(() => {
-    function vis(e, ms = STYRING_SYNLIG_MS) {
-      synligRef.current = true;
-      setStyringSynlig(true);
-      if (skjulTimer.current) clearTimeout(skjulTimer.current);
-      skjulTimer.current = setTimeout(() => { synligRef.current = false; setStyringSynlig(false); }, ms);
-    }
-    vis(null, STYRING_FORSTE_MS);
-    window.addEventListener('pointermove', vis);
-    window.addEventListener('pointerdown', vis);
-    window.addEventListener('keydown', vis);
-    return () => {
-      window.removeEventListener('pointermove', vis);
-      window.removeEventListener('pointerdown', vis);
-      window.removeEventListener('keydown', vis);
-      if (skjulTimer.current) clearTimeout(skjulTimer.current);
-    };
   }, []);
 
   // Fokus inn i visningen, så mellomrom og Enter ikke trykker på skjulte knapper under
@@ -167,14 +146,7 @@ export default function Presentasjon({
             className="k-btn k-btn--tilbake presentasjon-tilbake"
             title="Tilbake til lærervisningen (Esc)"
             aria-label="Tilbake til lærervisningen"
-            onPointerDown={e => {
-              // Et trykk med fingeren på en skjult knapp skal bare vise den, ikke avslutte
-              ignorerKlikk.current = !synligRef.current && e.pointerType === 'touch';
-            }}
-            onClick={() => {
-              if (ignorerKlikk.current) { ignorerKlikk.current = false; return; }
-              onExit();
-            }}
+            {...bareVisFoerst(onExit)}
           >
             <Ikon navn="arrow-left" /><span className="presentasjon-tilbake-tekst">Tilbake</span>
           </button>
