@@ -1,10 +1,13 @@
 import Ikon from './Ikon.jsx';
+import { aktivSkole } from '../data/skoletema.js';
+import { SKOLETEMA } from '../utils/tema.js';
 
 export function getThemeModeIcon(modeValue) {
   const mode = String(modeValue);
   if (mode === '0') return 'sun';
   if (mode === '1') return 'moon';
   if (mode === '2') return 'sparkles';
+  if (mode === SKOLETEMA) return 'graduation-cap';
   return 'rainbow';
 }
 
@@ -13,6 +16,7 @@ export function getThemeModeVisualIndex(modeValue) {
   if (mode === '3') return 0;
   if (mode === '0') return 1;
   if (mode === '1') return 2;
+  if (mode === SKOLETEMA) return 4; // sist, og bare på skolens nettside
   return 3; // mode 2 (star)
 }
 
@@ -20,10 +24,11 @@ export default function ThemeSwitch({ themeMode, onSetTheme }) {
   const mode = String(themeMode);
   const visualIndex = getThemeModeVisualIndex(mode);
   const icon = getThemeModeIcon(mode);
+  const skole = aktivSkole();
 
   return (
     <div
-      className={`theme-switch-control mode-${mode}`}
+      className={`theme-switch-control mode-${mode}${skole ? ' med-skole' : ''}`}
       id="theme-switch-control"
       role="radiogroup"
       aria-label="Velg tema"
@@ -40,6 +45,9 @@ export default function ThemeSwitch({ themeMode, onSetTheme }) {
       <button type="button" role="radio" aria-checked={mode === '0'} className={`theme-step${mode === '0' ? ' active' : ''}`} data-mode="0" aria-label="Lys modus" title="Lys modus" onClick={e => { e.stopPropagation(); onSetTheme('0'); }} onMouseDown={e => e.stopPropagation()}><Ikon navn="sun" /></button>
       <button type="button" role="radio" aria-checked={mode === '1'} className={`theme-step${mode === '1' ? ' active' : ''}`} data-mode="1" aria-label="Mørk modus" title="Mørk modus" onClick={e => { e.stopPropagation(); onSetTheme('1'); }} onMouseDown={e => e.stopPropagation()}><Ikon navn="moon" /></button>
       <button type="button" role="radio" aria-checked={mode === '2'} className={`theme-step${mode === '2' ? ' active' : ''}`} data-mode="2" aria-label="Stjernemodus" title="Stjernemodus" onClick={e => { e.stopPropagation(); onSetTheme('2'); }} onMouseDown={e => e.stopPropagation()}><Ikon navn="sparkles" /></button>
+      {skole && (
+        <button type="button" role="radio" aria-checked={mode === SKOLETEMA} className={`theme-step${mode === SKOLETEMA ? ' active' : ''}`} data-mode={SKOLETEMA} aria-label={`${skole.navn}s farger`} title={`${skole.navn}s farger`} onClick={e => { e.stopPropagation(); onSetTheme(SKOLETEMA); }} onMouseDown={e => e.stopPropagation()}><Ikon navn="graduation-cap" /></button>
+      )}
     </div>
   );
 }

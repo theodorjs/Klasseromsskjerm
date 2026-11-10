@@ -25,6 +25,7 @@ import {
 import { buildClassFromSharePayload } from '../utils/share.js';
 
 import { safeGetItem, safeSetItem, safeRemoveItem, stashRescuedData } from '../utils/storage.js';
+import { lesTema } from '../utils/tema.js';
 
 /** Ved import av en delt timeplan huskes forrige versjon her, så «Angre» virker også senere. */
 const LAST_IMPORT_KEY = 'klasseromData.sisteImport';
@@ -253,7 +254,7 @@ export function useAppState() {
   const [simState, setSimState] = useState({ simDay: null, simHour: null, simMinute: null });
 
   // Theme
-  const [themeMode, setThemeModeState] = useState(() => safeGetItem('preferredMode') || '2');
+  const [themeMode, setThemeModeState] = useState(lesTema);
 
   // UI panel visibility
   const [timerPanelOpen, setTimerPanelOpen] = useState(false);

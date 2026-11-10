@@ -1,0 +1,72 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Skolens farger: et femte tema, bare på skolens egen nettside
+   ───────────────────────────────────────────────────────────────────
+   index.html setter <html data-skole="<id>"> etter adressen (se
+   src/data/skoletema.js), og temaet «4» gir <body class="light-mode
+   skole-mode ui-light">. Temaet bygger altså på Lys, og her legges
+   skolens farger oppå.
+   Safari 14: ingen color-mix, ingen inset, ingen :has.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ---------- Torderød skole (torderodskole.no) ----------
+ * Lys og varm som skolens nettside: varm hvit bakgrunn, dyp rød for
+ * titler, dato og verktøykassa, og en krem med rødlig tint i
+ * «Dager til». Rødfargene er hentet fra forsiden: overskrifter #841E1E,
+ * knapper #A70F10. Tittelrøden #7F1D1D har god kontrast mot hvitt (9:1).
+ */
+
+html[data-skole="torderod"] body.skole-mode {
+    --skole-rod: #7F1D1D;
+    --skole-krem: #F5E6DC;
+    --skole-blekk: #2A211C;
+    --skole-dempet: #6E625A;
+    --skole-kant: rgba(127, 29, 29, 0.14);
+    --bg-color: #FAF6F0;
+    background: linear-gradient(170deg, #FCF9F4 0%, #F4EADF 100%);
+}
+
+/* Lys maler bakgrunnen på de to skjermhalvdelene; her skal kroppens
+   varme bakgrunn synes gjennom, som i Fargerik */
+html[data-skole="torderod"] body.skole-mode .split-layer { background: transparent; }
+
+/* Glasset: hvitere og med varm kant, så det står mot den varme bakgrunnen */
+html[data-skole="torderod"] body.skole-mode .date-time,
+html[data-skole="torderod"] body.skole-mode .week-number,
+html[data-skole="torderod"] body.skole-mode #main-container {
+    background: rgba(255, 255, 255, 0.62);
+    border-color: var(--skole-kant);
+    box-shadow: 0 14px 28px rgba(110, 70, 50, 0.10), inset 0 1px 0 #fff;
+}
+
+/* Fagtittelen i «Nå», dato og uke i skolens røde */
+html[data-skole="torderod"] body.skole-mode #current-activity,
+html[data-skole="torderod"] body.skole-mode .date-time,
+html[data-skole="torderod"] body.skole-mode .date-time span,
+html[data-skole="torderod"] body.skole-mode .week-number {
+    color: var(--skole-rod);
+}
+
+/* Verktøykassa: symbolet i samme røde, navnet som før */
+html[data-skole="torderod"] body.skole-mode .toolbox-main .ikon { color: var(--skole-rod); }
+html[data-skole="torderod"] body.skole-mode .toolbox-main { border-color: var(--skole-kant); }
+
+/* ─── «Dager til»: hvit brikke med krem tittelfelt ─────────────────
+   Tallet får en hvit flate (i Lys er den nesten gjennomsiktig), og
+   tittelen henter igjen den røde fra «Nå». */
+html[data-skole="torderod"] body.skole-mode .countdown-card {
+    background: #FFFFFF;
+    border: 1px solid var(--skole-kant);
+    color: var(--skole-blekk);
+    box-shadow: 0 6px 16px rgba(110, 70, 50, 0.10);
+}
+html[data-skole="torderod"] body.skole-mode .countdown-card-title {
+    background: var(--skole-krem);
+    color: var(--skole-rod);
+    border-right: 1px solid var(--skole-kant);
+}
+html[data-skole="torderod"] body.skole-mode .countdown-card-number { color: var(--skole-blekk); }
+html[data-skole="torderod"] body.skole-mode .countdown-card-unit { color: var(--skole-dempet); }
+
+/* ─── Temabryteren får et femte steg på skolens nettside ─────────── */
+.theme-switch-control.med-skole { grid-template-columns: repeat(5, 1fr); }
+.theme-switch-control.med-skole .theme-switch-thumb { width: calc((100% - 8px) / 5); }

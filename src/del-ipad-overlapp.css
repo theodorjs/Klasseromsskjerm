@@ -171,3 +171,11 @@ body.har-dager-til:not(.vegg-aktiv) .hs-skive .tt-dial { width: min(48vh, 31vw, 
 @media (max-width: 800px) {
     .top-status-bar.er-simulert .sim-indicator { display: none; }
 }
+
+/* Verktøymenyen og «Dager til»: menyen ligger inne i skjermhalvdelens lag
+   (z-index 100), raden over den (4500), så kortene dekket høyre del av
+   temabryteren. Mens menyen er åpen, viker raden. */
+.countdown-stack { transition: opacity 0.2s ease; }
+@media (max-width: 1366px) {
+    body.verktoy-apen .countdown-stack { opacity: 0; pointer-events: none; }
+}

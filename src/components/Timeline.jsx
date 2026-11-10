@@ -12,6 +12,7 @@ import {
 } from '../utils/schedule.js';
 import { getSubjectDefaultColor } from '../utils/color.js';
 import { FagSymbol } from './Ikon.jsx';
+import { erLystTema } from '../utils/tema.js';
 
 export default function Timeline({
   classes,
@@ -73,7 +74,7 @@ export default function Timeline({
   const multipleClasses = timelineStates.length > 1;
   const markerTime = useRealTime ? realMinutes : currentMinutes;
 
-  const isLightMode = themeMode === '0' || themeMode === '3';
+  const isLightMode = erLystTema(themeMode);
   const isDarkMode = !isLightMode;
 
   return (
