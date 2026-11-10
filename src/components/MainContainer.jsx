@@ -6,6 +6,7 @@ import {
   isClassMultiGrade,
   getClassScheduleState,
   getStoredSubjectEmoji,
+  formatEventTeachers,
 } from '../utils/schedule.js';
 import { getCurrentSubjectColor, getReadableAgendaTextColor } from '../utils/color.js';
 import { TIMER_CLASSIC_RED } from '../utils/timer.js';
@@ -15,6 +16,7 @@ import SkiveBryter from './SkiveBryter.jsx';
 import useVisSkive from '../hooks/useVisSkive.js';
 
 const SKOLEDAGER = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag'];
+
 
 /**
  * Krymper skriften til teksten får plass i boksen (bredde og høyde).
@@ -112,6 +114,7 @@ export default function MainContainer({ primaryState, displayStates, currentMinu
   let remaining = null;
   let dial = null;
   let next = null;
+  let laerer = '';
   let phase = 'tom';
 
   if (primaryState) {
@@ -135,6 +138,8 @@ export default function MainContainer({ primaryState, displayStates, currentMinu
       phase = 'na';
       label = 'Nå';
       const multi = (displayStates?.length || 0) > 1 || isClassMultiGrade(classData, className);
+      // Læreren vises bare når én klasse står på skjermen; med to klasser blir det uklart hvem som har hvem
+      if (activeEvent && (displayStates?.length || 0) <= 1) laerer = formatEventTeachers(activeEvent, classData, className);
       if (multi) {
         heroLines = buildCurrentActivityLines(displayStates.length > 1 ? displayStates : [primaryState]);
       } else {
@@ -191,6 +196,7 @@ export default function MainContainer({ primaryState, displayStates, currentMinu
             {heroLines.map((line, i) => <div key={i} className="hs-fag-linje">{line}</div>)}
           </div>
         )}
+        {laerer && <div className="hs-laerer" id="current-teacher">{laerer}</div>}
         {remaining && (
           <div className="hs-igjen" id="countdown-container">
             <span className="hs-igjen-tall">{remaining.number}</span>

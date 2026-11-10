@@ -20,6 +20,8 @@ import {
   getDefaultMultiGradeLabels,
   getActivitySubjectParts,
   canonicalizeSubjectName,
+  normalizeEntryTeachers,
+  MAKS_LAERERE,
 } from './schedule.js';
 import { getMinutesFromTime, formatMinutesAsTime } from './time.js';
 
@@ -111,6 +113,8 @@ function compactEntries(list) {
       };
       if (entry.weekParity) out.weekParity = entry.weekParity;
       if (entry.parallel) out.parallel = true;
+      const teachers = normalizeEntryTeachers(entry);
+      if (teachers) out.teachers = teachers;
       return out;
     });
 }
@@ -215,6 +219,17 @@ function validateEntries(list, where) {
     const out = { time, end, activity };
     if (entry.weekParity === 'partall' || entry.weekParity === 'oddetall') out.weekParity = entry.weekParity;
     if (entry.parallel === true) out.parallel = true;
+    if (entry.teachers !== undefined) {
+      const navnOk = name => typeof name === 'string' && normalizeName(name).length <= 40;
+      // Parallell økt: én gruppe (høyst to navn) per fag; ellers høyst to navn
+      const ok = Array.isArray(entry.teachers) && (out.parallel
+        ? entry.teachers.length <= 8 && entry.teachers.every(g => Array.isArray(g) ? g.length <= MAKS_LAERERE && g.every(navnOk) : navnOk(g))
+        : entry.teachers.length <= MAKS_LAERERE && entry.teachers.every(navnOk));
+      if (!ok) throw new Error(`Ugyldige lærere (${where}).`);
+      const rens = g => (Array.isArray(g) ? g.map(normalizeName) : normalizeName(g));
+      const teachers = normalizeEntryTeachers({ parallel: out.parallel, teachers: entry.teachers.map(rens) });
+      if (teachers) out.teachers = teachers;
+    }
     return out;
   });
 }

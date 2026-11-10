@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Info from './Info.jsx';
 import Dialog from './Dialog.jsx';
-import { isClassMultiGrade } from '../utils/schedule.js';
+import { isClassMultiGrade, formatTeachers, normalizeTeachers, normalizeParallelTeachers } from '../utils/schedule.js';
 import { getMinutesFromTime } from '../utils/time.js';
 import { getSubject } from '../data/subjects.js';
 import Ikon, { FagSymbol } from './Ikon.jsx';
@@ -21,6 +21,14 @@ const isObj      = v => v !== null && typeof v === "object";
 const isSplit    = v => isObj(v) && !v.type;
 const isWeekAlt  = v => isObj(v) && v.type === "week";
 const isParallel = v => isObj(v) && v.type === "parallel";
+/** Har cella minst ett fag, uansett celletype? */
+const harFag = v => {
+  if (v === null || v === undefined) return false;
+  if (!isObj(v)) return true;
+  if (isParallel(v)) return (v.ids || []).some(Boolean);
+  if (isWeekAlt(v)) return v.even != null || v.odd != null;
+  return v.a != null || v.b != null;
+};
 
 const BREAK_NAMES = ["Pause", "Mat", "Storefri"];
 
@@ -66,6 +74,7 @@ const FRAME0 = [
 const DEFAULT_PALETTE = [
   "Norsk", "Matematikk", "Engelsk", "Naturfag", "Samfunnsfag", "KRLE",
   "Kunst og håndverk", "Musikk", "Kroppsøving", "Valgfag", "Leksehjelp", "Språkfag",
+  "Uteskole",
 ];
 
 const SUBJ0 = DEFAULT_PALETTE.map((name, i) => {
@@ -80,6 +89,22 @@ const blankSched = fr => {
     fr.filter(r => r.type === "lesson").forEach(l => { s[d][l.id] = null; });
   });
   return s;
+};
+
+/**
+ * Lærere per økt i editoren: { dag: { økt-id: [lærer 1, lærer 2] } }.
+ * En parallell økt har i stedet én gruppe per fag: [[lærer, lærer], [lærer], …].
+ */
+const blankLaerere = () => Object.fromEntries(DAYS.map(d => [d, {}]));
+
+/**
+ * Hva de to lærerfeltene betyr i en celle. Fådelt: én lærer per trinn.
+ * Ukeveksling: én for partalls- og én for oddetallsuker. Ellers to likestilte.
+ */
+const laererEtiketter = (raw, parts) => {
+  if (isWeekAlt(raw)) return ['Partallsuker', 'Oddetallsuker'];
+  if (isSplit(raw)) return parts ? [`${parts[0]} trinn`, `${parts[1]} trinn`] : ['Trinn A', 'Trinn B'];
+  return ['Lærer 1', 'Lærer 2'];
 };
 
 /* ─── Konvertering: eksisterende klassedata → editor-state ── */
@@ -154,6 +179,7 @@ function buildEditorStateFromClass(currentClass, currentClassName, baseSubj) {
   };
 
   const sched = blankSched(FRAME0);
+  const laerere = blankLaerere();
   DAYS.forEach(day => {
     const entries = [...(currentClass?.schedule?.[day] || [])]
       .sort((a, b) => getMinutesFromTime(a.time) - getMinutesFromTime(b.time));
@@ -173,6 +199,11 @@ function buildEditorStateFromClass(currentClass, currentClassName, baseSubj) {
       // Ukeveksling: to oppforinger pa samme tid med ulik weekParity
       const even = group.find(e => e.weekParity === 'partall');
       const odd  = group.find(e => e.weekParity === 'oddetall');
+      laerere[day][fid] = (even || odd)
+        ? [even?.teachers?.find(Boolean) || '', odd?.teachers?.find(Boolean) || '']
+        : group[0]?.parallel
+          ? (normalizeParallelTeachers(group[0]?.teachers) || [])
+          : [...(group[0]?.teachers || [])];
       if (even || odd) {
         sched[day][fid] = {
           type: 'week',
@@ -203,7 +234,7 @@ function buildEditorStateFromClass(currentClass, currentClassName, baseSubj) {
     });
   });
 
-  return { subj, sched, isMg, cn: currentClassName };
+  return { subj, sched, laerere, isMg, cn: currentClassName };
 }
 
 /* ─── Konvertering: editor-state → classData.schedule + breaks ─ */
@@ -212,7 +243,7 @@ function buildEditorStateFromClass(currentClass, currentClassName, baseSubj) {
  * Returnerer { schedule, breaks } klare til å lagres i klassedata.
  * b2-blokken (Lunsj & Storefri) splittes tilbake til «Mat» + «Storefri».
  */
-function buildClassDataFromEditorState(subjects, sched, frames, gradeLabels = null) {
+function buildClassDataFromEditorState(subjects, sched, frames, gradeLabels = null, laerere = {}) {
   const schedule = {};
   const breaks   = {};
   const nameOf   = id => subjects.find(sub => sub.id === id)?.name || null;
@@ -235,22 +266,35 @@ function buildClassDataFromEditorState(subjects, sched, frames, gradeLabels = nu
 
       const raw = sched[day]?.[frame.id];
       if (raw === null || raw === undefined) return;
-      const base = { time: frame.start, end: frame.end };
+      const cellListe = laerere[day]?.[frame.id] || [];
+      const [laererA = '', laererB = ''] = isParallel(raw) ? [] : cellListe;
+      // Fådelt: plassen viser trinnet (en tom første plass beholdes som ''),
+      // og en plass uten fag har heller ikke lærer
+      const cellLaerere = isSplit(raw)
+        ? normalizeTeachers([nameOf(raw.a) ? laererA : '', nameOf(raw.b) ? laererB : ''])
+        : normalizeTeachers([laererA, laererB].filter(n => String(n || '').trim()));
+      const base = { time: frame.start, end: frame.end, ...(cellLaerere ? { teachers: cellLaerere } : {}) };
 
-      // Ukeveksling -> to oppforinger med hver sin weekParity
+      // Ukeveksling -> to oppforinger med hver sin weekParity og lærer
       if (isWeekAlt(raw)) {
         const evenName = nameOf(raw.even);
         const oddName  = nameOf(raw.odd);
-        if (evenName) schedule[day].push({ ...base, activity: evenName, weekParity: 'partall' });
-        if (oddName)  schedule[day].push({ ...base, activity: oddName,  weekParity: 'oddetall' });
+        const tid = { time: frame.start, end: frame.end };
+        const med = navn => (navn && String(navn).trim() ? { teachers: [String(navn).trim()] } : {});
+        if (evenName) schedule[day].push({ ...tid, activity: evenName, weekParity: 'partall', ...med(laererA) });
+        if (oddName)  schedule[day].push({ ...tid, activity: oddName,  weekParity: 'oddetall', ...med(laererB) });
         return;
       }
 
       // Parallelle fag -> en oppforing med flagg
       if (isParallel(raw)) {
-        const names = (raw.ids || []).map(nameOf).filter(Boolean);
-        if (!names.length) return;
-        schedule[day].push({ ...base, activity: names.join(' / '), parallel: true });
+        // Hvert fag tar med seg sin egen lærergruppe; tomme plasser faller bort sammen med lærerne
+        const fag = (raw.ids || [])
+          .map((id, i) => ({ navn: nameOf(id), laerere: Array.isArray(cellListe[i]) ? cellListe[i] : [] }))
+          .filter(f => f.navn);
+        if (!fag.length) return;
+        const grupper = normalizeParallelTeachers(fag.map(f => f.laerere));
+        schedule[day].push({ ...base, activity: fag.map(f => f.navn).join(' / '), parallel: true, ...(grupper ? { teachers: grupper } : {}) });
         return;
       }
 
@@ -315,14 +359,17 @@ export default function ScheduleEditor({
   const [newSj,  setNewSj]  = useState({ name: "", emoji: "book-open", color: "#4A90E2" });
   const [newCn,  setNewCn]  = useState("");
   const [hjelp,  setHjelp]  = useState(false);
+  const [laerere, setLaerere] = useState(blankLaerere);
+  const [laererCelle, setLaererCelle] = useState(null);   // { day, lid } når lærerdialogen er åpen
 
   /* ── Initialiser fra eksisterende klassedata ── */
   useEffect(() => {
     if (!currentClass) return;
-    const { subj: s, sched: sc, isMg: mg, cn: name } =
+    const { subj: s, sched: sc, laerere: la, isMg: mg, cn: name } =
       buildEditorStateFromClass(currentClass, currentClassName, SUBJ0);
     setSubj(s);
     setSched(sc);
+    setLaerere(la);
     setIsMg(mg);
     setCn(name);
     setFrame(FRAME0);
@@ -358,12 +405,69 @@ export default function ScheduleEditor({
 
   const isFocused = (day, lid) => focus?.day === day && focus?.lid === lid;
 
+  const laererFor = (day, lid) => laerere[day]?.[lid] || [];
+  const settLaerer = (day, lid, idx, navn) => setLaerere(p => {
+    const liste = [...(p[day]?.[lid] || [])];
+    while (liste.length < 2) liste.push('');
+    liste[idx] = navn;
+    return { ...p, [day]: { ...p[day], [lid]: liste } };
+  });
+  const tomLaerere = (day, lid) => setLaerere(p => ({ ...p, [day]: { ...p[day], [lid]: [] } }));
+  /** Parallell økt: setter lærer nr. idx (0 eller 1) for faget på plass slot */
+  const settGruppeLaerer = (day, lid, slot, idx, navn) => setLaerere(p => {
+    const grupper = (p[day]?.[lid] || []).map(g => (Array.isArray(g) ? [...g] : []));
+    while (grupper.length <= slot) grupper.push([]);
+    while (grupper[slot].length < 2) grupper[slot].push('');
+    grupper[slot][idx] = navn;
+    return { ...p, [day]: { ...p[day], [lid]: grupper } };
+  });
+  const tomGruppe = (day, lid, slot) => setLaerere(p => {
+    const grupper = (p[day]?.[lid] || []).map(g => (Array.isArray(g) ? g : []));
+    if (slot < grupper.length) grupper[slot] = [];
+    return { ...p, [day]: { ...p[day], [lid]: grupper } };
+  });
+  /** Beholder bare læreren på plass idx, flyttet til første plass */
+  const beholdLaerer = (day, lid, idx) => setLaerere(p => {
+    const navn = p[day]?.[lid]?.[idx] || '';
+    return { ...p, [day]: { ...p[day], [lid]: navn ? [navn] : [] } };
+  });
+  /** Enkel celle som blir delt: første lærer følger faget som står, en medlærer får ingen egen plass */
+  const beholdForsteLaerer = (day, lid) => setLaerere(p => {
+    const navn = (p[day]?.[lid] || []).find(n => String(n || '').trim()) || '';
+    return { ...p, [day]: { ...p[day], [lid]: navn ? [navn] : [] } };
+  });
+
+  /** Alle lærernavn i timeplanen, som forslag i lærerfeltene */
+  const kjenteLaerere = [...new Set(Object.values(laerere)
+    .flatMap(dag => Object.values(dag || {}).flat(2))
+    .map(n => String(n || '').trim())
+    .filter(Boolean))].sort((a, b) => a.localeCompare(b, 'nb'));
+
+  /** Knappen som åpner lærerdialogen for en økt */
+  const laererKnapp = (day, lid) => (
+    <button type="button" className="se-tool" onClick={e => { e.stopPropagation(); setLaererCelle({ day, lid }); setFocus(null); }}
+      title="Ansvarlige lærere i økta" aria-label="Ansvarlige lærere"><Ikon navn="users" /></button>
+  );
+
   /* ── Tegn i celle ── */
   const paint = (day, lid, slot = null) => {
     if (!erase && active === null) {
       // Ingen pensel valgt: trykk velger cella, så verktøyene vises (også på iPad)
       setFocus(f => (f?.day === day && f?.lid === lid ? null : { day, lid }));
       return;
+    }
+    // En tømt økt (eller plass) skal ikke ta med seg læreren hvis et nytt fag settes inn
+    if (erase) {
+      const rawNa = sched[day]?.[lid];
+      if (isObj(rawNa) && slot !== null) {
+        const plass = slot === 'a' || slot === 'even' ? 0 : slot === 'b' || slot === 'odd' ? 1 : null;
+        // Mister økta sitt siste fag (også i en parallell), går lærerne med
+        if (!harFag(withSlot(rawNa, slot, null))) tomLaerere(day, lid);
+        else if (plass !== null) settLaerer(day, lid, plass, '');
+        else if (isParallel(rawNa)) tomGruppe(day, lid, slot);
+      } else {
+        tomLaerere(day, lid);
+      }
     }
     setSched(p => {
       const raw = p[day][lid];
@@ -382,22 +486,46 @@ export default function ScheduleEditor({
   /* ── Konverter celletype ── */
   const splitCell = (day, lid) => {
     const v = sched[day][lid];
-    if (!isObj(v)) setCell(day, lid, { a: v, b: null });
+    if (isObj(v)) return;
+    setCell(day, lid, { a: v, b: null });
+    beholdForsteLaerer(day, lid);
   };
   const makeWeekAlt = (day, lid) => {
     const v = sched[day][lid];
-    if (!isObj(v)) setCell(day, lid, { type: 'week', even: v, odd: null });
+    if (isObj(v)) return;
+    setCell(day, lid, { type: 'week', even: v, odd: null });
+    // Faget som står, går i partallsuker; læreren følger det. Oddetallsuka starter uten lærer.
+    beholdForsteLaerer(day, lid);
   };
   const makeParallel = (day, lid) => {
     const v = sched[day][lid];
-    if (!isObj(v)) setCell(day, lid, { type: 'parallel', ids: v ? [v, null] : [null, null] });
+    if (isObj(v)) return;
+    setCell(day, lid, { type: 'parallel', ids: v ? [v, null] : [null, null] });
+    // Lærerne følger faget som står, og blir dets gruppe
+    setLaerere(p => {
+      const navn = (p[day]?.[lid] || []).filter(n => typeof n === 'string' && n.trim());
+      return { ...p, [day]: { ...p[day], [lid]: navn.length ? [navn] : [] } };
+    });
   };
   const mergeCell = (day, lid) => {
     const v = sched[day][lid];
     if (!isObj(v)) return;
-    if (isParallel(v))     setCell(day, lid, v.ids?.find(Boolean) ?? null);
-    else if (isWeekAlt(v)) setCell(day, lid, v.even ?? v.odd ?? null);
-    else                   setCell(day, lid, v.a ?? v.b ?? null);
+    // Læreren følger faget som blir stående; i en parallell er lærerne likestilte
+    if (isParallel(v)) {
+      const idx = (v.ids || []).findIndex(Boolean);
+      setCell(day, lid, idx >= 0 ? v.ids[idx] : null);
+      // Faget som blir stående, beholder lærerne sine
+      setLaerere(p => {
+        const gruppe = idx >= 0 && Array.isArray(p[day]?.[lid]?.[idx]) ? p[day][lid][idx].filter(Boolean) : [];
+        return { ...p, [day]: { ...p[day], [lid]: gruppe } };
+      });
+    } else {
+      const [forste, andre] = isWeekAlt(v) ? [v.even, v.odd] : [v.a, v.b];
+      setCell(day, lid, forste ?? andre ?? null);
+      if (forste != null) beholdLaerer(day, lid, 0);
+      else if (andre != null) beholdLaerer(day, lid, 1);
+      else tomLaerere(day, lid);
+    }
   };
   const addParallelSlot = (day, lid) => {
     const v = sched[day][lid];
@@ -407,7 +535,14 @@ export default function ScheduleEditor({
     const v = sched[day][lid];
     if (!isParallel(v)) return;
     const ids = (v.ids || []).filter((_, i) => i !== idx);
-    setCell(day, lid, ids.length >= 2 ? { ...v, ids } : (ids[0] ?? null));
+    const rest = ids.length >= 2 ? { ...v, ids } : (ids[0] ?? null);
+    setCell(day, lid, rest);
+    if (!harFag(rest)) tomLaerere(day, lid);
+    else setLaerere(p => {
+      // Lærergruppa til det fjernede faget går ut; resten flytter opp sammen med fagene
+      const grupper = (p[day]?.[lid] || []).filter((_, i) => i !== idx);
+      return { ...p, [day]: { ...p[day], [lid]: isParallel(rest) ? grupper : (Array.isArray(grupper[0]) ? grupper[0].filter(Boolean) : []) } };
+    });
   };
 
   /* ── Forhåndsvisning ved hover ── */
@@ -426,6 +561,16 @@ export default function ScheduleEditor({
   };
 
   const cellCursor = active !== null || erase ? "pointer" : "default";
+
+  /** Læreren som hører til en plass: fådelt a/b og partall/oddetall har hver sin */
+  const slotLaerer = (day, lid, slot) => {
+    const liste = laererFor(day, lid);
+    if (typeof slot === 'number') return formatTeachers(Array.isArray(liste[slot]) ? liste[slot] : []);
+    const [a = '', b = ''] = liste;
+    if (slot === 'a' || slot === 'even') return a;
+    if (slot === 'b' || slot === 'odd') return b;
+    return '';
+  };
 
   /* ── Render én plass i en delt/veksel/parallell-celle ── */
   const renderSlot = (day, lid, slot, label) => {
@@ -456,6 +601,7 @@ export default function ScheduleEditor({
             ? <>
                 <span className="se-cell-emoji"><FagSymbol verdi={sub.emoji} /></span>
                 <span className="se-cell-name" title={sub.name}>{shortName(sub.name)}</span>
+                {slotLaerer(day, lid, slot) && <span className="se-cell-laerer" title={slotLaerer(day, lid, slot)}>{slotLaerer(day, lid, slot)}</span>}
               </>
             : <span className="se-cell-plus">+</span>
         }
@@ -495,6 +641,7 @@ export default function ScheduleEditor({
               ? <>
                   <span className="se-cell-emoji"><FagSymbol verdi={sub.emoji} /></span>
                   <span className="se-cell-name">{sub.name}</span>
+                  {formatTeachers(laererFor(day, lid)) && <span className="se-cell-laerer">{formatTeachers(laererFor(day, lid))}</span>}
                 </>
               : <span className="se-cell-plus">+</span>
           }
@@ -509,6 +656,7 @@ export default function ScheduleEditor({
               title="Veksle mellom partalls- og oddetallsuker" aria-label="Partall og oddetall"><Ikon navn="calendar-range" /></button>
             <button type="button" className="se-tool" onClick={e => { e.stopPropagation(); makeParallel(day, lid); setFocus(null); }}
               title="Flere fag samtidig (parallelt, på tvers av trinn)" aria-label="Flere fag samtidig"><Ikon navn="layers" /></button>
+            {sched[day]?.[lid] != null && laererKnapp(day, lid)}
           </div>
         )}
       </div>
@@ -551,6 +699,12 @@ export default function ScheduleEditor({
         </div>
         {badge && <span className="se-cell-badge">{badge}</span>}
         <div className="se-slots">{slots}</div>
+        {/* Lærerne nederst, så knappene øverst ikke dekker merket «Fådelt»/«Parallelt» */}
+        <button type="button" className="se-laerer-knapp" onClick={() => { setLaererCelle({ day, lid }); setFocus(null); }}
+          title="Ansvarlige lærere i økta" aria-label="Ansvarlige lærere">
+          <Ikon navn="users" />
+          {!laererFor(day, lid).flat().some(n => String(n || '').trim()) && <span>Lærere</span>}
+        </button>
       </div>
     );
   };
@@ -581,6 +735,16 @@ export default function ScheduleEditor({
       });
       return s;
     });
+    // Lærerne til økter som er fjernet, skal ikke dukke opp i en ny økt med samme id
+    setLaerere(prev => {
+      const l = {};
+      DAYS.forEach(day => {
+        const d = { ...(prev[day] || {}) };
+        oldL.forEach(id => { if (!newL.has(id)) delete d[id]; });
+        l[day] = d;
+      });
+      return l;
+    });
     setFrame(fEdit);
     setModal(null);
   };
@@ -589,6 +753,7 @@ export default function ScheduleEditor({
   const doCreateClass = (mg) => {
     if (!newCn.trim()) return;
     setSched(blankSched(frame));
+    setLaerere(blankLaerere());
     setCn(newCn.trim());
     setIsMg(mg);
     setNewCn("");
@@ -599,7 +764,7 @@ export default function ScheduleEditor({
 
   /* ── Lagre til app-state ── */
   const handleSave = () => {
-    const { schedule, breaks } = buildClassDataFromEditorState(subj, sched, frame, isMg ? parts : null);
+    const { schedule, breaks } = buildClassDataFromEditorState(subj, sched, frame, isMg ? parts : null, laerere);
     const subjectUpdates = {};
     subj.forEach(s => { subjectUpdates[s.name] = { color: s.color, emoji: s.emoji }; });
     onSave(schedule, breaks, subjectUpdates, cn, isMg);
@@ -756,6 +921,7 @@ export default function ScheduleEditor({
             <div><dt><Ikon navn="calendar-range" /></dt><dd>Ulike fag i partalls- og oddetallsuker</dd></div>
             <div><dt><Ikon navn="layers" /></dt><dd>Flere fag samtidig (parallell)</dd></div>
             <div><dt><Ikon navn="merge" /></dt><dd>Slå sammen igjen</dd></div>
+            <div><dt><Ikon navn="users" /></dt><dd>Ansvarlige lærere, inntil to per økt</dd></div>
             <div><dt><Ikon navn="plus" /></dt><dd>Ett fag til i parallellen</dd></div>
             <div><dt><Ikon navn="x" /></dt><dd>Fjern et valg</dd></div>
           </dl>
@@ -766,6 +932,79 @@ export default function ScheduleEditor({
           </div>
         </Dialog>
       )}
+
+      {/* LÆRERE I ØKTA */}
+      {laererCelle && (() => {
+        const { day, lid } = laererCelle;
+        const raw = sched[day]?.[lid];
+        const etiketter = laererEtiketter(raw, parts);
+        const okt = frame.find(f => f.id === lid);
+        const [a = '', b = ''] = laererFor(day, lid);
+        const felt = (id, etikett, verdi, onChange, forst) => (
+          <label key={id} className="se-field">
+            <span>{etikett}</span>
+            <input
+              className="se-input"
+              id={id}
+              list="se-kjente-laerere"
+              autoFocus={forst}
+              maxLength={40}
+              autoComplete="off"
+              placeholder="Navn"
+              value={verdi}
+              onChange={e => onChange(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') setLaererCelle(null); }}
+            />
+          </label>
+        );
+        if (isParallel(raw)) {
+          const grupper = laererFor(day, lid);
+          return (
+            <Dialog onClose={() => setLaererCelle(null)} title={`Lærere ${day.toLowerCase()} ${okt?.label || ''}`.trim()}>
+              <Info>Fagene går samtidig. Hvert fag kan ha inntil to ansvarlige lærere.</Info>
+              <datalist id="se-kjente-laerere">
+                {kjenteLaerere.map(n => <option key={n} value={n} />)}
+              </datalist>
+              {(raw.ids || []).map((id, slot) => {
+                const fag = gs(id);
+                const [g1 = '', g2 = ''] = Array.isArray(grupper[slot]) ? grupper[slot] : [];
+                return (
+                  <fieldset key={slot} className="se-laerer-gruppe">
+                    <legend>{fag ? fag.name : `Valg ${slot + 1} (uten fag)`}</legend>
+                    <div className="se-field-row">
+                      {felt(`se-laerer-${slot + 1}-1`, 'Lærer 1', g1, v => settGruppeLaerer(day, lid, slot, 0, v), slot === 0)}
+                      {felt(`se-laerer-${slot + 1}-2`, 'Lærer 2', g2, v => settGruppeLaerer(day, lid, slot, 1, v), false)}
+                    </div>
+                  </fieldset>
+                );
+              })}
+              <div className="se-modal-actions">
+                <button type="button" className="k-btn k-btn--ny" onClick={() => setLaererCelle(null)}>Ferdig</button>
+                <button type="button" className="k-btn k-btn--slett" onClick={() => { tomLaerere(day, lid); setLaererCelle(null); }}>Fjern lærerne</button>
+              </div>
+            </Dialog>
+          );
+        }
+        return (
+          <Dialog onClose={() => setLaererCelle(null)} title={`Lærere ${day.toLowerCase()} ${okt?.label || ''}`.trim()}>
+            <Info>
+              {isWeekAlt(raw)
+                ? 'Skriv læreren i partallsuker og i oddetallsuker. Navnet vises på skjermen den uka faget går.'
+                : isSplit(raw)
+                  ? 'Skriv læreren for hvert trinn. La et felt stå tomt hvis trinnet ikke har egen lærer.'
+                  : 'Inntil to ansvarlige lærere. Navnene vises under faget på skjermen.'}
+            </Info>
+            <datalist id="se-kjente-laerere">
+              {kjenteLaerere.map(n => <option key={n} value={n} />)}
+            </datalist>
+            {[a, b].map((verdi, i) => felt(`se-laerer-${i + 1}`, etiketter[i], verdi, v => settLaerer(day, lid, i, v), i === 0))}
+            <div className="se-modal-actions">
+              <button type="button" className="k-btn k-btn--ny" onClick={() => setLaererCelle(null)}>Ferdig</button>
+              <button type="button" className="k-btn k-btn--slett" onClick={() => { setLaerere(p => ({ ...p, [day]: { ...p[day], [lid]: [] } })); setLaererCelle(null); }}>Fjern lærerne</button>
+            </div>
+          </Dialog>
+        );
+      })()}
 
       {/* REDIGER FAG */}
       {editSj !== null && (() => {

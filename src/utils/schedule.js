@@ -67,7 +67,7 @@ export function canonicalizeSubjectName(rawLabel) {
   const aliasMap = {
     "KUNST OG HÅNDTVERK": "Kunst og håndverk",
     "GYM": "Kroppsøving",
-    "FYSAK": "Fys.ak."
+    "FYS.AK.": "Fysak"
   };
   if (aliasMap[upper]) return aliasMap[upper];
   const subjectInfo = Object.values(subjectMap).find(subject =>
@@ -246,17 +246,95 @@ export function normalizeStoredTimeValue(rawValue) {
   return value;
 }
 
+/** Høyst så mange ansvarlige lærere kan stå på én økt. */
+export const MAKS_LAERERE = 2;
+
+/**
+ * Lærerne på en økt: høyst to navn. Plassen betyr noe i en fådelt økt
+ * («Kroppsøving 8. / Matematikk 9.» → [lærer for 8., lærer for 9.]), så en
+ * tom plass foran et navn beholdes som ''. Gir null når ingen navn står.
+ */
+export function normalizeTeachers(list) {
+  if (!Array.isArray(list)) return null;
+  const names = list.slice(0, MAKS_LAERERE).map(name => String(name ?? '').replace(/\s+/g, ' ').trim().slice(0, 40));
+  while (names.length && !names[names.length - 1]) names.pop();
+  return names.length ? names : null;
+}
+
+/** Høyst så mange fag kan gå parallelt i én økt (og ha hver sine lærere). */
+const MAKS_PARALLELLE = 8;
+
+/**
+ * Lærerne i en parallell økt: én gruppe per fag, i samme rekkefølge som fagene
+ * («Spansk / Tysk / Arbeidslivsfag» → [["Ana Maria"], ["Barbara"], ["Eirik"]]),
+ * høyst to lærere per fag. En eldre flat liste (["Ana Maria", "Eirik"]) blir én
+ * lærer per fag. Gir null når ingen navn står.
+ */
+export function normalizeParallelTeachers(list) {
+  if (!Array.isArray(list)) return null;
+  const grupper = list.slice(0, MAKS_PARALLELLE).map(g => normalizeTeachers(Array.isArray(g) ? g : [g])?.filter(Boolean) || []);
+  while (grupper.length && !grupper[grupper.length - 1].length) grupper.pop();
+  return grupper.length ? grupper : null;
+}
+
+/** Lærerne på en oppføring, normalisert etter om økta er parallell. */
+export function normalizeEntryTeachers(entry) {
+  return entry?.parallel ? normalizeParallelTeachers(entry.teachers) : normalizeTeachers(entry?.teachers);
+}
+
+/** «Thor» eller «Rune og Linda»; tom streng når økta ikke har lærer. */
+export function formatTeachers(list) {
+  const names = (normalizeTeachers(list) || []).filter(Boolean);
+  return [...new Set(names)].join(' og ');
+}
+
+/**
+ * Lærerteksten for en økt, slik elevene ser den:
+ * fådelt med hver sin lærer «8. Rune · 9. Linda», parallell «Rune og Andreas · Maria»
+ * (i fagenes rekkefølge), ellers «Thor» eller «Andreas og Maria». Tom uten lærer.
+ */
+export function formatEventTeachers(event, classData, className) {
+  if (!event || event.type === 'break') return '';
+  // Økta er endret for i dag («Endre denne økta»): lærerne hører til det som sto der
+  if (event.displayActivity != null && event.displayActivity !== event.activity) return '';
+  if (event.parallel) {
+    const grupper = normalizeParallelTeachers(event.teachers) || [];
+    const fag = getActivitySubjectParts(event.activity).map(p => p.subject);
+    const tekster = fag.map((_, i) => formatTeachers(grupper[i] || []));
+    // Mangler et fag lærer, står faget foran navnene, så ingen ser ut til å ha feil fag
+    const hull = tekster.some(t => !t) && tekster.some(Boolean);
+    return tekster
+      .map((t, i) => (t && hull ? `${canonicalizeSubjectName(fag[i]) || fag[i]}: ${t}` : t))
+      .filter(Boolean)
+      .join(' · ');
+  }
+  const teachers = normalizeTeachers(event.teachers);
+  if (!teachers) return '';
+  const [a = '', b = ''] = teachers;
+  const delt = String(event.activity || '').includes('/') && isClassMultiGrade(classData, className);
+  if (delt && a !== b) {
+    const [la, lb] = getClassMultiGradeLabels(classData, className);
+    // Ett trinn uten egen lærer: navnet får trinnet sitt, så det ikke ser ut til å gjelde begge
+    if (la && lb) return [a && `${la} ${a}`, b && `${lb} ${b}`].filter(Boolean).join(' · ');
+  }
+  return formatTeachers(teachers);
+}
+
 export function normalizeScheduleEntries(list) {
   if (!Array.isArray(list)) return [];
   return list
     .map((entry) => {
       if (!entry || typeof entry !== 'object') return null;
-      return {
+      const out = {
         ...entry,
         time: normalizeStoredTimeValue(entry.time),
         end: normalizeStoredTimeValue(entry.end),
         activity: normalizeSubjectLabel(entry.activity)
       };
+      const teachers = normalizeEntryTeachers(entry);
+      if (teachers) out.teachers = teachers;
+      else delete out.teachers;
+      return out;
     })
     .filter((entry) => entry && entry.time && entry.end);
 }
@@ -499,8 +577,15 @@ function mergeActivityParts(parts) {
   }
   const lines = [];
   const groups = new Map();
+  const utenEtikett = new Set();
   parts.forEach(p => {
-    if (!p.label) { lines.push({ parts: [p] }); return; }
+    // Parallelle fag (uten etikett) som to klasser har samtidig, står bare én gang
+    if (!p.label) {
+      if (utenEtikett.has(p.text)) return;
+      utenEtikett.add(p.text);
+      lines.push({ parts: [p] });
+      return;
+    }
     const key = `${p.sep}|${p.text}`;
     if (groups.has(key)) { groups.get(key).parts.push(p); return; }
     const group = { parts: [p] };

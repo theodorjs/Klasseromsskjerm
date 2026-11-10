@@ -10,6 +10,7 @@ import {
   formatExpandedActivityLabel,
   buildCurrentActivityLines,
   isClassMultiGrade,
+  formatEventTeachers,
   normalizeSubjectLabel,
   getCountdownRemainingDisplay,
 } from '../utils/schedule.js';
@@ -83,6 +84,7 @@ export default function Presentasjon({
   let linjer = null;
   let gjenstaarTekst = '';
   let nesteTekst = '';
+  let laerer = '';
   let agenda = [];
 
   if (primaryState) {
@@ -104,6 +106,7 @@ export default function Presentasjon({
       } else {
         aktivitet = currentActivity === 'FRI' ? 'Fri' : formatExpandedActivityDisplay(currentActivity);
       }
+      if (activeEvent && displayStates.length <= 1) laerer = formatEventTeachers(activeEvent, classData, primaryState.className);
       if (activeEvent) {
         const igjen = formatDurationSmart(Math.max(0, activeEvent.end - currentMinutes));
         if (currentActivity === 'Mat') gjenstaarTekst = `${igjen} igjen av spisetiden`;
@@ -196,6 +199,7 @@ export default function Presentasjon({
             {linjer
               ? <div className="presentasjon-fag er-flere">{linjer.map((l, i) => <div key={i}>{l}</div>)}</div>
               : <div className="presentasjon-fag">{aktivitet}</div>}
+            {laerer && <div className="presentasjon-laerer" id="presentasjon-laerer">{laerer}</div>}
             {gjenstaarTekst && <div className="presentasjon-igjen">{gjenstaarTekst}</div>}
             {agenda.length > 0 && (
               <div className="presentasjon-agenda">

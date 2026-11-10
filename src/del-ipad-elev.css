@@ -135,6 +135,16 @@
     .ep-naa:not(.har-skive) { min-height: 0; }
     .ep-naa:not(.har-skive) .ep-hoved { font-size: clamp(2.2rem, 7.4vw, 5rem); }
 
+    /* Ansvarlige lærere i økta som pågår */
+    .ep-laerer {
+        font-size: clamp(1.05rem, 2.8vw, 1.8rem);
+        font-weight: 700;
+        line-height: 1.2;
+        opacity: 0.8;
+        max-width: 100%;
+        overflow-wrap: break-word;
+    }
+
     .ep-igjen {
         display: inline-block;
         margin-top: 0.15em;
@@ -410,13 +420,16 @@
 
     .ep-li {
         display: flex;
-        flex: 1 1 0;
+        /* Aldri lavere enn innholdet (fag, trinn og lærere); lista ruller heller */
+        flex: 1 0 auto;
         min-height: clamp(52px, 6.4vh, 72px);
         max-height: clamp(84px, 9.5vh, 128px);
     }
 
     .ep-li.li-pause { flex-grow: 0.6; min-height: clamp(44px, 4.6vh, 56px); }
-    .ep-li.li-naa { flex-grow: 1.5; max-height: none; }
+    /* Timen som pågår krymper aldri under innholdet sitt (to fag og lærere ble kuttet); blir lista
+       for lang, ruller den, og PlanListe holder timen i syne */
+    .ep-li.li-naa { flex: 1.5 0 auto; max-height: none; }
 
     .ep-rad {
         position: relative;
@@ -531,6 +544,13 @@
     .ep-rad.er-pause .ep-navn { font-size: clamp(1rem, 2.6vw, 1.6rem); font-weight: 600; }
     .ep-rad.er-naa .ep-navn { font-size: clamp(1.3rem, 4vw, 2.6rem); }
     .ep-rad.er-naa.er-delt .ep-navn { font-size: clamp(1.15rem, 3.3vw, 2.15rem); }
+    /* Lærerne under faget i lista: liten og dempet, så faget fortsatt leses først */
+    .ep-navn-laerer {
+        font-size: clamp(0.85rem, 2vw, 1.2rem);
+        font-weight: 600;
+        line-height: 1.2;
+        opacity: 0.72;
+    }
 
     .ep-gjoremal {
         display: flex;

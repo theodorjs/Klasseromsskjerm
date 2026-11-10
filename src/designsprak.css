@@ -885,12 +885,51 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
     overflow-wrap: break-word; word-break: break-word;
 }
 .se-cell-plus { font-size: 1.4rem; color: var(--tekst-svak); opacity: 0.6; }
+/* Ansvarlige lærere under faget */
+.se-cell-laerer {
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--tekst-dempet);
+    overflow-wrap: break-word; word-break: break-word;
+    max-width: 100%;
+}
+.se-laerer-gruppe { border: 1px solid var(--instrument-kant); border-radius: var(--radius-s); padding: 8px 12px 10px; margin: 0; }
+.se-laerer-gruppe legend { padding: 0 6px; font-weight: 800; font-size: 0.9rem; color: var(--tekst); }
+.se-laerer-gruppe .se-field-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.se-laerer-gruppe .se-field { flex: 1 1 140px; min-width: 0; }
+.se-laerer-knapp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 28px;
+    margin-top: 3px;
+    padding: 2px 6px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--tekst-dempet);
+    cursor: pointer;
+    max-width: 100%;
+}
+.se-laerer-knapp span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.se-laerer-knapp:hover { background: var(--instrument-2); color: var(--tekst); }
+.se-laerer-knapp:focus-visible { outline: 3px solid var(--fokus); outline-offset: 1px; }
+/* I smale delceller: én linje, ellers deles navnet midt i («Lindbj-ørg») */
+.se-slot .se-cell-laerer { width: 100%; font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; word-break: normal; }
 
 .se-cell-tools {
     position: absolute;
     top: 4px;
     right: 4px;
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: calc(100% - 8px);   /* fire knapper legger seg i to rader i stedet for å stikke ut av cella */
     gap: 4px;
     z-index: 5;
 }
@@ -1254,6 +1293,8 @@ body.colorful-mode .vegg { color: #fff; }
     border-radius: 999px;
     background: var(--fagfarge, transparent);
 }
+/* Ansvarlige lærere: rett under faget, dempet */
+.vegg-laerer { font-size: clamp(1rem, 4vmin, 2.6rem); font-weight: 600; opacity: 0.85; margin-top: 0.4vmin; text-align: center; }
 .vegg-meta {
     display: flex;
     flex-wrap: wrap;

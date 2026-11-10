@@ -8,6 +8,7 @@ import {
   getClassScheduleState,
   buildCurrentActivityLines,
   isClassMultiGrade,
+  formatEventTeachers,
   formatExpandedActivityDisplay,
   getStoredSubjectEmoji,
   getTempScheduleKey,
@@ -118,6 +119,7 @@ function Plan({ state, classes, minutter, erIDag, editPermission, onOpenEditModa
         const symbol = getStoredSubjectEmoji(state.className, activity.split('/')[0], classes);
         const andel = naa ? Math.min(1, Math.max(0, (minutter - event.start) / Math.max(1, event.end - event.start))) : 0;
         const gjoremal = naa && !isBreak ? gjoremalForOkt(state.classData, activity) : [];
+        const laererTekst = formatEventTeachers(event, state.classData, state.className);
 
         const liKlasse = `ep-li${isBreak ? ' li-pause' : ''}${naa ? ' li-naa' : ''}`;
         const radStil = naa ? { borderColor: aksent } : undefined;
@@ -159,6 +161,7 @@ function Plan({ state, classes, minutter, erIDag, editPermission, onOpenEditModa
             </span>
             <span className="ep-navn">
               {linjer.map((l, i) => <span key={i} className="ep-navn-linje">{l}</span>)}
+              {laererTekst && <span className="ep-navn-laerer">{laererTekst}</span>}
               {gjoremal.length > 0 && (
                 <span className="ep-gjoremal">
                   {gjoremal.slice(0, 4).map((g, i) => (
@@ -257,6 +260,7 @@ export default function ElevPortrett({
   let hovedLinjer = null;
   let igjen = '';
   let underlinje = '';
+  let laerer = '';
   let dial = null;
 
   if (!harTimerIDag || currentMinutes >= schoolDayEnd) {
@@ -281,6 +285,7 @@ export default function ElevPortrett({
     } else {
       hoved = currentActivity === 'FRI' ? 'Fri' : formatExpandedActivityDisplay(currentActivity);
     }
+    if (activeEvent && displayStates.length <= 1) laerer = formatEventTeachers(activeEvent, primaryState.classData, primaryState.className);
     if (activeEvent) {
       const nowSec = currentMinutes * 60 + (currentSeconds || 0);
       const minutterIgjen = Math.max(0, activeEvent.end - currentMinutes);
@@ -331,6 +336,7 @@ export default function ElevPortrett({
           {hovedLinjer
             ? <div className="ep-hoved er-stabel">{hovedLinjer.map((l, i) => <div key={i}>{l}</div>)}</div>
             : <div className="ep-hoved">{hoved}</div>}
+          {laerer && <div className="ep-laerer" id="ep-laerer">{laerer}</div>}
           {igjen && <div className="ep-igjen">{igjen}</div>}
           {underlinje && <div className="ep-under">{underlinje}</div>}
         </div>

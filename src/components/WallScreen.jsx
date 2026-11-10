@@ -7,6 +7,7 @@ import {
   formatExpandedActivityDisplay,
   buildCurrentActivityLines,
   isClassMultiGrade,
+  formatEventTeachers,
 } from '../utils/schedule.js';
 import { getCurrentSubjectColor } from '../utils/color.js';
 
@@ -52,6 +53,7 @@ export default function WallScreen({
   let stackLines = null;
   let remainingText = '';
   let nextText = '';
+  let laerer = '';
 
   if (primaryState) {
     const { schoolDayEnd, firstClassTime, currentActivity, activeEvent, normalizedDayEvents } = primaryState;
@@ -75,6 +77,8 @@ export default function WallScreen({
         activity = currentActivity === 'FRI' ? 'Fri' : formatExpandedActivityDisplay(currentActivity);
       }
 
+      // Lærerne vises bare når én klasse står på skjermen
+      if (activeEvent && displayStates.length <= 1) laerer = formatEventTeachers(activeEvent, primaryState.classData, primaryState.className);
       if (activeEvent) {
         const minutesLeft = Math.max(0, activeEvent.end - currentMinutes);
         remainingText = activeEvent.type === 'break'
@@ -127,6 +131,7 @@ export default function WallScreen({
         >
           {stackLines ? stackLines.map((line, i) => <div key={i}>{line}</div>) : activity}
         </div>
+        {laerer && <div className="vegg-laerer" id="vegg-laerer">{laerer}</div>}
         {(remainingText || nextText) && (
           <div className="vegg-meta">
             {remainingText && <span className="vegg-remaining">{remainingText}</span>}

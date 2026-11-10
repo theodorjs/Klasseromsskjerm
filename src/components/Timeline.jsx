@@ -13,6 +13,7 @@ import {
 import { getSubjectDefaultColor } from '../utils/color.js';
 import { FagSymbol } from './Ikon.jsx';
 import { erLystTema } from '../utils/tema.js';
+import { formatEventTeachers } from '../utils/schedule.js';
 
 export default function Timeline({
   classes,
@@ -189,6 +190,7 @@ export default function Timeline({
                           </div>
                         );
                       })}
+                      {formatEventTeachers(event, state.classData, state.className) && <div className="teacher">{formatEventTeachers(event, state.classData, state.className)}</div>}
                       <div className="time">{event.time}–{formatMinutesAsTime(event.end)}</div>
                     </div>
                   </div>

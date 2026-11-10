@@ -140,6 +140,15 @@ body.light-mode .presentasjon-nedteller {
     flex-direction: column;
     gap: 1vh;
 }
+/* Ansvarlige lærere i økta: rett under faget, mindre og dempet */
+.presentasjon-laerer {
+    font-size: clamp(1.1rem, min(4.4vh, 2.8vw), 3rem);
+    font-weight: 700;
+    line-height: 1.15;
+    opacity: 0.8;
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
 .presentasjon-igjen {
     font-size: clamp(1.3rem, 4.6vh, 3.4rem);
     font-weight: 800;

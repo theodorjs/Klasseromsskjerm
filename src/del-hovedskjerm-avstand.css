@@ -93,6 +93,19 @@ body #main-container.hs-tavle #countdown-container {
 }
 .hs-for .hs-igjen { justify-content: center; }
 
+/* Ansvarlige lærere i økta: rolig linje rett under faget */
+.hs-laerer {
+    max-width: 100%;
+    margin-top: calc(-1 * min(0.6vh, 0.4vw));
+    font-size: min(4.4vh, 2.6vw);
+    font-weight: 700;
+    line-height: 1.15;
+    opacity: 0.78;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* Hva som kommer etterpå, med klokkeslett */
 .hs-neste {
     width: 100%;
@@ -150,6 +163,7 @@ body.colorful-mode .hs-neste-merke.is-noytral { background: rgba(255, 255, 255, 
     .hs-fag.is-stack { font-size: min(6vh, 8vw); }
     .hs-fri .hs-fag { font-size: min(7vh, 10vw); }
     .hs-igjen { justify-content: center; }
+    .hs-laerer { font-size: min(3vh, 4.4vw); }
     .hs-igjen-tall { font-size: min(8vh, 12vw); }
     .hs-igjen-enhet { font-size: min(3.6vh, 5vw); }
     .hs-neste { justify-content: center; font-size: min(3.4vh, 5vw); }
