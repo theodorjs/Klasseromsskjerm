@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Ikon from './Ikon.jsx';
 import useSkjermVaaken from '../hooks/useSkjermVaaken.js';
+import useRolig from '../hooks/useRolig.js';
 import TimeTimerDial from './TimeTimerDial.jsx';
 import { normalizeHexColor } from '../utils/color.js';
 import {
@@ -10,6 +11,7 @@ import {
   loadTimerPosition, saveTimerPosition, clampTimerPosition,
   primeTimerAudio, playTimerChime,
   TIMER_PRESETS_MIN, TIMER_CLASSIC_RED, MAX_DURATION_MS, TIMER_TASK_MAX,
+  TIMER_RUN_KEY, TIMER_SETTINGS_KEY, claimTimerChime,
 } from '../utils/timer.js';
 
 /** Hvor lenge «Tiden er ute» står etter at en reload fant en utløpt timer. */
@@ -22,25 +24,38 @@ function formatClock(ms) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+/** Adressen til den egne nedteller-siden, sett fra hovedsiden. */
+export const EGEN_SIDE_HREF = 'timer/';
+
+/**
+ * Kjøringen slik den er lagret nå. En timer som gikk ut mens siden var
+ * lukket, vises som «ferdig» en stund, ellers starter den blankt.
+ */
+function lesLagretKjoring() {
+  const saved = loadTimerRun();
+  if (!saved) return null;
+  if (saved.endAt !== null && saved.endAt <= Date.now()) {
+    return Date.now() - saved.endAt < DONE_GRACE_MS ? { ...saved, done: true, doneAt: saved.endAt } : null;
+  }
+  return saved;
+}
+
 /**
  * Nedteller i TimeTimer-stil. Skiva er full når timeren starter og krymper
  * mot null. Fargen følger faget som pågår, med mulighet for egen farge.
- * Kjøringen lagres, så timeren overlever at siden lastes på nytt.
+ * Kjøringen lagres, så timeren overlever at siden lastes på nytt, og den
+ * deles mellom faner: hovedsiden og den egne nedteller-siden viser samme timer.
+ *
+ * `egenSide`: nedtelleren er hele siden (timer/index.html). Den er alltid
+ * åpen, står midt på skjermen og kan ikke lukkes, bare veksles mellom
+ * oppsett og stor visning. Går en timer allerede, åpner den i stor visning.
  */
-export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor, subjectName, lessonTitle }) {
+export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor, subjectName, lessonTitle, egenSide = false }) {
   const [settings, setSettings] = useState(loadTimerSettings);
-  const [run, setRun] = useState(() => {
-    const saved = loadTimerRun();
-    if (!saved) return null;
-    if (saved.endAt !== null && saved.endAt <= Date.now()) {
-      // Utløp mens siden var lukket: vis «ferdig» en stund, ellers start blankt
-      return Date.now() - saved.endAt < DONE_GRACE_MS ? { ...saved, done: true, doneAt: saved.endAt } : null;
-    }
-    return saved;
-  });
+  const [run, setRun] = useState(lesLagretKjoring);
   const [now, setNow] = useState(() => Date.now());
   const [colorOpen, setColorOpen] = useState(false);
-  const [big, setBig] = useState(false);
+  const [big, setBig] = useState(() => egenSide && run !== null);
   // Oppgaveteksten over stor visning skrives rett på tavla
   const [taskDraft, setTaskDraft] = useState(null);
   const taskCancelRef = useRef(false);
@@ -48,11 +63,34 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
   const [pos, setPos] = useState(loadTimerPosition);
   const panelRef = useRef(null);
   const dragRef = useRef(null);
+  const closeBtnRef = useRef(null);
+  const chimedRef = useRef(false);
 
-  useEffect(() => { saveTimerPosition(pos); }, [pos]);
+  useEffect(() => { if (!egenSide) saveTimerPosition(pos); }, [pos, egenSide]);
+
+  // «Åpne som egen side» starter med tekst hver gang panelet åpnes, og krymper til symbolet
+  const { synlig: egenSideSynlig } = useRolig({ aktiv: open && !egenSide && !big });
+
+  // Samme timer i alle faner: det en annen fane starter, pauser eller stiller, vises her også.
+  // (Lagringshendelsen kommer bare til de andre fanene, aldri til den som lagret.)
+  useEffect(() => {
+    function naarLagret(e) {
+      if (e.key === null || e.key === TIMER_RUN_KEY) {
+        const neste = lesLagretKjoring();
+        // En timer som gikk ut i den andre fanen, har allerede ringt der.
+        // En ny kjøring derfra skal derimot kunne ringe her.
+        chimedRef.current = !!neste?.done;
+        setRun(neste);
+        setNow(Date.now());
+      }
+      if (e.key === null || e.key === TIMER_SETTINGS_KEY) setSettings(loadTimerSettings());
+    }
+    window.addEventListener('storage', naarLagret);
+    return () => window.removeEventListener('storage', naarLagret);
+  }, []);
 
   function onHandlePointerDown(e) {
-    if (big || e.button > 0) return;
+    if (big || egenSide || e.button > 0) return;
     if (e.target.closest('button, input, label, a')) return;
     const rect = panelRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -73,8 +111,6 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
   function resetPosition() {
     setPos(null);
   }
-  const closeBtnRef = useRef(null);
-  const chimedRef = useRef(false);
 
   const running = !!run && run.endAt !== null && !run.done;
   // Skjermen skal ikke slukke mens klassen ser på den store skiva
@@ -95,10 +131,12 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
   useEffect(() => {
     finishRef.current = () => {
       if (!run || run.done) return;
-      const finished = { ...run, endAt: null, pausedRemainingMs: 0, done: true, doneAt: Date.now() };
+      // Samme sluttid i alle faner som teller ned samtidig, så «Gikk ut kl.» blir lik overalt
+      const sluttet = run.endAt !== null ? Math.min(run.endAt, Date.now()) : Date.now();
+      const finished = { ...run, endAt: null, pausedRemainingMs: 0, done: true, doneAt: sluttet };
       setRun(finished);
-      saveTimerRun({ totalMs: finished.totalMs, endAt: Date.now(), pausedRemainingMs: 0 });
-      if (settings.sound && !chimedRef.current) {
+      saveTimerRun({ totalMs: finished.totalMs, endAt: sluttet, pausedRemainingMs: 0 });
+      if (settings.sound && !chimedRef.current && claimTimerChime(run.endAt ?? sluttet)) {
         chimedRef.current = true;
         playTimerChime();
       }
@@ -146,11 +184,11 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
       if (taskDraft !== null) { setTaskDraft(null); return; }
       if (colorOpen) { setColorOpen(false); return; }
       if (big) { setBig(false); return; }
-      onClose();
+      if (!egenSide) onClose();
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose, big, colorOpen, taskDraft]);
+  }, [open, onClose, big, colorOpen, taskDraft, egenSide]);
 
   const updateSettings = useCallback((patch) => {
     setSettings(prev => {
@@ -276,15 +314,32 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
 
       <div
         ref={panelRef}
-        className={`timer-panel${open ? ' active' : ''}${big ? ' is-big' : ''}${pos && !big ? ' is-moved' : ''}`}
+        className={`timer-panel${open ? ' active' : ''}${big ? ' is-big' : ''}${pos && !big && !egenSide ? ' is-moved' : ''}${egenSide ? ' er-egen-side' : ''}`}
         id="timer-panel"
         role="dialog"
         aria-modal="false"
         aria-label="Nedteller"
-        style={pos && !big ? { left: pos.x, top: pos.y } : undefined}
+        style={pos && !big && !egenSide ? { left: pos.x, top: pos.y } : undefined}
       >
         <div className={`tt-device${done ? ' is-done' : ''}${running ? ' is-running' : ''}${paused ? ' is-paused' : ''}`}>
-          <button ref={closeBtnRef} type="button" className="tt-close" id="timer-close-btn" aria-label={big ? 'Tilbake til liten visning' : 'Lukk nedteller'} onClick={() => { setColorOpen(false); setTaskDraft(null); if (big) setBig(false); else onClose(); }}><Ikon navn="x" /></button>
+          {/* På den egne siden er det ingenting å lukke til; krysset går bare fra stor visning til oppsettet */}
+          {(big || !egenSide) && (
+            <button ref={closeBtnRef} type="button" className="tt-close" id="timer-close-btn" aria-label={big ? (egenSide ? 'Tilbake til oppsettet' : 'Tilbake til liten visning') : 'Lukk nedteller'} onClick={() => { setColorOpen(false); setTaskDraft(null); if (big) setBig(false); else onClose(); }}><Ikon navn="x" /></button>
+          )}
+
+          {/* Nedtelleren på en egen side, i en ny fane: lenken kan også deles eller legges på Hjem-skjermen */}
+          {!egenSide && !big && (
+            <a
+              className={`tt-egen-side${egenSideSynlig ? '' : ' er-rolig'}`}
+              href={EGEN_SIDE_HREF}
+              target="_blank"
+              rel="noopener"
+              title="Åpne nedtelleren som egen side i en ny fane"
+              aria-label="Åpne som egen side (ny fane)"
+            >
+              <Ikon navn="external-link" /><span className="tt-egen-side-tekst">Åpne som egen side</span>
+            </a>
+          )}
 
           {/* Stor visning: faget som pågår og hva klassen skal gjøre står over nedtelleren */}
           {big && (bigHeading || task || taskDraft !== null) && (
@@ -321,8 +376,8 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
             onPointerMove={onHandlePointerMove}
             onPointerUp={onHandlePointerUp}
             onPointerCancel={onHandlePointerUp}
-            onDoubleClick={() => { if (!big) resetPosition(); }}
-            title={big ? undefined : 'Dra for å flytte nedtelleren. Dobbelttrykk for å legge den tilbake.'}
+            onDoubleClick={() => { if (!big && !egenSide) resetPosition(); }}
+            title={big || egenSide ? undefined : 'Dra for å flytte nedtelleren. Dobbelttrykk for å legge den tilbake.'}
           >
             <div className="tt-face">
               <TimeTimerDial

@@ -123,6 +123,22 @@ export function readTimerStatus(now = Date.now()) {
   return { totalMs: run.totalMs, remainingMs: rest, done: rest <= 0, paused: rest > 0 };
 }
 
+/** Hvilken kjøring som allerede har ringt, delt mellom fanene. */
+export const TIMER_CHIME_KEY = 'timerRingt';
+
+/**
+ * Bare én fane skal ringe når tiden er ute, selv om hovedsiden og den egne
+ * nedteller-siden teller ned samtidig. Den første som kommer hit, tar
+ * ringeturen for denne kjøringen (identifisert ved når den skulle slutte).
+ * Kan ikke lagringen leses, ringer fanen heller enn å tie.
+ */
+export function claimTimerChime(runKey) {
+  const key = String(runKey);
+  if (safeGetItem(TIMER_CHIME_KEY) === key) return false;
+  safeSetItem(TIMER_CHIME_KEY, key);
+  return true;
+}
+
 export function saveTimerRun(run) {
   if (!run) safeRemoveItem(TIMER_RUN_KEY);
   else safeSetItem(TIMER_RUN_KEY, JSON.stringify(run));

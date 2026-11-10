@@ -21,6 +21,9 @@ function FallbackClock() {
  * Siste skanse mot hvit skjerm foran klassen: fanger feil i alt under seg og
  * viser en rolig side med klokke og mulighet til å laste på nytt eller
  * laste ned en sikkerhetskopi. Leser aldri lagring uten try/catch.
+ *
+ * `kanStarteNy={false}`: ingen «Start med standardtimeplanen». Brukes på sider
+ * som ikke eier timeplanen (den egne nedteller-siden), så de aldri kan legge den bort.
  */
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -71,9 +74,11 @@ export default class ErrorBoundary extends Component {
             {this.state.backupDone ? 'Sikkerhetskopien er lastet ned' : 'Last ned sikkerhetskopi'}
           </button>
         </div>
-        <button type="button" className="error-fallback-link" onClick={() => this.startFresh()}>
-          Skjer det igjen? Start med standardtimeplanen
-        </button>
+        {this.props.kanStarteNy !== false && (
+          <button type="button" className="error-fallback-link" onClick={() => this.startFresh()}>
+            Skjer det igjen? Start med standardtimeplanen
+          </button>
+        )}
         <details className="error-fallback-details">
           <summary>Teknisk informasjon</summary>
           <pre>{String(this.state.error?.stack || this.state.error)}</pre>

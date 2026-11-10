@@ -1,0 +1,17 @@
+{
+  "id": "./timer/",
+  "name": "Nedteller · Klasseskjerm",
+  "short_name": "Nedteller",
+  "description": "Nedteller for klasserommet, som skive. Fra Klasseskjerm.",
+  "start_url": "./timer/",
+  "scope": "./timer/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "background_color": "#1E242C",
+  "theme_color": "#1E242C",
+  "icons": [
+    { "src": "nedteller-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "nedteller-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "nedteller-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

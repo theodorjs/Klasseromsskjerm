@@ -59,7 +59,8 @@ function rensTime(t) {
   };
 }
 
-function lesTimer() {
+/** Dagens timer slik de er lagret nå (bare i dag). Leser, skriver aldri. */
+export function lesTimer() {
   try {
     const raw = safeGetItem(DAGENS_TIME_KEY);
     if (!raw) return [];

@@ -1,0 +1,115 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Nedtelleren som egen side (timer/) og veien dit fra hovedsiden
+   ───────────────────────────────────────────────────────────────────
+   Samme nedteller som på hovedsiden; her står bare det som er annerledes.
+   Ingen color-mix, :has eller inset-forkortelse (Safari 14 på veggen).
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── «Åpne som egen side»: speiler krysset, øverst til venstre ──── */
+
+/* Knappene øverst får en egen rad, så den fulle teksten aldri ligger oppå skiva */
+.timer-panel:not(.is-big):not(.er-egen-side) .tt-device { padding-top: 58px; }
+@media (max-height: 880px) {
+    .timer-panel:not(.is-big):not(.er-egen-side) .tt-device { padding-top: 56px; }
+}
+
+.tt-egen-side {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 14px 0 12px;
+    border-radius: 22px;
+    border: 1px solid var(--instrument-kant);
+    background: var(--instrument-3);
+    color: var(--tekst);
+    font-size: 0.85rem;
+    font-weight: 800;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    -webkit-tap-highlight-color: transparent;
+    transition: padding 0.4s ease, gap 0.4s ease, opacity 0.4s ease;
+}
+.tt-egen-side .ikon { width: 1.15rem; height: 1.15rem; flex: none; }
+.tt-egen-side-tekst {
+    display: inline-block;
+    max-width: 12em;
+    overflow: hidden;
+    transition: max-width 0.4s ease, opacity 0.3s ease;
+}
+.tt-egen-side.er-rolig { padding: 0; gap: 0; }
+.tt-egen-side.er-rolig .tt-egen-side-tekst { max-width: 0; opacity: 0; }
+.tt-egen-side:active { box-shadow: var(--trykk-inn); }
+.tt-egen-side:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+
+/* ─── Den egne siden ─────────────────────────────────────────────── */
+
+body.egen-nedteller { overflow: hidden; }
+
+/* Oppsettet står midt på skjermen og kan ikke dras */
+body.egen-nedteller .timer-panel.er-egen-side:not(.is-big),
+body.egen-nedteller .timer-panel.er-egen-side.active:not(.is-big) {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-height: calc(100vh - 24px);
+}
+body.egen-nedteller .timer-panel.er-egen-side .tt-plate { cursor: default; touch-action: auto; }
+
+/* Smal skjerm: oppsettet under Tilbake-knappen, ikke oppå den */
+@media (max-width: 600px) {
+    body.egen-nedteller .timer-panel.er-egen-side:not(.is-big),
+    body.egen-nedteller .timer-panel.er-egen-side.active:not(.is-big) {
+        top: calc(70px + var(--topp));
+        transform: translateX(-50%);
+        max-height: calc(100vh - 82px - var(--topp));
+    }
+}
+
+/* Tilbake til hele Klasseskjerm: starter med tekst, krymper til pila.
+   Ligger under stor visning (5600), så klassen bare ser nedtelleren. */
+.nedteller-tilbake {
+    position: fixed;
+    left: 14px;
+    top: calc(14px + var(--topp));
+    z-index: 5500;
+    box-sizing: border-box;
+    height: 44px;
+    min-height: 44px;
+    min-width: 44px;
+    border-radius: 22px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: opacity 0.4s ease, padding 0.4s ease, gap 0.4s ease, background-color 0.4s ease, border-color 0.4s ease;
+}
+.nedteller-tilbake .ikon { width: 1.25em; height: 1.25em; flex: none; }
+.nedteller-tilbake-tekst {
+    display: inline-block;
+    max-width: 10em;
+    overflow: hidden;
+    transition: max-width 0.4s ease, opacity 0.3s ease;
+}
+.nedteller-tilbake.er-rolig {
+    opacity: 0.35;
+    padding: 0;
+    gap: 0;
+    background-image: none;
+    background-color: transparent;
+    border-color: currentColor;
+    box-shadow: none;
+    color: inherit;
+}
+.nedteller-tilbake.er-rolig .nedteller-tilbake-tekst { max-width: 0; opacity: 0; }
+.nedteller-tilbake.er-rolig:focus-visible { opacity: 1; }
+body.colorful-mode .nedteller-tilbake.er-rolig { color: #fff; }

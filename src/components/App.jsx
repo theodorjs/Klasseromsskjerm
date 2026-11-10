@@ -4,6 +4,7 @@ import { getOsloTimeAndDay, getMinutesFromTime } from '../utils/time.js';
 import { getClassScheduleState, normalizeActiveTimelineClassNames, getTempScheduleKey } from '../utils/schedule.js';
 
 import Stars from './Stars.jsx';
+import { applyBodyClasses } from '../utils/tema.js';
 import StatusBar from './StatusBar.jsx';
 import MainContainer from './MainContainer.jsx';
 import ElevPortrett from './ElevPortrett.jsx';
@@ -36,15 +37,6 @@ import {
   LoginModal,
   ColorDetailModal,
 } from './Modals.jsx';
-
-function applyBodyClasses(themeMode) {
-  const mode = String(themeMode);
-  document.body.classList.remove('light-mode', 'dark-mode', 'star-mode', 'colorful-mode', 'ui-light', 'ui-dark');
-  if (mode === '0') document.body.classList.add('light-mode', 'ui-light');
-  else if (mode === '1') document.body.classList.add('dark-mode', 'ui-dark');
-  else if (mode === '2') document.body.classList.add('star-mode', 'ui-dark');
-  else document.body.classList.add('colorful-mode', 'ui-light');
-}
 
 export default function App() {
   const state = useAppState();
