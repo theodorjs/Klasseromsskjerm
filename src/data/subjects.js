@@ -29,6 +29,12 @@ export const SUBJECTS = [
   { name: "Andakt",                   short: "Andakt",      color: "#7D308E", emoji: "church" },
   { name: "Folkhelse & livsmestring", short: "F.H.L.M",     color: "#CC3399", emoji: "heart-pulse", aliases: ["Folkehelse og livsmestring"] },
   { name: "Fysak",                    short: "Fys",         color: "#76D3A9", emoji: "person-standing", aliases: ["Fys.ak."] },
+  { name: "Uteskole",                 short: "Ute",         color: "#708238", emoji: "tree-deciduous" },
+  // Språkfagene og valgfagene hver for seg, for økter der de går parallelt med egne lærere
+  { name: "Spansk",                   short: "Spansk",      color: "#C62828", emoji: "sun" },
+  { name: "Tysk",                     short: "Tysk",        color: "#546E7A", emoji: "flag" },
+  { name: "Friluftsliv",              short: "Friluft",     color: "#795548", emoji: "tent-tree" },
+  { name: "Design og redesign",       short: "Design",      color: "#00838F", emoji: "lightbulb" },
 ];
 
 /** Pauser: mørkegrå, så de trer tilbake bak fagene. */

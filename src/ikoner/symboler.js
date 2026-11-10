@@ -15,7 +15,7 @@ export const SYMBOLVALG = [
   ['calculator', 'Kalkulator'], ['sigma', 'Matte'], ['shapes', 'Former'], ['ruler', 'Linjal'],
   ['drafting-compass', 'Passer'], ['chart-column', 'Diagram'],
   ['microscope', 'Mikroskop'], ['flask-conical', 'Forsøk'], ['atom', 'Atom'], ['dna', 'DNA'],
-  ['leaf', 'Natur'], ['globe', 'Verden'], ['map', 'Kart'], ['compass', 'Kompass'], ['scroll', 'Historie'],
+  ['leaf', 'Natur'], ['tree-deciduous', 'Tre'], ['globe', 'Verden'], ['map', 'Kart'], ['compass', 'Kompass'], ['scroll', 'Historie'],
   ['church', 'Kirke'], ['sparkles', 'Gnist'],
   ['palette', 'Kunst'], ['brush', 'Pensel'], ['drama', 'Drama'], ['music', 'Musikk'], ['guitar', 'Gitar'],
   ['clapperboard', 'Film'], ['camera', 'Foto'],
@@ -50,7 +50,7 @@ const FRA_EMOJI = {
   '🌟': 'star', '⭐': 'star', '🪐': 'atom', '🚀': 'rocket', '🛰': 'rocket', '✨': 'sparkles', '🎯': 'target',
   '💬': 'message-circle', '🍳': 'chef-hat', '🧭': 'compass', '🤸': 'person-standing', '😊': 'smile',
   '🥘': 'cooking-pot', '🍲': 'cooking-pot', '🧑‍🎓': 'elev', '👨‍🎓': 'elev', '👩‍🎓': 'elev', '🎓': 'graduation-cap',
-  '🪜': 'stige',
+  '🪜': 'stige', '🌳': 'tree-deciduous', '🌲': 'tree-deciduous',
 };
 
 /** Gjør en lagret verdi (nøkkel eller gammel emoji) om til en symbolnøkkel, eller null. */
