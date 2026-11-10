@@ -296,6 +296,9 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
     ? 'Egen farge'
     : (subjectName ? `Følger faget: ${subjectName}` : 'Klassisk rød (ingen time nå)');
 
+  // Stor visning uten nedtelling i gang: tidsvalgene står i knappraden
+  const bigVelger = big && !running && !paused;
+
   const showMini = !open && (running || paused || done);
   // Ingen timer i gang: en synlig knapp på forsiden, så ingen må lete i verktøykassa
   const showLaunch = !open && !run;
@@ -419,6 +422,31 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
             </div>
 
             <div className="tt-controls" ref={controlsRef} role="group" aria-label="Styr nedtelleren">
+              {/* Stor visning før start og etter at tiden er ute: velg tid og start herfra.
+                  Mens nedtellingen går (eller står på pause) er skjermen like ren som før. */}
+              {bigVelger && (
+                <div className="tt-big-hurtig" role="group" aria-label="Start med ett trykk">
+                  {TIMER_PRESETS_MIN.map(min => (
+                    <button
+                      key={min}
+                      type="button"
+                      className="tt-preset tt-preset--start tt-preset--big"
+                      aria-label={`Start ${min} ${min === 1 ? 'minutt' : 'minutter'}`}
+                      onClick={() => startWith(min * 60000)}
+                    >
+                      <span className="tt-preset-tall"><Ikon navn="play" className="tt-preset-play" />{min}</span>
+                      <span className="tt-preset-enhet">min</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {bigVelger && (
+                <div className="tt-stepper tt-big-stepper" role="group" aria-label="Juster minutter">
+                  <button type="button" className="tt-step" aria-label="Ett minutt mindre" onClick={() => nudge(-60000)}><Ikon navn="minus" /></button>
+                  <span className="tt-step-value">{durationMinutes} min</span>
+                  <button type="button" className="tt-step" aria-label="Ett minutt mer" onClick={() => nudge(60000)}><Ikon navn="plus" /></button>
+                </div>
+              )}
               {!running && (
                 <button type="button" className="k-btn k-btn--ny k-btn--fylt tt-main-btn" id="timer-start" onClick={start}>
                   <Ikon navn="play" /> {paused ? 'Fortsett' : done ? 'Start på nytt' : `Start ${formatDurationLabel(settings.durationMs)}`}
