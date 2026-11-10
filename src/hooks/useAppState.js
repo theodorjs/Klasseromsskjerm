@@ -26,6 +26,8 @@ import { buildClassFromSharePayload } from '../utils/share.js';
 
 import { safeGetItem, safeSetItem, safeRemoveItem, stashRescuedData } from '../utils/storage.js';
 import { lesTema } from '../utils/tema.js';
+import { aktivSkole } from '../data/skoletema.js';
+import { skoleKlasser } from '../data/skoler/index.js';
 
 /** Ved import av en delt timeplan huskes forrige versjon her, så «Angre» virker også senere. */
 const LAST_IMPORT_KEY = 'klasseromData.sisteImport';
@@ -69,10 +71,18 @@ function loadClasses() {
   }
 
   if (!classes || typeof classes !== 'object' || Array.isArray(classes) || Object.keys(classes).length === 0) {
-    classes = { [DEFAULT_CLASS_NAME]: cloneDefaultClass() };
-    classes[DEFAULT_CLASS_NAME].name = DEFAULT_CLASS_NAME;
+    // På en skoles egen nettside ligger skolens klasser klare (se src/data/skoler)
+    const skole = aktivSkole();
+    const fraSkolen = skole ? skoleKlasser(skole.id) : null;
+    if (fraSkolen) {
+      classes = fraSkolen;
+      safeSetItem('currentClassName', Object.keys(fraSkolen)[0]);
+    } else {
+      classes = { [DEFAULT_CLASS_NAME]: cloneDefaultClass() };
+      classes[DEFAULT_CLASS_NAME].name = DEFAULT_CLASS_NAME;
+      safeSetItem('currentClassName', DEFAULT_CLASS_NAME);
+    }
     safeSetItem('klasseromData', JSON.stringify(classes));
-    safeSetItem('currentClassName', DEFAULT_CLASS_NAME);
   }
 
   // Migration: 9A -> 7. og 8.

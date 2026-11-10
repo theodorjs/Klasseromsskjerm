@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Ikon from './Ikon.jsx';
 import { safeGetItem, safeSetItem } from '../utils/storage.js';
+import { aktivSkole } from '../data/skoletema.js';
 
 /* Første møte: en ny lærer som åpner appen for første gang skal på
    noen sekunder skjønne hva skjermen er og hva første steg er.
@@ -30,6 +31,8 @@ export default function ForsteMote({ klassenavn, skjult, onOpenPlanlegg, onOpenT
 
   if (!vises) return null;
 
+  const skole = aktivSkole();
+
   function ferdig() {
     safeSetItem(SETT_KEY, '1');
     setSynlig(false);
@@ -58,7 +61,9 @@ export default function ForsteMote({ klassenavn, skjult, onOpenPlanlegg, onOpenT
           <p className="fm-ingress">
             Skjermen viser elevene hvilken time det er nå, hvor lenge den varer og resten av dagen.
             <span className="fm-ekstra"> Den følger klokka av seg selv.</span>
-            {klassenavn ? <span className="fm-klasse"> Nå vises timeplanen for klassen <strong>«{klassenavn}»</strong>.</span> : null}
+            {skole
+              ? <span className="fm-klasse"> Timeplanene for alle klassene på {skole.navn} ligger klare. Velg klassen din under <strong>Klasse og timeplan</strong>.</span>
+              : klassenavn ? <span className="fm-klasse"> Nå vises timeplanen for klassen <strong>«{klassenavn}»</strong>.</span> : null}
           </p>
         </div>
         <button type="button" className="k-btn k-btn--tilbake k-btn--liten fm-skjul" id="fm-skjul" onClick={ferdig}>
