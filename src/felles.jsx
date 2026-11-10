@@ -18,6 +18,8 @@ import './del-hovedskjerm-avstand.css'
 import './del-ipad-elev.css'
 import './del-ipad-overlapp.css'
 import './del-egen-nedteller.css'
+import './del-om.css'
+import './del-skoletema.css'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 // iPadOS 14 og 15 (Safari før 15.4) mangler Object.hasOwn; veggskjermen skal også kjøre der.

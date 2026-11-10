@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import ThemeSwitch from './ThemeSwitch.jsx';
 import Ikon from './Ikon.jsx';
 import useRolig from '../hooks/useRolig.js';
+import OmKlasseskjerm, { Signatur } from './OmKlasseskjerm.jsx';
 
 export default function Toolbox({
   themeMode,
@@ -24,6 +25,7 @@ export default function Toolbox({
   onPresent,
 }) {
   const [open, setOpen] = useState(false);
+  const [omOpen, setOmOpen] = useState(false);
   const containerRef = useRef(null);
   const timerRef = useRef(null);
   // Starter med navnet «Verktøy», krymper til bare kofferten når ingen rører skjermen
@@ -41,6 +43,13 @@ export default function Toolbox({
     setOpen(false);
     if (timerRef.current) clearTimeout(timerRef.current);
   }
+
+  // «Dager til»-raden ligger i et høyere lag enn menyen og dekket temabryteren
+  // på iPad; mens menyen er åpen, viker den (se del-ipad-overlapp.css)
+  useEffect(() => {
+    document.body.classList.toggle('verktoy-apen', open);
+    return () => document.body.classList.remove('verktoy-apen');
+  }, [open]);
 
   useEffect(() => {
     if (open) resetTimer();
@@ -228,12 +237,17 @@ export default function Toolbox({
           <span className="label">Veggskjerm</span>
         </div>
 
-        {/* Lock */}
-        <div className="toolbox-item" id="tool-lock" onClick={() => onToggleLock()}>
-          <span className="icon" id="lock-icon"><Ikon navn={editPermission ? 'lock-open' : 'lock'} /></span>
-          <span className="label" id="lock-label">{editPermission ? 'Låst opp' : 'Lås opp'}</span>
+        {/* Lås, og signaturen ved siden av: samme rad, så lista ikke blir lengre */}
+        <div className="toolbox-siste-rad">
+          <div className="toolbox-item" id="tool-lock" onClick={() => onToggleLock()}>
+            <span className="icon" id="lock-icon"><Ikon navn={editPermission ? 'lock-open' : 'lock'} /></span>
+            <span className="label" id="lock-label">{editPermission ? 'Låst opp' : 'Lås opp'}</span>
+          </div>
+          <Signatur onClick={() => { closeToolbox(); setOmOpen(true); }} />
         </div>
       </div>
+
+      {omOpen && <OmKlasseskjerm onClose={() => setOmOpen(false)} />}
 
     </div>
   );

@@ -1,0 +1,59 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Signaturen og «Om Klasseskjerm»
+   ───────────────────────────────────────────────────────────────────
+   Én dempet tekstlinje til høyre for «Lås opp» nederst i verktøymenyen,
+   ikke en knapp på linje med verktøyene. Samme rad, så lista ikke blir
+   høyere: på iPad liggende går den allerede nesten ned til timeplanen.
+   Den vises bare når menyen er åpen, så elevene ser den aldri på
+   hovedskjermen. Safari 14: ingen color-mix, ingen inset.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* «Lås opp» beholder samme bredde som knappene over; signaturen henger
+   utenfor til høyre, midt på raden */
+.toolbox-siste-rad {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.toolbox-signatur {
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    margin: 0 0 0 2px;
+    padding: 6px 4px;
+    min-height: 32px;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-s);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.72);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+    white-space: nowrap;
+}
+body.light-mode .toolbox-signatur {
+    color: rgba(28, 39, 53, 0.62);
+    text-shadow: none;
+}
+.toolbox-signatur-om { text-decoration: underline; text-underline-offset: 2px; }
+.toolbox-signatur:hover { color: #fff; }
+body.light-mode .toolbox-signatur:hover { color: #1C2735; }
+.toolbox-signatur:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+
+.om-dialog .k-dialog-tekst a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.om-signatur { line-height: 1.6; }
+
+/* Smal skjerm (telefon): ikke plass til høyre, så linja legger seg under */
+@media (max-width: 520px) {
+    .toolbox-signatur {
+        position: static;
+        transform: none;
+        align-self: flex-start;
+        margin: 2px 10px 0;
+    }
+}

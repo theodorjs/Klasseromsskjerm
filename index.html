@@ -13,6 +13,22 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Klasseskjerm">
+    <meta name="author" content="Theodor Sandaker">
+    <meta name="copyright" content="© 2026 Theodor Sandaker. Alle rettigheter forbeholdt.">
+    <script>
+      // Skolens nettside: data-skole på <html> før siden tegnes (se src/data/skoletema.js).
+      // ?skole=<id> forhåndsviser, ?skole=ingen slår av.
+      try {
+        var skoler = { 'torderod': 'torderod' }; // prefiks: skole-id
+        var vert = location.hostname.toLowerCase().replace(/^www\./, '');
+        var skole = null;
+        for (var prefiks in skoler) if (!skole && vert.indexOf(prefiks) === 0) skole = skoler[prefiks];
+        var onsket = new URLSearchParams(location.search).get('skole');
+        if (onsket === 'ingen') skole = null;
+        for (prefiks in skoler) if (skoler[prefiks] === onsket) skole = onsket;
+        if (skole) document.documentElement.setAttribute('data-skole', skole);
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
