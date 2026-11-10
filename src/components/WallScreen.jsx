@@ -7,7 +7,6 @@ import {
   formatExpandedActivityDisplay,
   buildCurrentActivityLines,
   isClassMultiGrade,
-  getCountdownRemainingDisplay,
 } from '../utils/schedule.js';
 import { getCurrentSubjectColor } from '../utils/color.js';
 
@@ -17,8 +16,8 @@ const MIN_FAG_SKALA = 0.4;
 /**
  * Egen visning for en liten skjerm langt unna (den gamle iPaden på veggen).
  * Klokka og faget skal kunne leses bakerst i rommet, så de er størst.
- * Tid igjen, neste time, dag, dato og «Dager til» står mindre.
- * Ingen nedteller-skive, ingen verktøy; dagens tidslinje nederst.
+ * Tid igjen, neste time, dag og dato står mindre.
+ * Ingen nedteller-skive, ingen «Dager til», ingen verktøy; dagens tidslinje nederst.
  */
 export default function WallScreen({
   primaryState,
@@ -34,8 +33,6 @@ export default function WallScreen({
   realMinutes,
   isSim,
   themeMode,
-  countdowns = [],
-  countdownsVisible = true,
   onExit,
 }) {
   const weekNum = getIsoWeekNumberForOslo(new Date());
@@ -118,18 +115,6 @@ export default function WallScreen({
     <div className="vegg" id="vegg">
       <div className="vegg-info">
         <div className="vegg-date">{currentDay} {dateStr} · Uke {weekNum}{isSim ? ' (simulert)' : ''}</div>
-        {countdownsVisible && countdowns.length > 0 && (
-          <div className="vegg-countdowns" aria-label="Dager til">
-            {countdowns.map((item, i) => {
-              const d = getCountdownRemainingDisplay(item.targetDate, item.targetTime);
-              return (
-                <span key={item.id || i} className="vegg-countdown">
-                  {item.title}: <b>{d.value}</b> {d.unit}
-                </span>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       <div className="vegg-now">

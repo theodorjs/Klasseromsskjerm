@@ -260,7 +260,6 @@ export default function App() {
           primaryState={primaryState}
           displayStates={displayStates}
           currentMinutes={currentMinutes}
-          currentSeconds={currentSeconds}
           currentDay={currentDay}
           currentTime={currentTime}
           dateStr={dateStr}
@@ -271,8 +270,6 @@ export default function App() {
           realMinutes={realMinutes}
           isSim={isSim}
           themeMode={themeMode}
-          countdowns={countdowns}
-          countdownsVisible={countdownsVisible}
           onExit={exitWallMode}
         />
         <TimerPanel

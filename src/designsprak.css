@@ -1190,35 +1190,20 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
 }
 body.colorful-mode .vegg { color: #fff; }
 
-/* Øverst, lite: dag, dato, uke og «Dager til». Holder seg unna
-   Avslutt-knappen også mens den står med tekst. */
+/* Øverst, lite: dag, dato og uke. Holder seg unna Avslutt-knappen
+   også mens den står med tekst. */
 .vegg-info {
     align-self: stretch;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.4vmin;
     padding: 0 210px;
-}
-@media (max-width: 900px) {
-    .vegg-info { align-items: flex-start; text-align: left; padding: 0 210px 0 0; }
-    .vegg-info .vegg-countdowns { justify-content: flex-start; }
 }
 .vegg-date {
     font-size: clamp(1rem, 3.2vmin, 1.8rem);
     font-weight: 600;
     opacity: 0.85;
 }
-.vegg-countdowns {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.4vmin 2.4vmin;
-    font-size: clamp(0.9rem, 2.8vmin, 1.5rem);
-    font-weight: 600;
-    opacity: 0.85;
+@media (max-width: 900px) {
+    .vegg-info { text-align: left; padding: 0 210px 0 0; }
 }
-.vegg-countdown b { font-weight: 900; }
 
 /* Midten: klokka og faget størst, leses bakerst i rommet */
 .vegg-now {
