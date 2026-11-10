@@ -191,3 +191,43 @@
     .timer-panel.is-big .tt-device.is-done::before,
     .timer-panel.is-big .tt-device.is-done .tt-done-mark { animation: none; }
 }
+
+/* ─── Knappraden i stor visning får aldri ligge oppå tiden ─────────────
+   Raden står nederst over hele bredden (med left: 50% fikk den bare halve
+   skjermen, og på iPhone havnet hver knapp på sin egen linje). Høyden den
+   faktisk får, måles i TimerPanel (--tt-knapper-h); skiva, tallene og
+   hake-merket holder seg over den, uansett hvor mange rader det blir. */
+.timer-panel.is-big .tt-controls {
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: none;
+    transform: none;
+    justify-content: center;
+    row-gap: 8px;
+}
+.timer-panel.is-big .tt-plate {
+    --tt-bunn-rom: calc(var(--tt-knapper-h, 52px) + 36px + var(--bunn));
+    /* Høyden som er igjen til skiva og tallene mellom toppen og knappraden */
+    --tt-hoyde: calc(100vh - 13vh - var(--topp) - var(--tt-bunn-rom));
+    padding-bottom: var(--tt-bunn-rom);
+}
+
+@media (min-aspect-ratio: 5/4) {
+    .timer-panel.is-big .tt-dial { width: min(60vh, 34vw, var(--tt-hoyde)); }
+    .timer-panel.is-big .tt-readout-time { font-size: min(36vh, 22vw, calc(var(--tt-hoyde) * 0.62)); }
+    .timer-panel.is-big .tt-done-mark {
+        width: min(56vh, 32vw, var(--tt-hoyde));
+        height: min(56vh, 32vw, var(--tt-hoyde));
+        font-size: min(56vh, 32vw, var(--tt-hoyde));
+    }
+}
+@media (max-aspect-ratio: 5/4) {
+    /* Kolonne: skiva deler høyden med tallene og statuslinja under (om lag 26vh) */
+    .timer-panel.is-big .tt-dial { width: min(46vh, 84vw, calc(var(--tt-hoyde) - 26vh)); }
+    .timer-panel.is-big .tt-done-mark {
+        width: min(40vh, 70vw, calc(var(--tt-hoyde) - 20vh));
+        height: min(40vh, 70vw, calc(var(--tt-hoyde) - 20vh));
+        font-size: min(40vh, 70vw, calc(var(--tt-hoyde) - 20vh));
+    }
+}

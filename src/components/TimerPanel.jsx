@@ -65,8 +65,23 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
   const dragRef = useRef(null);
   const closeBtnRef = useRef(null);
   const chimedRef = useRef(false);
+  const controlsRef = useRef(null);
 
   useEffect(() => { if (!egenSide) saveTimerPosition(pos); }, [pos, egenSide]);
+
+  // Stor visning: skiva og tallene får vite hvor høy knappraden nederst er (én eller
+  // flere rader, etter skjermbredden), så de aldri vokser ned i den
+  useEffect(() => {
+    const panel = panelRef.current;
+    const controls = controlsRef.current;
+    if (!big || !panel || !controls) return undefined;
+    const maal = () => panel.style.setProperty('--tt-knapper-h', `${Math.ceil(controls.offsetHeight)}px`);
+    maal();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(maal);
+    observer.observe(controls);
+    return () => observer.disconnect();
+  }, [big]);
 
   // «Åpne som egen side» starter med tekst hver gang panelet åpnes, og krymper til symbolet
   const { synlig: egenSideSynlig } = useRolig({ aktiv: open && !egenSide && !big });
@@ -403,7 +418,7 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
               </div>
             </div>
 
-            <div className="tt-controls" role="group" aria-label="Styr nedtelleren">
+            <div className="tt-controls" ref={controlsRef} role="group" aria-label="Styr nedtelleren">
               {!running && (
                 <button type="button" className="k-btn k-btn--ny k-btn--fylt tt-main-btn" id="timer-start" onClick={start}>
                   <Ikon navn="play" /> {paused ? 'Fortsett' : done ? 'Start på nytt' : `Start ${formatDurationLabel(settings.durationMs)}`}
