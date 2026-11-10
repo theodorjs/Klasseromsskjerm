@@ -1,7 +1,7 @@
 /* Ikontegninger for Klasseskjerm. Genereres ikke på nytt automatisk: rediger fritt.
  * Utgangspunkt: Lucide (lucide.dev), ISC-lisens, © Lucide Contributors 2022 og Cole Bemis 2013–2022 (Feather, MIT).
  * Hver tegning er en liste med [element, attributter] i et 24 × 24-rutenett, tegnet med strek (currentColor).
- * «verktoykasse», «elev» og «stige» er tegnet for Klasseskjerm i samme stil. */
+ * «verktoykasse», «elev», «stige» og «skive» er tegnet for Klasseskjerm i samme stil. */
 
 export const TEGNINGER = {
   'verktoykasse': [["rect", {"x": "2", "y": "8", "width": "20", "height": "13", "rx": "2"}], ["path", {"d": "M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"}], ["path", {"d": "M2 14h20"}], ["path", {"d": "M10 13v3h4v-3"}]],
@@ -23,6 +23,7 @@ export const TEGNINGER = {
   'check': [["path", {"d": "M20 6 9 17l-5-5"}]],
   'trash-2': [["path", {"d": "M3 6h18"}], ["path", {"d": "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"}], ["path", {"d": "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"}], ["line", {"x1": "10", "x2": "10", "y1": "11", "y2": "17"}], ["line", {"x1": "14", "x2": "14", "y1": "11", "y2": "17"}]],
   'pencil': [["path", {"d": "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"}], ["path", {"d": "m15 5 4 4"}]],
+  'skive': [["circle", {"cx": "12", "cy": "12", "r": "10"}], ["path", {"d": "M12 12V2a10 10 0 0 0-8.66 15z"}]],
   'external-link': [["path", {"d": "M15 3h6v6"}], ["path", {"d": "M10 14 21 3"}], ["path", {"d": "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"}]],
   'arrow-left': [["path", {"d": "m12 19-7-7 7-7"}], ["path", {"d": "M19 12H5"}]],
   'download': [["path", {"d": "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"}], ["polyline", {"points": "7 10 12 15 17 10"}], ["line", {"x1": "12", "x2": "12", "y1": "15", "y2": "3"}]],

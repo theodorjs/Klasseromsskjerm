@@ -11,6 +11,8 @@ import { getCurrentSubjectColor, getReadableAgendaTextColor } from '../utils/col
 import { TIMER_CLASSIC_RED } from '../utils/timer.js';
 import TimeTimerDial from './TimeTimerDial.jsx';
 import { FagSymbol } from './Ikon.jsx';
+import SkiveBryter from './SkiveBryter.jsx';
+import useVisSkive from '../hooks/useVisSkive.js';
 
 const SKOLEDAGER = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag'];
 
@@ -70,11 +72,11 @@ function findNextSchoolDayStart(primaryState, currentDay, isWeekend) {
   return null;
 }
 
-function NextRow({ label, event, primaryState, timeText, fallbackName, fallbackIcon }) {
+function NextRow({ label, event, primaryState, timeText, fallbackName, fallbackIcon, fitKey = '' }) {
   const ref = useRef(null);
   const raw = event ? (event.displayActivity || event.activity) : '';
   const name = event ? formatExpandedActivityDisplay(raw) : fallbackName;
-  useFitText(ref, `${label}|${name}|${timeText}`);
+  useFitText(ref, `${label}|${name}|${timeText}|${fitKey}`);
   const subject = event ? getCurrentSubjectColor({ currentActivity: raw, classData: primaryState.classData }) : null;
   const symbol = event
     ? getStoredSubjectEmoji(primaryState.className, String(raw).split('/')[0].trim(), { [primaryState.className]: primaryState.classData })
@@ -103,6 +105,7 @@ function NextRow({ label, event, primaryState, timeText, fallbackName, fallbackI
  */
 export default function MainContainer({ primaryState, displayStates, currentMinutes, currentSeconds = 0, isWeekend, currentDay }) {
   const heroRef = useRef(null);
+  const [visSkive, vekslSkive] = useVisSkive();
 
   let label = '';
   let heroLines = [];
@@ -166,15 +169,21 @@ export default function MainContainer({ primaryState, displayStates, currentMinu
     }
   }
 
-  useFitText(heroRef, heroLines.join('|'));
+  // Skiva kan skjules; da står teksten midt i boksen (samme oppsett som før skolestart)
+  const kanHaSkive = !!dial;
+  const skive = visSkive ? dial : null;
+  const fitKey = skive ? 'skive' : 'uten';
+
+  useFitText(heroRef, `${heroLines.join('|')}|${fitKey}`);
 
   if (!primaryState) return <div className="container" id="main-container"></div>;
 
   const isStack = heroLines.length > 1;
 
   return (
-    <div className={`container hs-tavle hs-${phase}${dial ? ' har-skive' : ''}`} id="main-container">
-      {dial && <div className="hs-skive">{dial}</div>}
+    <div className={`container hs-tavle hs-${phase}${skive ? ' har-skive' : ''}`} id="main-container">
+      {kanHaSkive && <SkiveBryter vis={visSkive} onVeksle={vekslSkive} />}
+      {skive && <div className="hs-skive">{skive}</div>}
       <div className="hs-tekst">
         {label && <div className="hs-etikett">{label}</div>}
         {heroLines.length > 0 && (
@@ -188,7 +197,7 @@ export default function MainContainer({ primaryState, displayStates, currentMinu
             <span className="hs-igjen-enhet">{remaining.unit}</span>
           </div>
         )}
-        {next && <NextRow primaryState={primaryState} {...next} />}
+        {next && <NextRow primaryState={primaryState} fitKey={fitKey} {...next} />}
       </div>
     </div>
   );

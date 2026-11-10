@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import Ikon, { FagSymbol } from './Ikon.jsx';
 import TimeTimerDial from './TimeTimerDial.jsx';
+import SkiveBryter from './SkiveBryter.jsx';
+import useVisSkive from '../hooks/useVisSkive.js';
 import { formatDurationSmart, formatMinutesAsTime, getIsoWeekNumberForOslo } from '../utils/time.js';
 import {
   getClassScheduleState,
@@ -229,6 +231,8 @@ export default function ElevPortrett({
 }) {
   // Valgt fane gjelder bare den dagen den ble valgt
   const [valg, setValg] = useState({ dag: null, fane: null });
+  // Samme valg som på hovedtavla: skiva i «Akkurat nå» kan skjules
+  const [visSkive, vekslSkive] = useVisSkive();
 
   if (!primaryState) return null;
 
@@ -319,8 +323,9 @@ export default function ElevPortrett({
 
   return (
     <div className="elev-portrett" id="elev-portrett">
-      <section className={`ep-naa${dial ? ' har-skive' : ''}`} aria-live="polite" aria-label="Akkurat nå">
-        {dial && <div className="ep-skive">{dial}</div>}
+      <section className={`ep-naa${dial && visSkive ? ' har-skive' : ''}`} aria-live="polite" aria-label="Akkurat nå">
+        {dial && <SkiveBryter vis={visSkive} onVeksle={vekslSkive} />}
+        {dial && visSkive && <div className="ep-skive">{dial}</div>}
         <div className="ep-naa-tekst">
           {etikett && <div className="ep-etikett">{etikett}</div>}
           {hovedLinjer

@@ -154,3 +154,40 @@ body.colorful-mode .hs-neste-merke.is-noytral { background: rgba(255, 255, 255, 
     .hs-igjen-enhet { font-size: min(3.6vh, 5vw); }
     .hs-neste { justify-content: center; font-size: min(3.4vh, 5vw); }
 }
+
+/* ─── Vis og skjul skiva: lite symbol øverst til venstre i «Nå»-boksen ───
+   Gjelder hovedtavla og elevvisningen (stående iPad, .ep-naa).
+   Fylt kakestykke = skiva vises; bare omriss = skjult. Rolig, så klassen
+   ikke legger merke til den; tydelig når læreren peker eller trykker. */
+.hs-skive-bryter {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 2;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--instrument-kant);
+    background: transparent;
+    color: inherit;
+    font-size: 1.3rem;
+    opacity: 0.45;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+.hs-skive-bryter .ikon { width: 1em; height: 1em; }
+.ep-naa { position: relative; }
+.hs-skive-bryter.er-paa .ikon path { fill: currentColor; fill-opacity: 0.45; }
+.hs-skive-bryter:hover,
+.hs-skive-bryter:focus-visible { opacity: 1; background: var(--instrument-3); }
+.hs-skive-bryter:focus-visible { outline: 3px solid var(--fokus); outline-offset: 2px; }
+.hs-skive-bryter:active { box-shadow: var(--trykk-inn); }
+/* Elevvisningen: skiva står nær hjørnet, så den flyttes litt inn fra knappen */
+@media (orientation: portrait) and (min-width: 521px) {
+    .ep-naa.har-skive .ep-skive { margin-left: 40px; }
+}
