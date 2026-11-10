@@ -1217,8 +1217,10 @@ body.colorful-mode .vegg { color: #fff; }
     min-height: 0;
     padding: 1vmin 0 2vmin;
 }
+/* Klokka er det største på veggen: så høy som plassen tillater, og aldri
+   bredere enn skjermen («00:00» er omtrent 2,6 em bred, derav 34vw) */
 .vegg-clock {
-    font-size: clamp(3.5rem, min(24vmin, 21vh), 15rem);
+    font-size: clamp(3.5rem, min(40vmin, 36vh, 34vw), 24rem);
     font-weight: 900;
     line-height: 0.95;
     letter-spacing: 0.01em;
