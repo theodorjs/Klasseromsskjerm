@@ -31,8 +31,10 @@ function lesSprukket() {
  * Svarer { bursdager, sprekk(nokkel) }; en sprukket ballong er borte resten av dagen.
  */
 export default function useBursdager(klassenavn) {
-  const tjeneste = useMemo(() => skoleTjeneste(), []);
-  const { bursdager: liste } = useSyncExternalStore(lyttTilTjeneste, lesTjenesteTilstand);
+  const skolensTjeneste = useMemo(() => skoleTjeneste(), []);
+  const { bursdager: liste, elev } = useSyncExternalStore(lyttTilTjeneste, lesTjenesteTilstand);
+  // Elevene får ingen bursdager, og tjenesten spørres ikke
+  const tjeneste = elev ? null : skolensTjeneste;
 
   useEffect(() => {
     if (!tjeneste) return undefined;

@@ -5,6 +5,8 @@ import { aktivSkole } from '../data/skoletema.js';
 import {
   skoleTjeneste,
   utloggingsadresse,
+  innloggingsadresse,
+  forlatElev,
   hentBursdager,
   glemLokalt,
   lyttTilTjeneste,
@@ -63,13 +65,30 @@ export default function OmKlasseskjerm({ onClose }) {
   );
 }
 
-/** Innlogget ansatt og bursdagslista, bare på skolens egen adresse. */
+/** Innlogget ansatt og bursdagslista (eller elevmodus), bare på skolens egen adresse. */
 function SkoleTjeneste() {
   const [tjeneste] = useState(() => skoleTjeneste());
-  const { navn, bursdager } = useSyncExternalStore(lyttTilTjeneste, lesTjenesteTilstand);
+  const { navn, bursdager, elev } = useSyncExternalStore(lyttTilTjeneste, lesTjenesteTilstand);
   const [henter, setHenter] = useState(false);
   const [melding, setMelding] = useState('');
   if (!tjeneste) return null;
+
+  if (elev) {
+    return (
+      <div className="om-tjeneste">
+        <p className="k-dialog-tekst">Du bruker Klasseskjerm som elev, uten innlogging.</p>
+        <div className="om-tjeneste-knapper">
+          <button
+            type="button"
+            className="k-btn k-btn--tilbake k-btn--liten"
+            onClick={() => { forlatElev(); window.location.assign(innloggingsadresse(tjeneste)); }}
+          >
+            Logg inn som lærer
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const hentet = bursdager?.hentet
     ? new Date(bursdager.hentet).toLocaleString('no-NO', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Oslo' })

@@ -15,7 +15,10 @@
  * knapper #A70F10. Tittelrøden #7F1D1D har god kontrast mot hvitt (9:1).
  */
 
-html[data-skole="torderod"] body.skole-mode {
+/* Påloggingssiden (del-innlogging.css) står før appen har satt tema, og
+   henter skolens farger herfra */
+html[data-skole="torderod"] body.skole-mode,
+html[data-skole="torderod"] .inn-side {
     --skole-rod: #7F1D1D;
     --skole-krem: #F5E6DC;
     --skole-blekk: #2A211C;

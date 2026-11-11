@@ -13,6 +13,8 @@ const BURSDAG_KEY = 'klasseskjerm.bursdager';
 /** Sprukne ballonger i dag (inneholder fornavn, så den slettes sammen med lista). */
 export const SPRUKKET_KEY = 'klasseskjerm.bursdagSprukket';
 const INNLOGGET_KEY = 'klasseskjerm.innlogget';
+/** Eleven har valgt å bruke Klasseskjerm uten å logge inn (huskes i nettleseren). */
+const ELEV_KEY = 'klasseskjerm.elev';
 const DOGN_MS = 24 * 60 * 60 * 1000;
 const TIDSFRIST_MS = 8000;
 
@@ -50,6 +52,27 @@ async function hent(url) {
 /** Huskes for å slippe et tomt skjermbilde ved oppstart: sist kjente svar fra /api/meg. */
 export function varInnlogget() {
   return safeGetItem(INNLOGGET_KEY) === '1';
+}
+
+/**
+ * Elevene bruker Klasseskjerm uten innlogging: dagen sin, nedtelleren og resten
+ * av verktøyene. De får aldri bursdagene (tjenesten gir dem bare til ansatte),
+ * og tjenesten blir ikke spurt, så en elev sendes aldri til Feide-siden.
+ */
+export function erElev() {
+  return safeGetItem(ELEV_KEY) === '1';
+}
+
+export function velgElev() {
+  glemLokalt();
+  safeSetItem(ELEV_KEY, '1');
+  sett({ elev: true, utlogget: false });
+}
+
+/** Før en lærer logger inn: ellers slipper elevvalget læreren forbi innloggingen. */
+export function forlatElev() {
+  safeRemoveItem(ELEV_KEY);
+  sett({ elev: false });
 }
 
 /** Glemmer innloggingen og bursdagslista i denne nettleseren (utlogget eller kapselen er ugyldig). */
@@ -127,7 +150,7 @@ export function trengerNyListe(lagret = lagretBursdagsliste(), naa = Date.now())
 }
 
 // ── Lite felles lager, så bursdagsvisningen og «Om»-dialogen ser det samme ──
-let tilstand = { navn: '', bursdager: null, utlogget: false };
+let tilstand = { navn: '', bursdager: null, utlogget: false, elev: erElev() };
 const lyttere = new Set();
 
 function sett(endring) {
