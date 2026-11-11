@@ -1,0 +1,97 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Del: bursdager
+   En tegnet ballong med navnet til eleven, først i raden med «Dager til»
+   (samme plass og samme høyde, så den aldri dekker noe). Ballongen stiger
+   opp når den dukker opp og vaier rolig etterpå. Stående iPad, «Vis for
+   klassen» og veggskjermen viser den samme ballongen der de har plass.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.countdown-card.bursdag-kort {
+    gap: 10px;
+    padding: 0 18px 0 8px;
+    overflow: visible;
+    cursor: pointer;
+}
+.bursdag-ballong {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 54px;
+    margin-top: -14px;          /* stikker litt opp over kortet, som en ballong */
+    transform-origin: 50% 100%;
+}
+.ballong .ballong-snor { stroke: currentColor; opacity: 0.55; }
+
+.bursdag-tekst {
+    overflow: hidden;           /* bare ballongen stikker ut av kortet, aldri teksten */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    line-height: 1.1;
+    text-align: left;
+}
+.bursdag-navn {
+    font-size: 1.3rem;
+    font-weight: 900;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 9em;
+}
+.bursdag-nar { font-size: 0.82rem; font-weight: 700; opacity: 0.72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (prefers-reduced-motion: no-preference) {
+    .bursdag-ballong,
+    .ep-bursdag .ballong,
+    .presentasjon-bursdag .ballong,
+    .vegg-bursdag .ballong {
+        animation: ballong-stig 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) both, ballong-vai 5s ease-in-out 1.4s infinite;
+        transform-origin: 50% 100%;
+    }
+}
+@keyframes ballong-stig {
+    from { transform: translateY(60px) scale(0.6); opacity: 0; }
+    60% { opacity: 1; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes ballong-vai {
+    0%, 100% { transform: rotate(-4deg) translateY(0); }
+    50% { transform: rotate(4deg) translateY(-3px); }
+}
+
+/* Smale skjermer: raden er lavere (42 px), og navnet krymper litt */
+@media (max-width: 768px) {
+    .countdown-card.bursdag-kort { padding: 0 12px 0 6px; gap: 6px; }
+    .bursdag-ballong { width: 26px; height: 42px; margin-top: -10px; }
+    .bursdag-navn { font-size: 1rem; }
+    .bursdag-nar { font-size: 0.7rem; }
+}
+
+/* ── Stående iPad: én linje i lista med «Dager til» ── */
+.ep-bursdag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.ep-bursdag .ballong { width: 1.3em; height: 2em; margin: -0.4em 0 -0.2em; flex: 0 0 auto; }
+.ep-bursdag b { font-weight: 900; }
+
+/* ── «Vis for klassen» og veggskjermen: én linje under datoen ── */
+.presentasjon-bursdag,
+.vegg-bursdag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-weight: 800;
+}
+.presentasjon-bursdag .ballong,
+.vegg-bursdag .ballong { width: 1.1em; height: 1.75em; margin: -0.35em 0 -0.15em; flex: 0 0 auto; }
+
+.vegg-bursdager {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4em 1.2em;
+    margin-top: 0.3em;
+    font-size: clamp(1rem, 3.2vmin, 1.8rem);
+}
+@media (max-width: 900px) { .vegg-bursdager { justify-content: flex-start; } }

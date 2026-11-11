@@ -7,7 +7,17 @@
 // torderodskole.no og torderod.github.io. «www.» foran teller ikke.
 // ?skole=<id> forhåndsviser en skole (for eksempel på github.io), ?skole=ingen slår av.
 
-export const SKOLER = [{ id: 'torderod', navn: 'Torderød skole', prefiks: ['torderod'] }];
+//
+// `tjeneste` er skolens egen tjeneste for Feide-innlogging og bursdager
+// (se src/utils/ksTjeneste.js). Den brukes bare fra adressene i `opprinnelser`,
+// fordi tjenesten bare svarer dem; forhåndsvisning med ?skole= lar den være.
+export const SKOLER = [{
+  id: 'torderod',
+  navn: 'Torderød skole',
+  prefiks: ['torderod'],
+  tjeneste: 'https://ks-data.torderod.no',
+  opprinnelser: ['https://torderod.no', 'https://www.torderod.no'],
+}];
 
 /** Skolen siden vises hos nå, eller null. */
 export function aktivSkole(rot = globalThis.document?.documentElement) {

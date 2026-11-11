@@ -20,7 +20,11 @@ import './del-ipad-overlapp.css'
 import './del-egen-nedteller.css'
 import './del-om.css'
 import './del-skoletema.css'
+import './del-innlogging.css'
+import './del-bursdag.css'
+import './del-tidslinje-rom.css'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import Innlogging from './components/Innlogging.jsx'
 
 // iPadOS 14 og 15 (Safari før 15.4) mangler Object.hasOwn; veggskjermen skal også kjøre der.
 // Laveste støttede versjon er satt i vite.config.js (safari14).
@@ -32,7 +36,8 @@ if (typeof Object.hasOwn !== 'function') {
 }
 
 /**
- * Tegner siden inn i #root, med samme feilsikring overalt.
+ * Tegner siden inn i #root, med samme feilsikring overalt. På skolens egen
+ * adresse må en ansatt først logge inn (se Innlogging.jsx).
  * `kanStarteNy: false` for sider som ikke eier timeplanen: da kan ikke
  * feilsiden tilby å legge timeplanen bort.
  */
@@ -40,7 +45,9 @@ export function startSide(Side, { kanStarteNy = true } = {}) {
   createRoot(document.getElementById('root')).render(
     <StrictMode>
       <ErrorBoundary kanStarteNy={kanStarteNy}>
-        <Side />
+        <Innlogging>
+          <Side />
+        </Innlogging>
       </ErrorBoundary>
     </StrictMode>,
   )

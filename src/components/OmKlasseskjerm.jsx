@@ -1,6 +1,15 @@
+import { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Dialog from './Dialog.jsx';
 import { aktivSkole } from '../data/skoletema.js';
+import {
+  skoleTjeneste,
+  utloggingsadresse,
+  hentBursdager,
+  glemLokalt,
+  lyttTilTjeneste,
+  lesTjenesteTilstand,
+} from '../utils/ksTjeneste.js';
 
 // Det samme som bunnteksten i de andre prosjektene (Kooperative grupper,
 // Sandakers Verden, naturfag). Klasseskjerm har ingen bunntekst, fordi
@@ -39,6 +48,7 @@ export default function OmKlasseskjerm({ onClose }) {
           {skole.navn} bruker Klasseskjerm med tillatelse fra utvikleren.
         </p>
       )}
+      <SkoleTjeneste />
       <p className="k-dialog-tekst is-dempet om-signatur">
         © {AAR} {OPPHAVSPERSON} · Alle rettigheter forbeholdt ·{' '}
         <a href={`mailto:${KONTAKT_EPOST}`}>Kontakt</a>
@@ -50,5 +60,47 @@ export default function OmKlasseskjerm({ onClose }) {
       </div>
     </Dialog>,
     document.body,
+  );
+}
+
+/** Innlogget ansatt og bursdagslista, bare på skolens egen adresse. */
+function SkoleTjeneste() {
+  const [tjeneste] = useState(() => skoleTjeneste());
+  const { navn, bursdager } = useSyncExternalStore(lyttTilTjeneste, lesTjenesteTilstand);
+  const [henter, setHenter] = useState(false);
+  const [melding, setMelding] = useState('');
+  if (!tjeneste) return null;
+
+  const hentet = bursdager?.hentet
+    ? new Date(bursdager.hentet).toLocaleString('no-NO', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Oslo' })
+    : null;
+
+  async function hentNaa() {
+    setHenter(true);
+    setMelding('');
+    const ok = await hentBursdager(tjeneste);
+    setHenter(false);
+    setMelding(ok ? 'Bursdagene er oppdatert.' : 'Fikk ikke hentet bursdagene nå. Den lagrede lista brukes.');
+  }
+
+  function loggUt() {
+    glemLokalt();
+    window.location.assign(utloggingsadresse(tjeneste));
+  }
+
+  return (
+    <div className="om-tjeneste">
+      <p className="k-dialog-tekst">
+        {navn ? <>Innlogget som <strong>{navn}</strong>.</> : 'Innlogget med Feide.'}{' '}
+        {hentet ? `Bursdagene ble sist hentet ${hentet}.` : 'Bursdagene er ikke hentet ennå.'}
+      </p>
+      {melding && <p className="k-dialog-tekst is-dempet" role="status">{melding}</p>}
+      <div className="om-tjeneste-knapper">
+        <button type="button" className="k-btn k-btn--tilbake k-btn--liten" onClick={hentNaa} disabled={henter}>
+          {henter ? 'Henter …' : 'Hent bursdagene på nytt'}
+        </button>
+        <button type="button" className="k-btn k-btn--tilbake k-btn--liten" onClick={loggUt}>Logg ut</button>
+      </div>
+    </div>
   );
 }

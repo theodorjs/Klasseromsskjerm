@@ -1,0 +1,73 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Del: plass til en høyere tidslinje
+   Med flere klasser på tidslinja blir den høyere enn én rad. Timeline.jsx
+   måler den og setter --tidslinje-rom (fra bunnen av skjermen til toppen
+   av tidslinja), --tidslinje-ekstra (hvor mye høyere enn én rad) og
+   body.tidslinje-hoy. Da flytter Nedteller-knappen seg opp over tidslinja,
+   og hovedkortet krymper og flytter seg like mye opp, så ingenting dekker
+   slutten av dagen. Med én rad er alt som før.
+   ═══════════════════════════════════════════════════════════════════ */
+
+body.tidslinje-hoy:not(.vegg-aktiv) .timer-launch,
+body.tidslinje-hoy:not(.vegg-aktiv) .timer-mini {
+    bottom: calc(var(--tidslinje-rom) + 10px);
+}
+body.tidslinje-hoy:not(.vegg-aktiv) .fm-kort {
+    bottom: calc(var(--tidslinje-rom) + 22px);
+}
+
+/* Hovedkortet står midt mellom det som er reservert øverst (topplinja, og
+   raden med «Dager til» og bursdager når den vises) og nederst (tidslinja og
+   Nedteller-knappen). Skiva bestemmer høyden, så den krymper til plassen. */
+body.tidslinje-hoy:not(.vegg-aktiv) {
+    --hs-topp: calc(var(--topp) + 92px);
+    --hs-bunn: calc(var(--tidslinje-rom) + 86px);
+}
+body.tidslinje-hoy.har-dager-til:not(.vegg-aktiv) {
+    --hs-topp: calc(var(--topp) + 155px);
+}
+body.tidslinje-hoy:not(.vegg-aktiv) #main-container.hs-tavle {
+    top: calc((var(--hs-topp) + 100vh - var(--hs-bunn)) / 2);
+}
+body.tidslinje-hoy:not(.vegg-aktiv) .hs-skive .tt-dial,
+body.tidslinje-hoy.har-dager-til:not(.vegg-aktiv) .hs-skive .tt-dial {
+    width: max(120px, min(31vw, 620px, calc(100vh - var(--hs-topp) - var(--hs-bunn) - 2 * min(4.6vh, 3vw) - 32px)));
+}
+@media (orientation: portrait), (max-width: 900px) {
+    body.tidslinje-hoy:not(.vegg-aktiv) .hs-skive .tt-dial,
+    body.tidslinje-hoy.har-dager-til:not(.vegg-aktiv) .hs-skive .tt-dial {
+        width: max(96px, min(calc(30vh - var(--tidslinje-ekstra)), 52vw));
+    }
+}
+
+/* Skriften i hovedkortet følger plassen mellom det reserverte øverst og nederst,
+   ikke hele skjermhøyden: --hs-u er «én vh» skalert ned når plassen er knapp
+   (tre fag over hverandre på en lav skjerm). Bredden (vw) begrenser som før. */
+@media (orientation: landscape) and (min-width: 901px) {
+    body.tidslinje-hoy:not(.vegg-aktiv) {
+        --hs-u: min(1vh, calc((100vh - var(--hs-topp) - var(--hs-bunn) - 2 * min(4.6vh, 3vw) - 32px) / 66));
+    }
+    body.tidslinje-hoy:not(.vegg-aktiv) .hs-tekst { gap: min(calc(1.6 * var(--hs-u)), 1.2vw); }
+    body.tidslinje-hoy:not(.vegg-aktiv) .hs-etikett { font-size: min(calc(4.4 * var(--hs-u)), 2.6vw); }
+    body.tidslinje-hoy:not(.vegg-aktiv) .hs-fag { font-size: min(calc(16 * var(--hs-u)), 9.4vw); }
+    body.tidslinje-hoy:not(.vegg-aktiv) .hs-fag.is-stack { font-size: min(calc(9.5 * var(--hs-u)), 5.6vw); }
+    body.tidslinje-hoy:not(.vegg-aktiv) .hs-fri .hs-fag { font-size: min(calc(10 * var(--hs-u)), 5.6vw); }
+    body.tidslinje-hoy:not(.vegg-aktiv) .hs-igjen-tall { font-size: min(calc(14 * var(--hs-u)), 8.2vw); }
+    body.tidslinje-hoy:not(.vegg-aktiv) .hs-igjen-enhet { font-size: min(calc(6 * var(--hs-u)), 3.5vw); }
+    body.tidslinje-hoy:not(.vegg-aktiv) .hs-laerer { font-size: min(calc(4.4 * var(--hs-u)), 2.6vw); }
+    body.tidslinje-hoy:not(.vegg-aktiv) .hs-neste {
+        font-size: min(calc(5.6 * var(--hs-u)), 3.3vw);
+        margin-top: min(calc(1.6 * var(--hs-u)), 1vw);
+        padding-top: min(calc(2.4 * var(--hs-u)), 1.5vw);
+    }
+}
+
+/* «Sett opp timen»-kortet: samme regel som over, med plass til knappen */
+body.tidslinje-hoy:not(.vegg-aktiv) #main-container.dagens-time {
+    top: calc(50% - 38px - var(--tidslinje-ekstra) / 2);
+    max-height: calc(100vh - 262px - var(--topp) - var(--tidslinje-ekstra));
+}
+body.tidslinje-hoy.har-dager-til:not(.vegg-aktiv) #main-container.dagens-time {
+    top: calc(50% - 5px - var(--tidslinje-ekstra) / 2);
+    max-height: calc(100vh - 328px - var(--topp) - var(--tidslinje-ekstra));
+}

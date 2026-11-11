@@ -28,6 +28,7 @@ import { formatMinutesAsTime } from '../utils/time.js';
 import { formatExpandedActivityDisplay } from '../utils/schedule.js';
 import Presentasjon from './Presentasjon.jsx';
 import usePresentasjon from '../hooks/usePresentasjon.js';
+import useBursdager from '../hooks/useBursdager.js';
 import { readWallModePreference, WALL_MODE_KEY } from '../utils/wallMode.js';
 import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
 import {
@@ -186,6 +187,8 @@ export default function App() {
   const displayStates = timelineClassNames
     .map(name => getClassScheduleState(name, currentDay, currentMinutes, classes, tempScheduleChanges))
     .filter(Boolean);
+  // Bursdagene for klassene som vises (bare på skolens egen adresse)
+  const { bursdager, sprekk: sprekkBallong } = useBursdager(displayStates.map(s => s.className));
 
   const isWeekend = (now.getDay() === 0 || now.getDay() === 6) && !isSim;
 
@@ -262,6 +265,7 @@ export default function App() {
           realMinutes={realMinutes}
           isSim={isSim}
           themeMode={themeMode}
+          bursdager={bursdager}
           onExit={exitWallMode}
         />
         <TimerPanel
@@ -360,6 +364,8 @@ export default function App() {
             onEditCountdown={(index) => setCountdownModal({ index })}
             dagensTime={synligTime}
             onOpenTimer={() => setTimerPanelOpen(true)}
+            bursdager={bursdager}
+            onSprekk={sprekkBallong}
           />
         </div>
 
@@ -406,6 +412,8 @@ export default function App() {
         countdowns={countdowns}
         countdownsVisible={countdownsVisible}
         onEditCountdown={(index) => setCountdownModal({ index })}
+        bursdager={bursdager}
+        onSprekk={sprekkBallong}
       />
 
       <TimerPanel
@@ -527,6 +535,7 @@ export default function App() {
           countdownsVisible={countdownsVisible}
           subjectColor={currentSubject?.color || null}
           dagensTime={synligTime}
+          bursdager={bursdager}
           onExit={avsluttPresentasjon}
         />
       )}

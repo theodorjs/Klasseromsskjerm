@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import Ballong from './Ballong.jsx';
 import Ikon, { FagSymbol } from './Ikon.jsx';
 import TimeTimerDial from './TimeTimerDial.jsx';
 import SkiveBryter from './SkiveBryter.jsx';
@@ -231,6 +232,8 @@ export default function ElevPortrett({
   onEditCountdown,
   dagensTime = null,
   onOpenTimer,
+  bursdager = [],
+  onSprekk,
 }) {
   // Valgt fane gjelder bare den dagen den ble valgt
   const [valg, setValg] = useState({ dag: null, fane: null });
@@ -395,9 +398,15 @@ export default function ElevPortrett({
         </section>
       )}
 
-      {visNedtellinger && (
+      {(visNedtellinger || bursdager.length > 0) && (
         <div className="ep-nedtellinger" aria-label="Dager til">
-          {countdowns.map((item, i) => {
+          {bursdager.map(b => (
+            <button key={b.nokkel} type="button" className="ep-nedtelling ep-bursdag" onClick={() => onSprekk?.(b.nokkel)} title="Trykk for å ta bort ballongen i dag">
+              <Ballong navn={b.fornavn} />
+              <span>{b.setning[0]}<b>{b.fornavn}</b>{b.setning[1]}</span>
+            </button>
+          ))}
+          {visNedtellinger && countdowns.map((item, i) => {
             const d = getCountdownRemainingDisplay(item.targetDate, item.targetTime);
             return (
               <button key={item.id || i} type="button" className="ep-nedtelling" onClick={() => onEditCountdown?.(i)}>

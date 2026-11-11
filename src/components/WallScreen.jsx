@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import Timeline from './Timeline.jsx';
 import Ikon from './Ikon.jsx';
+import Ballong from './Ballong.jsx';
 import useRolig from '../hooks/useRolig.js';
 import { formatDurationSmart, getIsoWeekNumberForOslo } from '../utils/time.js';
 import {
@@ -34,6 +35,7 @@ export default function WallScreen({
   realMinutes,
   isSim,
   themeMode,
+  bursdager = [],
   onExit,
 }) {
   const weekNum = getIsoWeekNumberForOslo(new Date());
@@ -119,6 +121,13 @@ export default function WallScreen({
     <div className="vegg" id="vegg">
       <div className="vegg-info">
         <div className="vegg-date">{currentDay} {dateStr} · Uke {weekNum}{isSim ? ' (simulert)' : ''}</div>
+        {bursdager.length > 0 && (
+          <div className="vegg-bursdager">
+            {bursdager.map(b => (
+              <span key={b.nokkel} className="vegg-bursdag"><Ballong navn={b.fornavn} /><span>{b.setning[0]}<b>{b.fornavn}</b>{b.setning[1]}</span></span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="vegg-now">

@@ -18,8 +18,17 @@ const VIS_VED_START = (() => {
   return !SPOR_AV_BRUK.some(key => safeGetItem(key));
 })();
 
+// Kortet monteres på nytt når læreren går inn og ut av veggskjermen.
+// Et valg skal gjelde resten av økta også om lagringen er blokkert.
+const okta = { lukket: false };
+const skalVises = () => VIS_VED_START && !okta.lukket && !safeGetItem(SETT_KEY);
+function merkLukket() {
+  okta.lukket = true;
+  safeSetItem(SETT_KEY, '1');
+}
+
 export default function ForsteMote({ klassenavn, skjult, onOpenPlanlegg, onOpenTimer, onPresent, onOpenNote, onOpenClass }) {
-  const [synlig, setSynlig] = useState(VIS_VED_START);
+  const [synlig, setSynlig] = useState(skalVises);
   const vises = synlig && !skjult;
 
   // Mens kortet står, er «Nedteller» et av valgene i det; den egne
@@ -34,7 +43,7 @@ export default function ForsteMote({ klassenavn, skjult, onOpenPlanlegg, onOpenT
   const skole = aktivSkole();
 
   function ferdig() {
-    safeSetItem(SETT_KEY, '1');
+    merkLukket();
     setSynlig(false);
   }
 
@@ -43,14 +52,14 @@ export default function ForsteMote({ klassenavn, skjult, onOpenPlanlegg, onOpenT
     handling?.();
   }
 
-  // Rekkefølgen er arbeidsflyten for en ny lærer: sett opp timen, start
-  // nedtelleren, vis det for klassen. Samme navn og symbol som i Verktøy.
+  // Rekkefølgen er arbeidsflyten for en ny lærer: velg klassen sin først,
+  // så sett opp timen, start nedtelleren og vis det for klassen.
   const valg = [
-    { id: 'time', ikon: 'clipboard-list', tittel: 'Sett opp timen', hint: 'Mål og agenda på tavla', handling: onOpenPlanlegg, hoved: true },
+    { id: 'klasse', ikon: 'school', tittel: 'Velg din klasse', hint: 'Klasse og timeplan', handling: onOpenClass, hoved: true },
+    { id: 'time', ikon: 'clipboard-list', tittel: 'Sett opp timen', hint: 'Mål og agenda på tavla', handling: onOpenPlanlegg },
     { id: 'nedteller', ikon: 'timer', tittel: 'Nedteller', hint: 'Gi elevene en frist', handling: onOpenTimer },
     { id: 'vis', ikon: 'presentation', tittel: 'Vis for klassen', hint: 'Fullskjerm uten verktøy', handling: onPresent },
     { id: 'notat', ikon: 'notebook-pen', tittel: 'Notat', hint: 'Skriv en beskjed', handling: onOpenNote },
-    { id: 'klasse', ikon: 'school', tittel: 'Klasse og timeplan', hint: 'Velg din klasse', handling: onOpenClass },
   ];
 
   return (

@@ -1,8 +1,11 @@
 import { useEffect } from 'react';
 import { getCountdownRemainingDisplay } from '../utils/schedule.js';
+import Ballong from './Ballong.jsx';
 
-export default function CountdownStack({ countdowns, countdownsVisible, onEditCountdown }) {
-  const shouldShow = countdowns.length > 0 && countdownsVisible !== false;
+export default function CountdownStack({ countdowns, countdownsVisible, onEditCountdown, bursdager = [], onSprekk }) {
+  const visNedtellinger = countdowns.length > 0 && countdownsVisible !== false;
+  // Bursdagene står i samme rad, så de får plassen raden alltid har
+  const shouldShow = visNedtellinger || bursdager.length > 0;
 
   // Hovedkortet gir plass til raden med «Dager til» når den vises
   useEffect(() => {
@@ -12,7 +15,23 @@ export default function CountdownStack({ countdowns, countdownsVisible, onEditCo
 
   return (
     <div className={`countdown-stack${shouldShow ? ' active' : ''}`} aria-live="polite">
-      {shouldShow && countdowns.map((item, index) => {
+      {bursdager.map(b => (
+        <button
+          key={b.nokkel}
+          type="button"
+          className={`countdown-card bursdag-kort${b.tid === 'i-dag' ? ' er-i-dag' : ''}`}
+          onClick={() => onSprekk?.(b.nokkel)}
+          title="Trykk for å ta bort ballongen i dag"
+          aria-label={`${b.setning[0]}${b.fornavn}${b.setning[1]} Trykk for å ta bort ballongen i dag.`}
+        >
+          <Ballong navn={b.fornavn} className="bursdag-ballong" />
+          <span className="bursdag-tekst">
+            <span className="bursdag-navn">{b.fornavn}</span>
+            <span className="bursdag-nar">{b.undertekst}</span>
+          </span>
+        </button>
+      ))}
+      {visNedtellinger && countdowns.map((item, index) => {
         const display = getCountdownRemainingDisplay(item.targetDate, item.targetTime);
         return (
           <button

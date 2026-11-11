@@ -2024,3 +2024,23 @@ body.ui-light .k-input, body.ui-light .k-select { color-scheme: light; }
 .event-box[data-smal] { padding: 0; }
 .event-box[data-smal] .event-text { display: none; }
 .event-box[data-smal] .event-symbol { display: inline-block; }
+
+/* ─── Timeplaneditoren: annenhver dag har et svakt bånd bak kolonnen ───
+   Båndet går fra dagnavnet til nederste rad og ut i mellomrommet, så det
+   er lett å se hvilken dag en rute hører til. Pausene ligger oppå.
+   Båndet er absolutt plassert i sitt rutenettområde, så det tar ikke plass
+   fra rutene, og ligger bak dem (eget stablingslag i .se-grid). */
+.se-grid { position: relative; z-index: 0; }
+.se-dag-band {
+    position: absolute;
+    grid-row: 1 / -1;
+    top: 0;                     /* innenfor rutenettet, så det ikke gir rullefelt */
+    bottom: 0;
+    left: -6px;                 /* hele mellomrommet (6 px) på hver side */
+    right: -6px;
+    z-index: -1;
+    border-radius: var(--radius-m);
+    background: rgba(120, 140, 170, 0.12);
+    pointer-events: none;
+}
+body.light-mode .se-dag-band { background: rgba(28, 39, 53, 0.075); }

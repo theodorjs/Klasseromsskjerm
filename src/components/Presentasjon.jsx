@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import Ballong from './Ballong.jsx';
 import Ikon, { FagSymbol } from './Ikon.jsx';
 import TimeTimerDial from './TimeTimerDial.jsx';
 import Timeline from './Timeline.jsx';
@@ -56,6 +57,7 @@ export default function Presentasjon({
   countdownsVisible = true,
   subjectColor,
   dagensTime = null,
+  bursdager = [],
   onExit,
 }) {
   const [naa, setNaa] = useState(() => Date.now());
@@ -157,6 +159,13 @@ export default function Presentasjon({
         </div>
         <div className="presentasjon-dato">
           <span className="presentasjon-dato-linje">{currentDay} {dateStr} · Uke {ukenr}{isSim ? ' (simulert)' : ''}</span>
+          {bursdager.length > 0 && (
+            <span className="presentasjon-nedtellinger">
+              {bursdager.map(b => (
+                <span key={b.nokkel} className="presentasjon-bursdag"><Ballong navn={b.fornavn} /><span>{b.setning[0]}<b>{b.fornavn}</b>{b.setning[1]}</span></span>
+              ))}
+            </span>
+          )}
           {visNedtellinger && (
             <span className="presentasjon-nedtellinger">
               {countdowns.map((item, i) => {

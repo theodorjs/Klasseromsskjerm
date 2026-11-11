@@ -238,3 +238,25 @@ export const TORDEROD_TIMEPLANER = {
     },
   },
 };
+
+/**
+ * Ferier og andre fridager for elevene i skoleåret, fra skolens skolerute.
+ * Brukes til bursdagene: en bursdag i en ferie vises siste skoledag før og
+ * første skoledag etter. Helger og helligdager (påske, 1. og 17. mai,
+ * Kristi himmelfart, 2. pinsedag, jul og nyttår) regnes ut av seg selv.
+ * Format: { navn, fra: 'ÅÅÅÅ-MM-DD', til: 'ÅÅÅÅ-MM-DD' }, begge dager med.
+ *
+ * Torderød følger skoleruta til Moss kommune (moss.kommune.no, skolerute 2026–2027).
+ * Plandager er fri for elevene. Legg inn neste skoleår når ruta for 2027/28 kommer:
+ * sommerferien under slutter skjønnsmessig 15. august 2027.
+ */
+export const TORDEROD_FERIER = [
+  // Skoleåret 2026/27
+  { navn: 'Plandager før skolestart', fra: '2026-08-11', til: '2026-08-14' },
+  { navn: 'Høstferie', fra: '2026-09-28', til: '2026-10-02' },
+  { navn: 'Plandag', fra: '2026-11-19', til: '2026-11-19' },
+  { navn: 'Juleferie', fra: '2026-12-19', til: '2027-01-03' },
+  { navn: 'Vinterferie', fra: '2027-02-22', til: '2027-02-26' },
+  { navn: 'Påskeferie', fra: '2027-03-22', til: '2027-03-29' },
+  { navn: 'Plandag og sommerferie', fra: '2027-06-18', til: '2027-08-15' },
+];

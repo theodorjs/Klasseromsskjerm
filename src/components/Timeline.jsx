@@ -15,6 +15,9 @@ import { FagSymbol } from './Ikon.jsx';
 import { erLystTema } from '../utils/tema.js';
 import { formatEventTeachers } from '../utils/schedule.js';
 
+/** Tidslinja med én rad: 62 px høy og 20 px over bunnen. Nedteller-knappen står klar av den. */
+const TIDSLINJE_VANLIG_ROM = 82;
+
 export default function Timeline({
   classes,
   currentDay,
@@ -60,6 +63,37 @@ export default function Timeline({
     document.fonts?.ready?.then(fitBreakLabels).catch(() => {});
     return () => observer.disconnect();
   }, [fitBreakLabels, hasRows]);
+
+  // Hvor høyt tidslinja rekker fra bunnen av skjermen. Med flere klasser blir
+  // den høyere, og Nedteller-knappen og hovedkortet flytter seg opp etter den
+  // (se del-tidslinje-rom.css) i stedet for å dekke slutten av dagen.
+  // Måles uten getBoundingClientRect, så det stemmer også mens delt skjerm glir.
+  useEffect(() => {
+    const root = rootRef.current;
+    const html = document.documentElement;
+    // Bare tidslinja på hovedskjermen; veggskjermen og «Vis for klassen» har egen plassering
+    if (!root || !root.closest('#split-bottom') || typeof ResizeObserver === 'undefined') return undefined;
+    const maal = () => {
+      const cs = getComputedStyle(root);
+      if (cs.position !== 'absolute') return;
+      const rom = Math.round(root.offsetHeight + (parseFloat(cs.bottom) || 0));
+      const ekstra = Math.max(0, rom - TIDSLINJE_VANLIG_ROM);
+      html.style.setProperty('--tidslinje-rom', `${rom}px`);
+      html.style.setProperty('--tidslinje-ekstra', `${ekstra}px`);
+      document.body.classList.toggle('tidslinje-hoy', ekstra > 0);
+    };
+    const observer = new ResizeObserver(maal);
+    observer.observe(root);
+    window.addEventListener('resize', maal);
+    maal();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', maal);
+      html.style.removeProperty('--tidslinje-rom');
+      html.style.removeProperty('--tidslinje-ekstra');
+      document.body.classList.remove('tidslinje-hoy');
+    };
+  }, [hasRows]);
 
   if (!hasRows) {
     const noScheduleText = ["Lørdag", "Søndag"].includes(currentDay)

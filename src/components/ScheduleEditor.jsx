@@ -854,6 +854,10 @@ export default function ScheduleEditor({
         <div className="se-grid-wrap">
           <div className="se-grid" style={{ gridTemplateRows: gridRows }} role="group" aria-label="Timeplan">
             <div className="se-corner" />
+            {/* Annenhver dag får et bånd bak hele kolonnen, så dagene skilles tydelig */}
+            {DAYS.map((d, i) => (i % 2 === 1
+              ? <div key={`${d}-band`} className="se-dag-band" style={{ gridColumn: `${i + 2} / span 1` }} aria-hidden="true" />
+              : null))}
             {DAYS.map((d, i) => (
               <div key={d} className="se-day"><span className="se-day-long">{d}</span><span className="se-day-short">{DAYS_S[i]}</span></div>
             ))}

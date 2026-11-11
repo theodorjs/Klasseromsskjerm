@@ -1,10 +1,16 @@
 import { cloneDefaultClass } from '../constants.js';
 import { pickSubjectColors, pickSubjectEmojis } from '../subjects.js';
 import { getDefaultMultiGradeLabels, getActivitySubjectParts } from '../../utils/schedule.js';
-import { TORDEROD_TIMEPLANER } from './torderod.js';
+import { TORDEROD_TIMEPLANER, TORDEROD_FERIER } from './torderod.js';
 
 /** Klassene som ligger klare på hver skoles egen nettside, etter skole-id (se skoletema.js). */
 const TIMEPLANER = { torderod: TORDEROD_TIMEPLANER };
+const FERIER = { torderod: TORDEROD_FERIER };
+
+/** Skolens ferier og fridager (se torderod.js), tom liste når skolen ikke har noen. */
+export function skoleFerier(skoleId) {
+  return FERIER[skoleId] || [];
+}
 
 /** Fagene som står i en timeplan, uten trinn («Matematikk 9.» → «Matematikk»). */
 function fagITimeplan(schedule) {
