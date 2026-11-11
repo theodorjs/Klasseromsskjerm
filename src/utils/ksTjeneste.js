@@ -75,6 +75,11 @@ export function forlatElev() {
   sett({ elev: false });
 }
 
+/** Om læreren kan se bursdagslista: skolens egen adresse, og ikke i elevmodus. */
+export function kanSeBursdager() {
+  return !!skoleTjeneste() && !tilstand.elev;
+}
+
 /** Glemmer innloggingen og bursdagslista i denne nettleseren (utlogget eller kapselen er ugyldig). */
 export function glemLokalt() {
   safeRemoveItem(INNLOGGET_KEY);

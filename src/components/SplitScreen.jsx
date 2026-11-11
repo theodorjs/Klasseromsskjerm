@@ -3,10 +3,13 @@ import ScheduleEditor from './ScheduleEditor.jsx';
 import SubjectColorPicker from './SubjectColorPicker.jsx';
 import { downloadBackup, parseBackupFile, applyBackup } from '../utils/backup.js';
 import Ikon from './Ikon.jsx';
+import Ballong from './Ballong.jsx';
+import Bursdagsliste from './Bursdagsliste.jsx';
+import { kanSeBursdager } from '../utils/ksTjeneste.js';
 
 export default function SplitScreen({
   open,
-  view, // 'classGrid' | 'scheduleEditor' | 'subjectColors'
+  view, // 'classGrid' | 'scheduleEditor' | 'subjectColors' | 'bursdager'
   setView,
   classes,
   currentClassName,
@@ -101,7 +104,7 @@ export default function SplitScreen({
         </div>
         {!editPermission && (
           <p className="klasse-laas">
-            <Ikon navn="lock" /> Logg inn med «Lås opp» i verktøykassen for å endre timeplan, fag og klasser.
+            <Ikon navn="lock" /> Logg inn med «Lås opp» i verktøykassen for å endre timeplan, fag og klasser{kanSeBursdager() ? ' og se bursdagene' : ''}.
           </p>
         )}
 
@@ -130,6 +133,11 @@ export default function SplitScreen({
                       onDeleteClass(currentClassName);
                     }
                   }}><Ikon navn="trash-2" /> Slett klasse</button>
+                  {kanSeBursdager() && (
+                    <button className="k-btn k-btn--bursdag k-btn--hel" id="birthdays-btn" onClick={() => setView('bursdager')}>
+                      <Ballong navn={currentClassName} className="k-btn-ballong" /> Bursdager
+                    </button>
+                  )}
                 </div>
               </section>
             )}
@@ -205,6 +213,9 @@ export default function SplitScreen({
           }}
           onBack={() => setView('classGrid')}
         />
+      )}
+      {view === 'bursdager' && editPermission && kanSeBursdager() && currentClassName && (
+        <Bursdagsliste klassenavn={currentClassName} onBack={() => setView('classGrid')} />
       )}
       {view === 'subjectColors' && editPermission && (
         <SubjectColorPicker

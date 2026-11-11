@@ -162,3 +162,37 @@ export function bursdagSetning(b) {
   if (b.tid === 'i-dag') return ['Gratulerer med dagen, ', '!'];
   return ['', b.tid === 'var' ? ` hadde bursdag ${b.nar}` : ` har bursdag ${b.nar}`];
 }
+
+/** «fredag 18. desember» */
+export function datoTekst(n) {
+  const { maned, dag, ukedag } = fraDagnr(n);
+  return `${UKEDAGER[ukedag]} ${dag}. ${MANEDER[maned - 1]}`;
+}
+
+/**
+ * Hele klassen, sortert etter hvem som har bursdag først (til lærerens oversikt).
+ * En bursdag på en fridag som ennå ikke er feiret (ballongen kommer første skoledag
+ * etter), regnes som kommende. Svarer
+ * [{ fornavn, bursdag, dagerTil, visesPaa: [dagnr …] }], der visesPaa er dagene
+ * ballongen vises fra og med i dag (tom når den vises på selve dagen).
+ */
+export function bursdagsoversikt(elever, idag, erFridag) {
+  if (!Array.isArray(elever)) return [];
+  const { aar } = fraDagnr(idag);
+  const ut = [];
+  for (const elev of elever) {
+    const maned = Number(elev?.maned), dag = Number(elev?.dag);
+    const fornavn = String(elev?.fornavn || '').trim();
+    if (!fornavn || !(maned >= 1 && maned <= 12) || !(dag >= 1 && dag <= 31)) continue;
+    for (const a of [aar - 1, aar, aar + 1]) {
+      const b = bursdagI(a, maned, dag);
+      const fri = erFridag(b);
+      const etter = fri ? nesteSkoledag(b, erFridag) : null;
+      if (b < idag && !(etter != null && etter >= idag)) continue;
+      const visesPaa = fri ? [forrigeSkoledag(b, erFridag), etter].filter(n => n != null && n >= idag) : [];
+      ut.push({ fornavn, bursdag: b, dagerTil: b - idag, visesPaa });
+      break;
+    }
+  }
+  return ut.sort((x, y) => x.bursdag - y.bursdag || x.fornavn.localeCompare(y.fornavn, 'nb'));
+}

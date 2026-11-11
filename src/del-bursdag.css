@@ -152,3 +152,42 @@
 @media (prefers-reduced-motion: reduce) {
     .ballong-smell { display: none; }
 }
+
+/* ═══ «Bursdager» under «Klasse og timeplan» (bare for lærere) ═══════ */
+.k-btn--bursdag {
+    --k: #E53950;
+    --k-tint: rgba(229, 57, 80, 0.16);
+    background-color: var(--noytral-knapp);
+    background-image: linear-gradient(var(--k-tint), var(--k-tint));
+    border: 1.5px solid var(--k);
+    color: var(--tekst);
+}
+body.light-mode .k-btn--bursdag { --k: #C8243C; --k-tint: rgba(200, 36, 60, 0.10); }
+.k-group-grid .k-btn--hel { grid-column: 1 / -1; }
+.k-btn-ballong { width: 1.05em; height: 1.7em; margin: -0.35em 0 -0.2em; flex: 0 0 auto; }
+
+.bursdagsliste { max-width: 640px; }
+.bl-tittel { display: flex; align-items: center; justify-content: center; gap: 12px; text-align: center; }
+.bl-tittel-ballong { width: 1.1em; height: 1.75em; margin: -0.3em 0; flex: 0 0 auto; }
+.bl-gruppe { width: 100%; max-width: 560px; }
+.bl-tom { margin: 0; color: var(--tekst-dempet); text-align: center; }
+.bl-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.bl-rad {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 6px;
+}
+.bl-rad + .bl-rad { border-top: 1px solid var(--instrument-kant); }
+.bl-rad.er-i-dag {
+    background: rgba(229, 57, 80, 0.12);
+    border-radius: var(--radius-s);
+}
+.bl-ballong { width: 26px; height: 42px; flex: 0 0 auto; }
+.bl-tekst { display: flex; flex-direction: column; min-width: 0; gap: 2px; text-align: left; }
+.bl-navn { font-size: 1.15rem; font-weight: 800; color: var(--tekst); overflow: hidden; text-overflow: ellipsis; }
+.bl-nar { font-size: 0.95rem; font-weight: 600; color: var(--tekst); }
+.bl-vises { font-size: 0.85rem; color: var(--tekst-dempet); }
+.bl-hent { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.bl-hentet { margin: 0; font-size: 0.9rem; color: var(--tekst-dempet); }
+.bl-hent .class-tool-msg { margin: 0; }

@@ -2025,12 +2025,15 @@ body.ui-light .k-input, body.ui-light .k-select { color-scheme: light; }
 .event-box[data-smal] .event-text { display: none; }
 .event-box[data-smal] .event-symbol { display: inline-block; }
 
-/* ─── Timeplaneditoren: annenhver dag har et svakt bånd bak kolonnen ───
+/* ─── Timeplaneditoren: annenhver dag har et blått bånd bak kolonnen ───
    Båndet går fra dagnavnet til nederste rad og ut i mellomrommet, så det
-   er lett å se hvilken dag en rute hører til. Pausene ligger oppå.
+   er lett å se hvilken dag en rute hører til. Det er blått, ikke grått,
+   så det ikke kan forveksles med pausene, og det ligger OPPÅ pauselinjene
+   (men under øktene): da går stripa sammenhengende gjennom hele dagen.
    Båndet er absolutt plassert i sitt rutenettområde, så det tar ikke plass
-   fra rutene, og ligger bak dem (eget stablingslag i .se-grid). */
+   fra rutene. Lagene i .se-grid: pause (-2) < bånd (-1) < økter (auto). */
 .se-grid { position: relative; z-index: 0; }
+.se-break { position: relative; z-index: -2; }
 .se-dag-band {
     position: absolute;
     grid-row: 1 / -1;
@@ -2040,7 +2043,11 @@ body.ui-light .k-input, body.ui-light .k-select { color-scheme: light; }
     right: -6px;
     z-index: -1;
     border-radius: var(--radius-m);
-    background: rgba(120, 140, 170, 0.12);
+    background: rgba(120, 165, 255, 0.13);
+    box-shadow: inset 0 0 0 1px rgba(120, 165, 255, 0.22);
     pointer-events: none;
 }
-body.light-mode .se-dag-band { background: rgba(28, 39, 53, 0.075); }
+body.light-mode .se-dag-band {
+    background: rgba(47, 110, 220, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(47, 110, 220, 0.24);
+}

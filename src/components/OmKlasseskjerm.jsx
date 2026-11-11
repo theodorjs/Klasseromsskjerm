@@ -7,7 +7,6 @@ import {
   utloggingsadresse,
   innloggingsadresse,
   forlatElev,
-  hentBursdager,
   glemLokalt,
   lyttTilTjeneste,
   lesTjenesteTilstand,
@@ -65,12 +64,10 @@ export default function OmKlasseskjerm({ onClose }) {
   );
 }
 
-/** Innlogget ansatt og bursdagslista (eller elevmodus), bare på skolens egen adresse. */
+/** Innlogget ansatt (eller elevmodus), bare på skolens egen adresse. */
 function SkoleTjeneste() {
   const [tjeneste] = useState(() => skoleTjeneste());
-  const { navn, bursdager, elev } = useSyncExternalStore(lyttTilTjeneste, lesTjenesteTilstand);
-  const [henter, setHenter] = useState(false);
-  const [melding, setMelding] = useState('');
+  const { navn, elev } = useSyncExternalStore(lyttTilTjeneste, lesTjenesteTilstand);
   if (!tjeneste) return null;
 
   if (elev) {
@@ -90,18 +87,6 @@ function SkoleTjeneste() {
     );
   }
 
-  const hentet = bursdager?.hentet
-    ? new Date(bursdager.hentet).toLocaleString('no-NO', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Oslo' })
-    : null;
-
-  async function hentNaa() {
-    setHenter(true);
-    setMelding('');
-    const ok = await hentBursdager(tjeneste);
-    setHenter(false);
-    setMelding(ok ? 'Bursdagene er oppdatert.' : 'Fikk ikke hentet bursdagene nå. Den lagrede lista brukes.');
-  }
-
   function loggUt() {
     glemLokalt();
     window.location.assign(utloggingsadresse(tjeneste));
@@ -111,13 +96,9 @@ function SkoleTjeneste() {
     <div className="om-tjeneste">
       <p className="k-dialog-tekst">
         {navn ? <>Innlogget som <strong>{navn}</strong>.</> : 'Innlogget med Feide.'}{' '}
-        {hentet ? `Bursdagene ble sist hentet ${hentet}.` : 'Bursdagene er ikke hentet ennå.'}
+        Bursdagene finner du under «Klasse og timeplan» når du har trykket «Lås opp» i verktøykassen.
       </p>
-      {melding && <p className="k-dialog-tekst is-dempet" role="status">{melding}</p>}
       <div className="om-tjeneste-knapper">
-        <button type="button" className="k-btn k-btn--tilbake k-btn--liten" onClick={hentNaa} disabled={henter}>
-          {henter ? 'Henter …' : 'Hent bursdagene på nytt'}
-        </button>
         <button type="button" className="k-btn k-btn--tilbake k-btn--liten" onClick={loggUt}>Logg ut</button>
       </div>
     </div>
