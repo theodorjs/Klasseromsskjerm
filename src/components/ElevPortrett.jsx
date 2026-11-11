@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import Ballong from './Ballong.jsx';
+import useSprekkBallong from '../hooks/useSprekkBallong.js';
 import Ikon, { FagSymbol } from './Ikon.jsx';
 import TimeTimerDial from './TimeTimerDial.jsx';
 import SkiveBryter from './SkiveBryter.jsx';
@@ -239,6 +240,7 @@ export default function ElevPortrett({
   const [valg, setValg] = useState({ dag: null, fane: null });
   // Samme valg som på hovedtavla: skiva i «Akkurat nå» kan skjules
   const [visSkive, vekslSkive] = useVisSkive();
+  const { sprekker, sprekk } = useSprekkBallong(onSprekk);
 
   if (!primaryState) return null;
 
@@ -401,8 +403,14 @@ export default function ElevPortrett({
       {(visNedtellinger || bursdager.length > 0) && (
         <div className="ep-nedtellinger" aria-label="Dager til">
           {bursdager.map(b => (
-            <button key={b.nokkel} type="button" className="ep-nedtelling ep-bursdag" onClick={() => onSprekk?.(b.nokkel)} title="Trykk for å ta bort ballongen i dag">
-              <Ballong navn={b.fornavn} />
+            <button
+              key={b.nokkel}
+              type="button"
+              className={`ep-nedtelling ep-bursdag${sprekker.includes(b.nokkel) ? ' sprekker' : ''}`}
+              onClick={() => sprekk(b.nokkel)}
+              title="Trykk for å sprekke ballongen"
+            >
+              <Ballong navn={b.fornavn} sprekker={sprekker.includes(b.nokkel)} />
               <span>{b.setning[0]}<b>{b.fornavn}</b>{b.setning[1]}</span>
             </button>
           ))}

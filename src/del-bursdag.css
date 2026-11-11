@@ -95,3 +95,60 @@
     font-size: clamp(1rem, 3.2vmin, 1.8rem);
 }
 @media (max-width: 900px) { .vegg-bursdager { justify-content: flex-start; } }
+
+/* ═══ Smellet: trykk på ballongen, så sprekker den ═══════════════════
+   0–120 ms svulmer ballongen, så er den borte; bitene i ballongens farge
+   flyr ut med et lysglimt, snora faller, og kortet blekner til slutt.
+   Totalt 750 ms (SPREKK_MS i useSprekkBallong.js). Med redusert bevegelse
+   tas ballongen bort med en gang, uten smell. */
+.ballong { overflow: visible; }
+.ballong-smell { pointer-events: none; }
+.ballong-bit,
+.ballong-glimt { transform-origin: 20px 22px; opacity: 0; }
+.ballong-bit { transform: translate(20px, 22px); }
+
+.ballong--sprekker {
+    animation: none !important;          /* stopp stigingen og vaiingen */
+}
+.ballong--sprekker .ballong-kropp {
+    transform-origin: 20px 24px;
+    animation: ballong-svulm 0.14s ease-in both;
+}
+.ballong--sprekker .ballong-glimt { animation: ballong-glimt 0.32s ease-out 0.1s forwards; }
+.ballong--sprekker .ballong-bit { animation: ballong-bit 0.6s cubic-bezier(0.15, 0.7, 0.3, 1) 0.11s forwards; }
+.ballong--sprekker .ballong-snor { animation: ballong-snor-fall 0.6s ease-in 0.12s both; }
+
+@keyframes ballong-svulm {
+    0% { transform: scale(1); opacity: 1; }
+    80% { transform: scale(1.18, 1.12); opacity: 1; }
+    100% { transform: scale(1.25); opacity: 0; }
+}
+@keyframes ballong-glimt {
+    0% { transform: scale(0.4) rotate(0deg); opacity: 1; }
+    100% { transform: scale(1.9) rotate(24deg); opacity: 0; }
+}
+@keyframes ballong-bit {
+    0% { transform: translate(20px, 22px) rotate(0deg) scale(1.2); opacity: 1; }
+    70% { opacity: 1; }
+    100% {
+        transform: translate(calc(20px + var(--dx)), calc(22px + var(--dy) + 14px)) rotate(var(--rot)) scale(0.8);
+        opacity: 0;
+    }
+}
+@keyframes ballong-snor-fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0.55; }
+    100% { transform: translateY(26px) rotate(14deg); opacity: 0; }
+}
+
+/* Kortet blekner og krymper når smellet er over */
+.bursdag-kort.sprekker,
+.ep-bursdag.sprekker {
+    pointer-events: none;
+    animation: bursdag-kort-borte 0.3s ease-in 0.45s both;
+}
+@keyframes bursdag-kort-borte {
+    to { opacity: 0; transform: scale(0.92); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ballong-smell { display: none; }
+}
