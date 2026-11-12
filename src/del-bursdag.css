@@ -154,19 +154,33 @@
 }
 
 /* ═══ «Bursdager» under «Klasse og timeplan» (bare for lærere) ═══════ */
+/* Lilla: ingen andre knapper i menyen har den, og rødt betyr «slett» */
 .k-btn--bursdag {
-    --k: #E53950;
-    --k-tint: rgba(229, 57, 80, 0.16);
+    --k: #B07FE0;
+    --k-tint: rgba(176, 127, 224, 0.20);
     background-color: var(--noytral-knapp);
     background-image: linear-gradient(var(--k-tint), var(--k-tint));
     border: 1.5px solid var(--k);
     color: var(--tekst);
 }
-body.light-mode .k-btn--bursdag { --k: #C8243C; --k-tint: rgba(200, 36, 60, 0.10); }
+body.light-mode .k-btn--bursdag { --k: #7B3FB8; --k-tint: rgba(123, 63, 184, 0.12); }
 .k-group-grid .k-btn--hel { grid-column: 1 / -1; }
 .k-btn-ballong { width: 1.05em; height: 1.7em; margin: -0.35em 0 -0.2em; flex: 0 0 auto; }
 
 .bursdagsliste { max-width: 640px; }
+/* Tilbake-knappen står fast øverst til venstre på skjermen, som i
+   timeplaneditoren, og blir stående der mens lista rulles */
+.bl-tilbake {
+    position: fixed;
+    top: calc(var(--topp, 0px) + 16px);
+    left: 16px;
+    z-index: 5;
+    box-shadow: 0 6px 16px rgba(28, 39, 53, 0.16);
+}
+/* Smale skjermer: tittelen flyttes ned under knappen, så de ikke kolliderer */
+@media (max-width: 860px) {
+    .klasse-meny.bursdagsliste { padding-top: 72px; }
+}
 .bl-tittel { display: flex; align-items: center; justify-content: center; gap: 12px; text-align: center; }
 .bl-tittel-ballong { width: 1.1em; height: 1.75em; margin: -0.3em 0; flex: 0 0 auto; }
 .bl-gruppe { width: 100%; max-width: 560px; }
@@ -180,7 +194,7 @@ body.light-mode .k-btn--bursdag { --k: #C8243C; --k-tint: rgba(200, 36, 60, 0.10
 }
 .bl-rad + .bl-rad { border-top: 1px solid var(--instrument-kant); }
 .bl-rad.er-i-dag {
-    background: rgba(229, 57, 80, 0.12);
+    background: rgba(142, 68, 201, 0.14);
     border-radius: var(--radius-s);
 }
 .bl-ballong { width: 26px; height: 42px; flex: 0 0 auto; }

@@ -60,6 +60,10 @@ export default function Bursdagsliste({ klassenavn, onBack }) {
 
   return (
     <div className="klasse-meny bursdagsliste">
+      {/* Står fast øverst til venstre mens lista rulles */}
+      <button type="button" className="k-btn k-btn--tilbake k-btn--liten bl-tilbake" onClick={onBack}>
+        <Ikon navn="arrow-left" /> Tilbake
+      </button>
       <h1 className="class-tool-title bl-tittel">
         <Ballong navn={klassenavn} className="bl-tittel-ballong" />
         Bursdager i {klassenavn}
@@ -101,7 +105,6 @@ export default function Bursdagsliste({ klassenavn, onBack }) {
         {melding && <p className={`class-tool-msg${melding.feil ? ' is-error' : ''}`} role="status">{melding.tekst}</p>}
       </section>
 
-      <button type="button" className="k-btn k-btn--tilbake" onClick={onBack}><Ikon navn="arrow-left" /> Tilbake</button>
     </div>
   );
 }

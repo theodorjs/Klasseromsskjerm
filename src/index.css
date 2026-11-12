@@ -548,6 +548,15 @@ body.under-the-hood-active #split-bottom {
     transform: translateY(100%);
 }
 
+/* Hovedkortet kan stikke ut under den øvre halvdelen (med to klasser i
+   tidslinja står det lavere). Da ville bunnen av kortet blitt liggende
+   øverst over menyen når halvdelen har glidd opp. Kortet glir med, og er
+   borte når glidningen (0,8 s) er ferdig; det kommer tilbake med en gang. */
+body.under-the-hood-active #main-container {
+    visibility: hidden;
+    transition: transform 0.3s, visibility 0s linear 0.8s;
+}
+
 #under-the-hood {
     position: fixed;
     top: 0;
