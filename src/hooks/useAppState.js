@@ -363,8 +363,12 @@ export function useAppState() {
         });
         next = next || [prev[0], name];
       }
+      // Lagres med klassen som står først i lista som «gjeldende». Før ble
+      // klassen som ble trykket på brukt her: ble den huket AV, la
+      // normaliseringen den tilbake i det lagrede, så den kom igjen ved neste
+      // innlasting (1.–2. dukket opp sammen med 8.–9. etter hver oppfrisking)
       setClassesState(cls => {
-        const normalized = normalizeActiveTimelineClassNames(next, cls, name);
+        const normalized = normalizeActiveTimelineClassNames(next, cls, next[0]);
         safeSetItem('activeTimelineClassNames', JSON.stringify(normalized));
         return cls;
       });

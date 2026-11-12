@@ -71,7 +71,7 @@ export default function Timeline({
   useEffect(() => {
     const root = rootRef.current;
     const html = document.documentElement;
-    // Bare tidslinja på hovedskjermen; veggskjermen og «Vis for klassen» har egen plassering
+    // Bare tidslinja på hovedskjermen; veggskjermen har egen plassering
     if (!root || !root.closest('#split-bottom') || typeof ResizeObserver === 'undefined') return undefined;
     const maal = () => {
       const cs = getComputedStyle(root);

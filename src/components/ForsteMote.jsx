@@ -27,7 +27,7 @@ function merkLukket() {
   safeSetItem(SETT_KEY, '1');
 }
 
-export default function ForsteMote({ klassenavn, skjult, onOpenPlanlegg, onOpenTimer, onPresent, onOpenNote, onOpenClass }) {
+export default function ForsteMote({ klassenavn, skjult, onOpenPlanlegg, onOpenTimer, onOpenNote, onOpenClass }) {
   const [synlig, setSynlig] = useState(skalVises);
   const vises = synlig && !skjult;
 
@@ -53,12 +53,11 @@ export default function ForsteMote({ klassenavn, skjult, onOpenPlanlegg, onOpenT
   }
 
   // Rekkefølgen er arbeidsflyten for en ny lærer: velg klassen sin først,
-  // så sett opp timen, start nedtelleren og vis det for klassen.
+  // så sett opp timen, start nedtelleren eller skriv en beskjed.
   const valg = [
     { id: 'klasse', ikon: 'school', tittel: 'Velg din klasse', hint: 'Klasse og timeplan', handling: onOpenClass, hoved: true },
     { id: 'time', ikon: 'clipboard-list', tittel: 'Sett opp timen', hint: 'Mål og agenda på tavla', handling: onOpenPlanlegg },
     { id: 'nedteller', ikon: 'timer', tittel: 'Nedteller', hint: 'Gi elevene en frist', handling: onOpenTimer },
-    { id: 'vis', ikon: 'presentation', tittel: 'Vis for klassen', hint: 'Fullskjerm uten verktøy', handling: onPresent },
     { id: 'notat', ikon: 'notebook-pen', tittel: 'Notat', hint: 'Skriv en beskjed', handling: onOpenNote },
   ];
 

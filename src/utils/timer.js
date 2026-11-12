@@ -107,7 +107,7 @@ export const TIMER_DONE_SHOWN_MS = 10 * 60 * 1000;
 
 /**
  * Nedtelleren slik den er lagret nå, for visninger som bare leser den av
- * (Vis for klassen, elevens iPad). Null når ingen nedteller går.
+ * (elevens iPad). Null når ingen nedteller går.
  */
 export function readTimerStatus(now = Date.now()) {
   const run = loadTimerRun();

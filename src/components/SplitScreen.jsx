@@ -6,6 +6,7 @@ import Ikon from './Ikon.jsx';
 import Ballong from './Ballong.jsx';
 import Bursdagsliste from './Bursdagsliste.jsx';
 import { kanSeBursdager } from '../utils/ksTjeneste.js';
+import OmKlasseskjerm, { Signatur } from './OmKlasseskjerm.jsx';
 
 export default function SplitScreen({
   open,
@@ -17,6 +18,7 @@ export default function SplitScreen({
   activeTimelineClassNames,
   editPermission,
   onClose,
+  onOpenTimePicker,
   onSelectClass,
   onToggleTimelineClass,
   onAddNewClass,
@@ -33,6 +35,7 @@ export default function SplitScreen({
 }) {
   const fileInputRef = useRef(null);
   const [dataMessage, setDataMessage] = useState(null); // { text, kind: 'ok' | 'error' }
+  const [omOpen, setOmOpen] = useState(false);
 
   // Meldingen hører til økten i panelet, ikke til neste gang det åpnes
   const [wasOpen, setWasOpen] = useState(open);
@@ -69,6 +72,17 @@ export default function SplitScreen({
   }
 
   function renderClassGrid() {
+    // For alle, også låst: se hvordan skjermen ser ut en annen dag eller tid
+    const tidGruppe = (
+      <section className="k-group" aria-label="Se skjermen på en annen tid">
+        <h3 className="k-group-title">Se en annen tid</h3>
+        <div className="k-group-row">
+          <button className="k-btn" id="tool-calendar" onClick={onOpenTimePicker}><Ikon navn="calendar-clock" /> Velg tid</button>
+        </div>
+        <p className="info">Sjekk timeplanen en annen dag eller tid. «Simulert tid» står øverst til du går tilbake til nå.</p>
+      </section>
+    );
+
     return (
       <div className="klasse-meny">
         <h1 className="class-tool-title">Velg klasse</h1>
@@ -188,6 +202,8 @@ export default function SplitScreen({
                 onChange={handleRestoreFile}
               />
             </section>
+
+            {tidGruppe}
           </div>
         )}
         {editPermission && dataMessage && (
@@ -196,7 +212,15 @@ export default function SplitScreen({
           </p>
         )}
 
+        {!editPermission && <div className="klasse-grupper">{tidGruppe}</div>}
+
         <button className="k-btn k-btn--tilbake" id="class-back-btn" onClick={onClose}><Ikon navn="arrow-left" /> Tilbake til skjermen</button>
+
+        {/* Opphav og «Om» hører til innstillingene, ikke til verktøyene i timen */}
+        <footer className="klasse-fot">
+          <Signatur onClick={() => setOmOpen(true)} />
+        </footer>
+        {omOpen && <OmKlasseskjerm onClose={() => setOmOpen(false)} />}
       </div>
     );
   }

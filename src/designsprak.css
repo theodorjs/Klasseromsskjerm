@@ -1331,7 +1331,7 @@ body.light-mode .vegg-remaining { background: rgba(28, 39, 53, 0.08); border-col
 }
 
 /* Avslutt: starter med tekst, krymper til et kryss i en rund knapp
-   når ingen rører skjermen (samme oppførsel som Tilbake i «Vis for klassen») */
+   når ingen rører skjermen */
 .vegg-exit {
     position: fixed;
     right: 14px;
@@ -1730,6 +1730,23 @@ body.under-the-hood-active .timer-mini { display: none !important; }
 .toolbox-main:active, .toolbox-item:active, .toolbox-fullscreen:active { box-shadow: var(--trykk-inn); }
 .toolbox-fullscreen.is-fullscreen { border-color: var(--tilbake); box-shadow: 0 0 0 3px var(--tilbake-tint), 0 8px 20px rgba(0, 0, 0, 0.28); }
 .toolbox-items { gap: 8px; }
+/* Små overskrifter i verktøymenyen: I timen, På skjermen, Oppsett.
+   Samme stil som overskriftene i «Klasse og timeplan». */
+.toolbox-gruppe {
+    margin: 6px 14px -2px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.78);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.toolbox-gruppe:first-child { margin-top: 0; }
+body.light-mode .toolbox-gruppe { color: rgba(28, 39, 53, 0.66); text-shadow: none; }
 .countdown-tool-btn {
     background: var(--instrument-3);
     color: var(--tekst);

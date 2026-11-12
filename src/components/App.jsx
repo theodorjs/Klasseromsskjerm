@@ -26,8 +26,6 @@ import { DagensTimeKort, PlanleggTimeDialog } from './DagensTime.jsx';
 import { useDagensTime, finnSynligTime, dagensDato } from '../hooks/useDagensTime.js';
 import { formatMinutesAsTime } from '../utils/time.js';
 import { formatExpandedActivityDisplay } from '../utils/schedule.js';
-import Presentasjon from './Presentasjon.jsx';
-import usePresentasjon from '../hooks/usePresentasjon.js';
 import useBursdager from '../hooks/useBursdager.js';
 import { readWallModePreference, WALL_MODE_KEY } from '../utils/wallMode.js';
 import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
@@ -119,9 +117,6 @@ export default function App() {
     } catch { /* adressen lar seg ikke endre; visningen bytter uansett */ }
     setWallMode(false);
   }
-
-  // Vis for klassen: fullskjerm og ren visning med ett trykk, Esc tilbake
-  const { presenterer, startPresentasjon, avsluttPresentasjon } = usePresentasjon();
 
   // Deling av timeplan via lenke
   const [shareOpen, setShareOpen] = useState(false);
@@ -317,17 +312,10 @@ export default function App() {
             onOpenClass={() => { setUnderTheHoodOpen(true); setUnderTheHoodView('classGrid'); }}
             editPermission={editPermission}
             onToggleLock={handleToggleLock}
-            onOpenTimePicker={() => setTimePickerOpen(true)}
-            timePickerOpen={timePickerOpen}
-            onCloseTimePicker={() => setTimePickerOpen(false)}
-            onApplyTime={(day, hour, minute) => {
-              applySimTime(day, parseInt(hour, 10), parseInt(minute, 10));
-            }}
             currentClass={currentClass}
             onAddCountdown={() => setCountdownModal({ index: null })}
             onToggleCountdownVisibility={toggleCountdownVisibility}
             onEnterWallMode={enterWallMode}
-            onPresent={startPresentasjon}
           />
           {synligTime ? (
             <DagensTimeKort
@@ -394,7 +382,6 @@ export default function App() {
         skjult={!!receiveState || underTheHoodOpen}
         onOpenPlanlegg={() => openPlanlegg()}
         onOpenTimer={() => setTimerPanelOpen(true)}
-        onPresent={startPresentasjon}
         onOpenNote={() => setNoteOpen(true)}
         onOpenClass={() => { setUnderTheHoodOpen(true); setUnderTheHoodView('classGrid'); }}
       />
@@ -444,6 +431,7 @@ export default function App() {
         activeTimelineClassNames={activeTimelineClassNames}
         editPermission={editPermission}
         onClose={() => setUnderTheHoodOpen(false)}
+        onOpenTimePicker={() => { setUnderTheHoodOpen(false); setTimePickerOpen(true); }}
         onSelectClass={selectClass}
         onToggleTimelineClass={toggleTimelineClass}
         onAddNewClass={addNewClass}
@@ -516,29 +504,6 @@ export default function App() {
         onSlett={(id) => { dagensTime.slettTime(id); setPlanleggOpen(false); }}
         onAvbryt={() => setPlanleggOpen(false)}
       />
-      {presenterer && (
-        <Presentasjon
-          primaryState={primaryState}
-          displayStates={displayStates}
-          currentMinutes={currentMinutes}
-          currentDay={currentDay}
-          currentTime={currentTime}
-          dateStr={dateStr}
-          isWeekend={isWeekend}
-          classes={classes}
-          activeTimelineClassNames={activeTimelineClassNames}
-          tempScheduleChanges={tempScheduleChanges}
-          realMinutes={realMinutes}
-          isSim={isSim}
-          themeMode={themeMode}
-          countdowns={countdowns}
-          countdownsVisible={countdownsVisible}
-          subjectColor={currentSubject?.color || null}
-          dagensTime={synligTime}
-          bursdager={bursdager}
-          onExit={avsluttPresentasjon}
-        />
-      )}
 
       {/* Modals */}
       <EditModal

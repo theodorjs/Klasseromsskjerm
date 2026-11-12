@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import ThemeSwitch from './ThemeSwitch.jsx';
 import Ikon from './Ikon.jsx';
 import useRolig from '../hooks/useRolig.js';
-import OmKlasseskjerm, { Signatur } from './OmKlasseskjerm.jsx';
+import { skoleTjeneste, innloggingsadresse, forlatElev, lyttTilTjeneste, lesTjenesteTilstand } from '../utils/ksTjeneste.js';
 
 export default function Toolbox({
   themeMode,
@@ -14,18 +14,15 @@ export default function Toolbox({
   onOpenClass,
   editPermission,
   onToggleLock,
-  onOpenTimePicker,
-  timePickerOpen,
-  onCloseTimePicker,
-  onApplyTime,
   currentClass,
   onAddCountdown,
   onToggleCountdownVisibility,
   onEnterWallMode,
-  onPresent,
 }) {
   const [open, setOpen] = useState(false);
-  const [omOpen, setOmOpen] = useState(false);
+  const [tjeneste] = useState(() => skoleTjeneste());
+  const { elev } = useSyncExternalStore(lyttTilTjeneste, lesTjenesteTilstand);
+  const elevmodus = !!tjeneste && elev;
   const containerRef = useRef(null);
   const timerRef = useRef(null);
   // Starter med navnet «Verktøy», krymper til bare kofferten når ingen rører skjermen
@@ -59,7 +56,6 @@ export default function Toolbox({
   useEffect(() => {
     if (!open) return;
     function handleMouseMove(e) {
-      if (timePickerOpen) { resetTimer(); return; }
       const container = containerRef.current;
       if (!container) return;
 
@@ -88,7 +84,7 @@ export default function Toolbox({
     }
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [open, timePickerOpen]);
+  }, [open]);
 
   return (
     <div className={`toolbox-container${open ? ' active' : ''}${navnSynlig ? '' : ' er-rolig'}`} id="toolbox-container" ref={containerRef}>
@@ -107,9 +103,17 @@ export default function Toolbox({
       ><Ikon navn="verktoykasse" /><span className="toolbox-main-label">Verktøy</span></div>
 
       <div className="toolbox-items">
-        {/* Theme Switch */}
-        <div className="toolbox-item theme-switch-tool" id="tool-mode" onClick={e => e.stopPropagation()}>
-          <ThemeSwitch themeMode={themeMode} onSetTheme={mode => { onSetTheme(mode); resetTimer(); }} />
+        {/* Gruppert etter hvor ofte læreren trenger det: det som brukes i hver time
+            øverst, det som styrer hva skjermen viser i midten, oppsett nederst */}
+        <p className="toolbox-gruppe" aria-hidden="true">I timen</p>
+
+        <div className="toolbox-item" id="tool-timer" role="button" onClick={e => {
+          e.stopPropagation();
+          onOpenTimer();
+          resetTimer();
+        }}>
+          <span className="icon"><Ikon navn="timer" /></span>
+          <span className="label">Nedteller</span>
         </div>
 
         {/* Sett opp dagens time: tittel, tid, mål og agenda */}
@@ -122,31 +126,25 @@ export default function Toolbox({
           <span className="label">Sett opp timen</span>
         </div>
 
-        {/* Timer */}
-        <div className="toolbox-item" id="tool-timer" onClick={e => {
+        <div className="toolbox-item" id="tool-agenda" role="button" onClick={e => {
           e.stopPropagation();
-          onOpenTimer();
-          resetTimer();
+          onOpenAgenda();
+          closeToolbox();
         }}>
-          <span className="icon"><Ikon navn="timer" /></span>
-          <span className="label">Nedteller</span>
+          <span className="icon"><Ikon navn="list-checks" /></span>
+          <span className="label">Agenda</span>
         </div>
 
-        {/* Vis for klassen: fullskjerm og ren elevvisning, Esc for å gå tilbake */}
-        {onPresent && (
-          <div className="toolbox-item" id="vis-for-klassen" role="button"
-            title="Fullskjerm for klassen, uten verktøyene. Esc for å gå tilbake."
-            onClick={e => {
-              e.stopPropagation();
-              closeToolbox();
-              onPresent();
-            }}>
-            <span className="icon"><Ikon navn="presentation" /></span>
-            <span className="label">Vis for klassen</span>
-          </div>
-        )}
+        <div className="toolbox-item" id="tool-note" role="button" onClick={e => {
+          e.stopPropagation();
+          onOpenNote();
+        }}>
+          <span className="icon"><Ikon navn="notebook-pen" /></span>
+          <span className="label">Notat</span>
+        </div>
 
-        {/* Countdown */}
+        <p className="toolbox-gruppe" aria-hidden="true">På skjermen</p>
+
         <div className="toolbox-item countdown-tool" id="tool-countdown"
           onClick={e => e.stopPropagation()}
           onMouseDown={e => e.stopPropagation()}
@@ -185,50 +183,7 @@ export default function Toolbox({
           </div>
         </div>
 
-        {/* Agenda */}
-        <div className="toolbox-item" id="tool-agenda" onClick={e => {
-          e.stopPropagation();
-          onOpenAgenda();
-          closeToolbox();
-        }}>
-          <span className="icon"><Ikon navn="list-checks" /></span>
-          <span className="label">Agenda</span>
-        </div>
-
-        {/* Note */}
-        <div className="toolbox-item" id="tool-note" onClick={e => {
-          e.stopPropagation();
-          onOpenNote();
-        }}>
-          <span className="icon"><Ikon navn="notebook-pen" /></span>
-          <span className="label">Notat</span>
-        </div>
-
-        {/* Class */}
-        <div className="toolbox-item" id="tool-class" onClick={e => {
-          e.stopPropagation();
-          onOpenClass();
-        }}>
-          <span className="icon"><Ikon navn="school" /></span>
-          <span className="label">Klasse og timeplan</span>
-        </div>
-
-        {/* Calendar / Time Picker */}
-        <div className="toolbox-item" id="tool-calendar" onClick={e => {
-          e.stopPropagation();
-          if (timePickerOpen) {
-            onCloseTimePicker();
-          } else {
-            onOpenTimePicker();
-            closeToolbox();
-          }
-        }}>
-          <span className="icon"><Ikon navn="calendar-clock" /></span>
-          <span className="label">Velg tid</span>
-        </div>
-
-        {/* Veggskjerm */}
-        <div className="toolbox-item" id="tool-wall" onClick={e => {
+        <div className="toolbox-item" id="tool-wall" role="button" onClick={e => {
           e.stopPropagation();
           closeToolbox();
           onEnterWallMode?.();
@@ -237,17 +192,40 @@ export default function Toolbox({
           <span className="label">Veggskjerm</span>
         </div>
 
-        {/* Lås, og signaturen ved siden av: samme rad, så lista ikke blir lengre */}
-        <div className="toolbox-siste-rad">
-          <div className="toolbox-item" id="tool-lock" onClick={() => onToggleLock()}>
+        <div className="toolbox-item theme-switch-tool" id="tool-mode" onClick={e => e.stopPropagation()}>
+          <ThemeSwitch themeMode={themeMode} onSetTheme={mode => { onSetTheme(mode); resetTimer(); }} />
+        </div>
+
+        <p className="toolbox-gruppe" aria-hidden="true">Oppsett</p>
+
+        <div className="toolbox-item" id="tool-class" role="button" onClick={e => {
+          e.stopPropagation();
+          closeToolbox();
+          onOpenClass();
+        }}>
+          <span className="icon"><Ikon navn="school" /></span>
+          <span className="label">Klasse og timeplan</span>
+        </div>
+
+        {/* Elevmodus på skolens adresse: i stedet for «Lås opp» kan en lærer logge inn med Feide */}
+        {elevmodus ? (
+          <div className="toolbox-item" id="tool-teacher-login" role="button"
+            title="Gå ut av elevmodus og logg inn med Feide"
+            onClick={e => {
+              e.stopPropagation();
+              forlatElev();
+              window.location.assign(innloggingsadresse(tjeneste));
+            }}>
+            <span className="icon"><Ikon navn="lock" /></span>
+            <span className="label">Logg inn som lærer</span>
+          </div>
+        ) : (
+          <div className="toolbox-item" id="tool-lock" role="button" onClick={() => onToggleLock()}>
             <span className="icon" id="lock-icon"><Ikon navn={editPermission ? 'lock-open' : 'lock'} /></span>
             <span className="label" id="lock-label">{editPermission ? 'Låst opp' : 'Lås opp'}</span>
           </div>
-          <Signatur onClick={() => { closeToolbox(); setOmOpen(true); }} />
-        </div>
+        )}
       </div>
-
-      {omOpen && <OmKlasseskjerm onClose={() => setOmOpen(false)} />}
 
     </div>
   );

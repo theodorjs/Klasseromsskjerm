@@ -113,7 +113,7 @@ body.velkomst-aktiv .timer-launch { display: none; }
 
 .fm-valg {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 10px;
 }
 
@@ -174,12 +174,10 @@ body.velkomst-aktiv .timer-launch { display: none; }
     font-weight: 800;
 }
 
-/* iPad på høykant og smalere skjermer: tre og tre */
+/* iPad på høykant og smalere skjermer: hovedvalget over hele bredden, de tre andre under */
 @media (max-width: 1100px) {
     .fm-valg { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .fm-knapp--hoved { grid-row: span 2; flex-direction: column; justify-content: center; text-align: center; }
-    .fm-knapp--hoved .fm-knapp-tekst { align-items: center; }
-    .fm-knapp--hoved .fm-knapp-ikon { font-size: 2.2rem; }
+    .fm-knapp--hoved { grid-column: 1 / -1; }
 }
 
 /* Lave skjermer (bærbar på projektor): kortere kort, så «Akkurat nå» får være i fred */
@@ -204,9 +202,8 @@ body.velkomst-aktiv .timer-launch { display: none; }
 @media (max-width: 600px) {
     .fm-kort { bottom: 92px; max-width: calc(100% - 24px); padding: 16px; }
     .fm-topp { flex-wrap: wrap; }
-    .fm-valg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .fm-knapp--hoved { grid-row: auto; grid-column: span 2; flex-direction: row; text-align: left; }
-    .fm-knapp--hoved .fm-knapp-tekst { align-items: flex-start; }
+    .fm-valg { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .fm-knapp:not(.fm-knapp--hoved) { flex-direction: column; justify-content: center; text-align: center; gap: 4px; padding: 8px 6px; }
     .fm-knapp-hint { display: none; }
 }
 

@@ -7,8 +7,8 @@ export const ROLIG_ETTER_MS = 2500;
 
 /**
  * Knapper som starter fullt ut med tekst og krymper til bare symbolet
- * når ingen rører mus, skjerm eller tastatur. Brukes av Tilbake i
- * «Vis for klassen», Avslutt på veggskjermen og Verktøy.
+ * når ingen rører mus, skjerm eller tastatur. Brukes av
+ * Avslutt på veggskjermen og Verktøy.
  *
  * Med `aktiv: false` står knappen i ro; idet den blir aktiv, starter den
  * fullt ut på nytt (for knapper i et panel som åpnes og lukkes).

@@ -109,7 +109,7 @@ export function minTekst(n) {
 }
 
 /**
- * Hvor timen står akkurat nå: samme tekst på tavla, i «Vis for klassen» og
+ * Hvor timen står akkurat nå: samme tekst på tavla og
  * på elevens iPad. naaIndex er agendapunktet klassen er på (første som ikke
  * er krysset av), bare mens timen pågår.
  */

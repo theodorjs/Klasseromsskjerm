@@ -2,8 +2,8 @@
    Del: bursdager
    En tegnet ballong med navnet til eleven, først i raden med «Dager til»
    (samme plass og samme høyde, så den aldri dekker noe). Ballongen stiger
-   opp når den dukker opp og vaier rolig etterpå. Stående iPad, «Vis for
-   klassen» og veggskjermen viser den samme ballongen der de har plass.
+   opp når den dukker opp og vaier rolig etterpå. Stående iPad og
+   veggskjermen viser den samme ballongen der de har plass.
    ═══════════════════════════════════════════════════════════════════ */
 
 .countdown-card.bursdag-kort {
@@ -42,7 +42,6 @@
 @media (prefers-reduced-motion: no-preference) {
     .bursdag-ballong,
     .ep-bursdag .ballong,
-    .presentasjon-bursdag .ballong,
     .vegg-bursdag .ballong {
         animation: ballong-stig 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) both, ballong-vai 5s ease-in-out 1.4s infinite;
         transform-origin: 50% 100%;
@@ -75,15 +74,13 @@
 .ep-bursdag .ballong { width: 1.3em; height: 2em; margin: -0.4em 0 -0.2em; flex: 0 0 auto; }
 .ep-bursdag b { font-weight: 900; }
 
-/* ── «Vis for klassen» og veggskjermen: én linje under datoen ── */
-.presentasjon-bursdag,
+/* ── Veggskjermen: én linje under datoen ── */
 .vegg-bursdag {
     display: inline-flex;
     align-items: center;
     gap: 0.4em;
     font-weight: 800;
 }
-.presentasjon-bursdag .ballong,
 .vegg-bursdag .ballong { width: 1.1em; height: 1.75em; margin: -0.35em 0 -0.15em; flex: 0 0 auto; }
 
 .vegg-bursdager {
