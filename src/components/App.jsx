@@ -13,7 +13,6 @@ import Toolbox from './Toolbox.jsx';
 import TimePicker from './TimePicker.jsx';
 import CountdownStack from './CountdownStack.jsx';
 import TimerPanel from './TimerPanel.jsx';
-import AgendaSidebar from './AgendaSidebar.jsx';
 import NotePanel from './NotePanel.jsx';
 import SplitScreen from './SplitScreen.jsx';
 import ShareModal from './ShareModal.jsx';
@@ -23,15 +22,14 @@ import { getCurrentSubjectColor } from '../utils/color.js';
 import WallScreen from './WallScreen.jsx';
 import ForsteMote from './ForsteMote.jsx';
 import { DagensTimeKort, PlanleggTimeDialog } from './DagensTime.jsx';
-import { useDagensTime, finnSynligTime, dagensDato } from '../hooks/useDagensTime.js';
+import { useDagensTime, finnSynligTime, dagensDato, timeTittel } from '../hooks/useDagensTime.js';
 import { formatMinutesAsTime } from '../utils/time.js';
-import { formatExpandedActivityDisplay } from '../utils/schedule.js';
+import { formatExpandedActivityDisplay, normalizeSubjectLabel, getStoredSubjectEmoji } from '../utils/schedule.js';
 import useBursdager from '../hooks/useBursdager.js';
 import { readWallModePreference, WALL_MODE_KEY } from '../utils/wallMode.js';
 import { safeSetItem, safeRemoveItem } from '../utils/storage.js';
 import {
   EditModal,
-  ActivityModal,
   CountdownModal,
   LoginModal,
   ColorDetailModal,
@@ -49,18 +47,15 @@ export default function App() {
     simState,
     themeMode,
     timerPanelOpen, setTimerPanelOpen,
-    agendaOpen, setAgendaOpen,
     noteOpen, setNoteOpen,
     underTheHoodOpen, setUnderTheHoodOpen,
     underTheHoodView, setUnderTheHoodView,
     scheduleEditorDraft, setScheduleEditorDraft,  // eslint-disable-line no-unused-vars
     timePickerOpen, setTimePickerOpen,
     editModal, setEditModal,
-    activityModal, setActivityModal,
     countdownModal, setCountdownModal,
     loginModalOpen, setLoginModalOpen,
     colorDetailModal, setColorDetailModal,
-    agendaSubject, setAgendaSubject,
     selectClass,
     toggleTimelineClass,
     renameCurrentClass,
@@ -75,13 +70,7 @@ export default function App() {
     saveCountdown,
     deleteCountdown,
     toggleCountdownVisibility,
-    saveAgendaItem,
-    toggleAgendaItemCompleted,
-    deleteAgendaItem,
-    reorderAgendaItems,
-    clearAgenda,
-    saveAgendaTemplate,
-    loadAgendaTemplate,
+    lagreTimeMal,
     saveSubjectColor,
     generatePalette,
     saveScheduleFromDraft,  // eslint-disable-line no-unused-vars
@@ -92,10 +81,12 @@ export default function App() {
     lastImportInfo,
   } = state;
 
-  // Dagens time: tittel, tid, mål og agenda på tavla
+  // «Agenda for timen»: tittel, tid, mål og agenda på tavla
   const dagensTime = useDagensTime();
   const [planleggOpen, setPlanleggOpen] = useState(false);
   const [planleggId, setPlanleggId] = useState(null);
+  // Forslaget fryses når dialogen åpnes, så faget ikke bytter ved et timeskifte
+  const [planleggForslag, setPlanleggForslag] = useState(null);
 
   // Clock tick state
   const [tick, setTick] = useState(0);  // eslint-disable-line no-unused-vars
@@ -206,21 +197,45 @@ export default function App() {
   // Timen som står på tavla nå, og forslag til tid når en ny time settes opp
   const synligTime = finnSynligTime(dagensTime.timer, dagensDato(), currentDay, currentMinutes);
   const planleggEksisterende = planleggId ? (dagensTime.timer.find(t => t.id === planleggId) || null) : null;
+  function dagensOkter() {
+    return (primaryState?.normalizedDayEvents || []).filter(e => e.type === 'class');
+  }
+  function fagForOkt(okt) {
+    if (!okt) return { fag: '', fagNokkel: '' };
+    const aktivitet = okt.displayActivity || okt.activity;
+    return {
+      fag: formatExpandedActivityDisplay(aktivitet).split(' / ')[0],
+      // Nøkkelen malen lagres under (samme form som fagfargene)
+      fagNokkel: normalizeSubjectLabel(String(aktivitet || '').split('/')[0]),
+    };
+  }
+  // Faget i timeplanen på et klokkeslett: følger med når læreren endrer starttiden
+  function fagVed(minutter) {
+    return fagForOkt(dagensOkter().find(e => minutter >= e.start && minutter < e.end));
+  }
   function lagForslag() {
-    const okter = (primaryState?.normalizedDayEvents || []).filter(e => e.type === 'class');
+    const okter = dagensOkter();
     const okt = okter.find(e => currentMinutes >= e.start && currentMinutes < e.end)
       || okter.find(e => e.start > currentMinutes);
     if (okt) {
       return {
         fra: formatMinutesAsTime(okt.start),
         til: formatMinutesAsTime(okt.end),
-        fag: formatExpandedActivityDisplay(okt.displayActivity || okt.activity).split(' / ')[0],
+        ...fagForOkt(okt),
       };
     }
     const start = Math.min(23 * 60, Math.ceil((currentMinutes + 1) / 5) * 5);
-    return { fra: formatMinutesAsTime(start), til: formatMinutesAsTime(Math.min(start + 45, 23 * 60 + 59)), fag: '' };
+    return { fra: formatMinutesAsTime(start), til: formatMinutesAsTime(Math.min(start + 45, 23 * 60 + 59)), fag: '', fagNokkel: '' };
+  }
+  // Fagets symbol og farge, som på «Akkurat nå»: øverst på kortet og i dialogen
+  function fagMerke(fagNokkel) {
+    if (!fagNokkel || !currentClass) return null;
+    const symbol = getStoredSubjectEmoji(currentClassName, fagNokkel, { [currentClassName]: currentClass });
+    const farge = getCurrentSubjectColor({ currentActivity: fagNokkel, classData: currentClass })?.color || null;
+    return { symbol: symbol && symbol !== 'circle-help' ? symbol : null, farge };
   }
   function openPlanlegg(id) {
+    setPlanleggForslag(lagForslag());
     setPlanleggId(id ?? synligTime?.id ?? null);
     setPlanleggOpen(true);
   }
@@ -308,7 +323,6 @@ export default function App() {
             onSetTheme={setThemeMode}
             onOpenTimer={() => setTimerPanelOpen(true)}
             onOpenPlanlegg={() => openPlanlegg()}
-            onOpenAgenda={() => setAgendaOpen(true)}
             onOpenNote={() => setNoteOpen(true)}
             onOpenClass={() => { setUnderTheHoodOpen(true); setUnderTheHoodView('classGrid'); }}
             currentClass={currentClass}
@@ -319,6 +333,7 @@ export default function App() {
           {synligTime ? (
             <DagensTimeKort
               time={synligTime}
+              merke={fagMerke(synligTime.fagNokkel)}
               minutter={currentMinutes}
               onEndre={() => openPlanlegg(synligTime.id)}
               onSkjul={() => dagensTime.skjulTime(synligTime.id)}
@@ -408,7 +423,7 @@ export default function App() {
         onRequestOpen={() => setTimerPanelOpen(true)}
         subjectColor={currentSubject?.color || null}
         subjectName={currentSubject?.name || null}
-        lessonTitle={synligTime?.tittel || null}
+        lessonTitle={synligTime ? (timeTittel(synligTime) || null) : null}
       />
 
       <TimePicker
@@ -472,23 +487,6 @@ export default function App() {
         onClose={() => setReceiveState(null)}
       />
 
-      <AgendaSidebar
-        open={agendaOpen}
-        onClose={() => setAgendaOpen(false)}
-        currentClass={currentClass}
-        agendaSubject={agendaSubject}
-        onSetSubject={setAgendaSubject}
-        editPermission={editPermission}
-        onAddItem={(subject) => setActivityModal({ subject, item: null, itemIndex: null })}
-        onEditItem={(subject, item, index) => setActivityModal({ subject, item, itemIndex: index })}
-        onToggleItem={toggleAgendaItemCompleted}
-        onDeleteItem={deleteAgendaItem}
-        onReorder={reorderAgendaItems}
-        onClearAgenda={clearAgenda}
-        onSaveTemplate={saveAgendaTemplate}
-        onLoadTemplate={loadAgendaTemplate}
-      />
-
       <NotePanel
         open={noteOpen}
         onClose={() => setNoteOpen(false)}
@@ -497,7 +495,12 @@ export default function App() {
       <PlanleggTimeDialog
         open={planleggOpen}
         eksisterende={planleggEksisterende}
-        forslag={planleggOpen ? lagForslag() : null}
+        forslag={planleggForslag}
+        fagVed={fagVed}
+        maler={currentClass?.timeMaler || {}}
+        merkeFor={fagMerke}
+        editPermission={editPermission}
+        onLagreMal={lagreTimeMal}
         minutter={currentMinutes}
         dag={currentDay}
         onLagre={(time) => { dagensTime.lagreTime(time); setPlanleggOpen(false); }}
@@ -534,20 +537,6 @@ export default function App() {
           setEditModal(null);
         }}
         onCancel={() => setEditModal(null)}
-      />
-
-      <ActivityModal
-        open={!!activityModal}
-        subject={activityModal?.subject || ''}
-        item={activityModal?.item || null}
-        itemIndex={activityModal?.itemIndex ?? null}
-        onSave={(payload, itemIndex) => {
-          if (activityModal?.subject) {
-            saveAgendaItem(activityModal.subject, payload, itemIndex);
-          }
-          setActivityModal(null);
-        }}
-        onCancel={() => setActivityModal(null)}
       />
 
       <CountdownModal

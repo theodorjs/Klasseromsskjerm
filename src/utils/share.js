@@ -6,7 +6,7 @@
  *
  * #-delen sendes aldri til serveren, så ingen data forlater enheten før
  * mottakeren selv velger «Legg til». Payloaden inneholder bare timeplan,
- * pauser, fagfarger og emoji – aldri agenda, notater eller nedtellinger.
+ * pauser, fagfarger og emoji – aldri agendamaler, notater eller nedtellinger.
  *
  * Formatet er versjonert (v) slik at det senere kan brukes uendret mot en
  * skytjeneste (PRD Fase 1).
@@ -339,8 +339,7 @@ export function buildClassFromSharePayload(payload, existingClass) {
     : getDefaultMultiGradeLabels(payload.name);
 
   if (!existingClass) {
-    base.agendas = {};
-    base.templates = {};
+    base.timeMaler = {};
     base.customCountdowns = [];
     base.countdownsVisible = true;
   }

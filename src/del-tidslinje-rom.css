@@ -62,7 +62,7 @@ body.tidslinje-hoy.har-dager-til:not(.vegg-aktiv) .hs-skive .tt-dial {
     }
 }
 
-/* «Sett opp timen»-kortet: samme regel som over, med plass til knappen */
+/* «Agenda for timen»-kortet: samme regel som over, med plass til knappen */
 body.tidslinje-hoy:not(.vegg-aktiv) #main-container.dagens-time {
     top: calc(50% - 38px - var(--tidslinje-ekstra) / 2);
     max-height: calc(100vh - 262px - var(--topp) - var(--tidslinje-ekstra));

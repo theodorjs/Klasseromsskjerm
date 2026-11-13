@@ -8,7 +8,6 @@ export default function Toolbox({
   onSetTheme,
   onOpenTimer,
   onOpenPlanlegg,
-  onOpenAgenda,
   onOpenNote,
   onOpenClass,
   currentClass,
@@ -110,23 +109,14 @@ export default function Toolbox({
           <span className="label">Nedteller</span>
         </div>
 
-        {/* Sett opp dagens time: tittel, tid, mål og agenda */}
+        {/* «Agenda for timen»: agendapunkter, og ved behov tittel, tid og mål */}
         <div className="toolbox-item toolbox-item--time" id="tool-plan" role="button" onClick={e => {
           e.stopPropagation();
           closeToolbox();
           onOpenPlanlegg?.();
         }}>
-          <span className="icon"><Ikon navn="clipboard-list" /></span>
-          <span className="label">Sett opp timen</span>
-        </div>
-
-        <div className="toolbox-item" id="tool-agenda" role="button" onClick={e => {
-          e.stopPropagation();
-          onOpenAgenda();
-          closeToolbox();
-        }}>
           <span className="icon"><Ikon navn="list-checks" /></span>
-          <span className="label">Agenda</span>
+          <span className="label">Agenda for timen</span>
         </div>
 
         <div className="toolbox-item" id="tool-note" role="button" onClick={e => {

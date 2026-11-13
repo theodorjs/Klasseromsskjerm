@@ -14,13 +14,12 @@ import {
   formatExpandedActivityDisplay,
   getStoredSubjectEmoji,
   getTempScheduleKey,
-  normalizeSubjectLabel,
   stripGradeSuffix,
   getCountdownRemainingDisplay,
 } from '../utils/schedule.js';
 import { getSubjectDefaultColor, getCurrentSubjectColor, normalizeHexColor } from '../utils/color.js';
 import { TIMER_CLASSIC_RED, loadTimerSettings, readTimerStatus, formatTimerReadout } from '../utils/timer.js';
-import { timeStatus } from '../hooks/useDagensTime.js';
+import { timeStatus, timeTittel } from '../hooks/useDagensTime.js';
 
 /**
  * Stående skjerm (elevenes iPad, mobil): hovedskjermen og den liggende
@@ -69,18 +68,6 @@ function fargerForOkt(classData, activity) {
   }).filter(c => c && c.toLowerCase() !== '#ffffff');
 }
 
-/** Gjøremålene læreren har lagt inn for faget/fagene i økta. */
-function gjoremalForOkt(classData, activity) {
-  const agendas = classData?.agendas || {};
-  const items = [];
-  String(activity || '').split('/').forEach(part => {
-    const key = normalizeSubjectLabel(part);
-    const list = agendas[key] || agendas[stripGradeSuffix(key)] || [];
-    list.forEach(item => { if (item && item.name) items.push(item); });
-  });
-  return items;
-}
-
 /** Lista ruller selv bare når dagen har mange økter; da holdes timen som pågår i syne. */
 function PlanListe({ fokusIdx, children }) {
   const ref = useRef(null);
@@ -120,7 +107,6 @@ function Plan({ state, classes, minutter, erIDag, editPermission, onOpenEditModa
         const aksent = (!isBreak && hovedfarge) ? hovedfarge : TIMER_CLASSIC_RED;
         const symbol = getStoredSubjectEmoji(state.className, activity.split('/')[0], classes);
         const andel = naa ? Math.min(1, Math.max(0, (minutter - event.start) / Math.max(1, event.end - event.start))) : 0;
-        const gjoremal = naa && !isBreak ? gjoremalForOkt(state.classData, activity) : [];
         const laererTekst = formatEventTeachers(event, state.classData, state.className);
 
         const liKlasse = `ep-li${isBreak ? ' li-pause' : ''}${naa ? ' li-naa' : ''}`;
@@ -164,17 +150,6 @@ function Plan({ state, classes, minutter, erIDag, editPermission, onOpenEditModa
             <span className="ep-navn">
               {linjer.map((l, i) => <span key={i} className="ep-navn-linje">{l}</span>)}
               {laererTekst && <span className="ep-navn-laerer">{laererTekst}</span>}
-              {gjoremal.length > 0 && (
-                <span className="ep-gjoremal">
-                  {gjoremal.slice(0, 4).map((g, i) => (
-                    <span key={i} className={`ep-gjoremal-punkt${g.completed ? ' er-gjort' : ''}`}>
-                      <Ikon navn={g.completed ? 'circle-check' : 'minus'} />
-                      {g.name}{g.duration ? ` (${g.duration} min)` : ''}
-                    </span>
-                  ))}
-                  {gjoremal.length > 4 && <span className="ep-gjoremal-punkt">+{gjoremal.length - 4} til</span>}
-                </span>
-              )}
             </span>
             {status}
           </>
@@ -323,7 +298,7 @@ export default function ElevPortrett({
     || normalizeHexColor(getCurrentSubjectColor(primaryState)?.color)
     || TIMER_CLASSIC_RED;
 
-  // Timen læreren har satt opp («Sett opp timen»)
+  // Agendaen læreren har satt opp («Agenda for timen»)
   const time = dagensTime ? timeStatus(dagensTime, currentMinutes) : null;
 
   const visNedtellinger = countdownsVisible !== false && countdowns.length > 0;
@@ -376,7 +351,7 @@ export default function ElevPortrett({
       {dagensTime && (
         <section className="ep-time" aria-label="Dagens time">
           <div className="ep-time-topp">
-            {dagensTime.tittel && <h2 className="ep-time-tittel">{dagensTime.tittel}</h2>}
+            {timeTittel(dagensTime) && <h2 className="ep-time-tittel">{timeTittel(dagensTime)}</h2>}
             <span className="ep-time-tid">
               {dagensTime.fra}–{dagensTime.til}{time.status ? ` · ${time.status}` : ''}
             </span>

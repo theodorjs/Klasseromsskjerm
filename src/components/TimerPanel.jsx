@@ -283,7 +283,7 @@ export default function TimerPanel({ open, onClose, onRequestOpen, subjectColor,
   const readout = formatTimerReadout(remainingMs);
   const task = settings.task || '';
   const subjectDot = normalizeHexColor(subjectColor);
-  // Har læreren satt opp timen («Sett opp timen»), står tittelen dens øverst i stedet for faget
+  // Har læreren satt opp «Agenda for timen», står tittelen dens øverst i stedet for faget
   const bigHeading = lessonTitle || subjectName;
   const doneClock = done ? formatClock(run?.doneAt) : '';
   const durationMinutes = Math.round(settings.durationMs / 60000);

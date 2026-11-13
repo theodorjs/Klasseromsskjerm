@@ -3,11 +3,11 @@ import { safeGetItem } from '../utils/storage.js';
 import { getOsloTimeAndDay, getMinutesFromTime } from '../utils/time.js';
 import { getClassScheduleState } from '../utils/schedule.js';
 import { getCurrentSubjectColor } from '../utils/color.js';
-import { lesTimer, finnSynligTime, dagensDato, DAGENS_TIME_KEY } from './useDagensTime.js';
+import { lesTimer, finnSynligTime, dagensDato, timeTittel, DAGENS_TIME_KEY } from './useDagensTime.js';
 
 const INGEN = { color: null, name: null, lessonTitle: null };
 
-/** Nøklene hovedsiden lagrer timeplanen og «Sett opp timen» under. */
+/** Nøklene hovedsiden lagrer timeplanen og «Agenda for timen» under. */
 const KILDER = ['klasseromData', 'currentClassName', DAGENS_TIME_KEY];
 
 /**
@@ -35,7 +35,7 @@ export function lesFagNaa() {
     return {
       color: fag?.color || null,
       name: fag?.name || null,
-      lessonTitle: time?.tittel || null,
+      lessonTitle: (time && timeTittel(time)) || null,
     };
   } catch (err) {
     console.warn('Kunne ikke lese timeplanen for nedtelleren:', err);

@@ -75,7 +75,7 @@
     font-size: 1rem;
 }
 
-/* «Sett opp timen»-kortet holder seg mellom topplinja og Nedteller-knappen.
+/* «Agenda for timen»-kortet holder seg mellom topplinja og Nedteller-knappen.
    Knappen står rett over tidslinja, så kortet får mest mulig høyde. */
 .timer-launch { bottom: 92px; }
 #main-container.dagens-time {

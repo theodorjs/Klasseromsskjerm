@@ -268,7 +268,6 @@ export function useAppState() {
 
   // UI panel visibility
   const [timerPanelOpen, setTimerPanelOpen] = useState(false);
-  const [agendaOpen, setAgendaOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [underTheHoodOpen, setUnderTheHoodOpen] = useState(false);
   const [underTheHoodView, setUnderTheHoodView] = useState('classGrid');
@@ -278,13 +277,9 @@ export function useAppState() {
 
   // Modal states
   const [editModal, setEditModal] = useState(null);
-  const [activityModal, setActivityModal] = useState(null);
   const [countdownModal, setCountdownModal] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [colorDetailModal, setColorDetailModal] = useState(null);
-
-  // Agenda subject selection
-  const [agendaSubject, setAgendaSubject] = useState('');
 
   // Siste mottatte deling – gjør «Angre» mulig, også etter at dialogen er lukket
   const [lastImportBackup, setLastImportBackup] = useState(() => loadLastImport());
@@ -528,91 +523,17 @@ export function useAppState() {
     });
   }, [currentClassName]);
 
-  // Agenda actions
-  const saveAgendaItem = useCallback((subject, payload, editingIndex) => {
+  // «Agenda for timen»: lagre (eller fjerne, med null) malen for et fag i klassen
+  const lagreTimeMal = useCallback((fagNokkel, mal) => {
+    if (!fagNokkel) return;
     setClassesState(prev => {
       if (!prev[currentClassName]) return prev;
-      // Kopier før endring (se saveCountdown): ellers dobbelt gjøremål i StrictMode
       const cd = { ...prev[currentClassName] };
+      const maler = { ...(cd.timeMaler || {}) };
+      if (mal) maler[fagNokkel] = { maal: mal.maal || '', punkter: [...(mal.punkter || [])] };
+      else delete maler[fagNokkel];
+      cd.timeMaler = maler;
       const newClasses = { ...prev, [currentClassName]: cd };
-      const list = [...((cd.agendas || {})[subject] || [])];
-      if (editingIndex !== null && list[editingIndex] !== undefined) {
-        const existing = list[editingIndex];
-        list[editingIndex] = { ...existing, ...payload, completed: existing.completed };
-      } else {
-        list.push(payload);
-      }
-      cd.agendas = { ...(cd.agendas || {}), [subject]: list };
-      safeSetItem('klasseromData', JSON.stringify(newClasses));
-      return newClasses;
-    });
-  }, [currentClassName]);
-
-  const toggleAgendaItemCompleted = useCallback((subject, index) => {
-    setClassesState(prev => {
-      const newClasses = { ...prev };
-      const cd = newClasses[currentClassName];
-      if (cd?.agendas?.[subject]?.[index] === undefined) return prev;
-      cd.agendas[subject][index].completed = !cd.agendas[subject][index].completed;
-      safeSetItem('klasseromData', JSON.stringify(newClasses));
-      return newClasses;
-    });
-  }, [currentClassName]);
-
-  const deleteAgendaItem = useCallback((subject, index) => {
-    setClassesState(prev => {
-      const newClasses = { ...prev };
-      const cd = newClasses[currentClassName];
-      if (!cd?.agendas?.[subject]) return prev;
-      cd.agendas[subject] = cd.agendas[subject].filter((_, i) => i !== index);
-      safeSetItem('klasseromData', JSON.stringify(newClasses));
-      return newClasses;
-    });
-  }, [currentClassName]);
-
-  const reorderAgendaItems = useCallback((subject, newItems) => {
-    setClassesState(prev => {
-      const newClasses = { ...prev };
-      const cd = newClasses[currentClassName];
-      if (!cd) return prev;
-      if (!cd.agendas) cd.agendas = {};
-      cd.agendas[subject] = newItems;
-      safeSetItem('klasseromData', JSON.stringify(newClasses));
-      return newClasses;
-    });
-  }, [currentClassName]);
-
-  const clearAgenda = useCallback((subject) => {
-    setClassesState(prev => {
-      const newClasses = { ...prev };
-      const cd = newClasses[currentClassName];
-      if (!cd) return prev;
-      if (!cd.agendas) cd.agendas = {};
-      cd.agendas[subject] = [];
-      safeSetItem('klasseromData', JSON.stringify(newClasses));
-      return newClasses;
-    });
-  }, [currentClassName]);
-
-  const saveAgendaTemplate = useCallback((subject) => {
-    setClassesState(prev => {
-      const newClasses = { ...prev };
-      const cd = newClasses[currentClassName];
-      if (!cd?.agendas?.[subject]?.length) return prev;
-      if (!cd.templates) cd.templates = {};
-      cd.templates[subject] = JSON.parse(JSON.stringify(cd.agendas[subject]));
-      safeSetItem('klasseromData', JSON.stringify(newClasses));
-      return newClasses;
-    });
-  }, [currentClassName]);
-
-  const loadAgendaTemplate = useCallback((subject) => {
-    setClassesState(prev => {
-      const newClasses = { ...prev };
-      const cd = newClasses[currentClassName];
-      if (!cd?.templates?.[subject]) return prev;
-      if (!cd.agendas) cd.agendas = {};
-      cd.agendas[subject] = JSON.parse(JSON.stringify(cd.templates[subject]));
       safeSetItem('klasseromData', JSON.stringify(newClasses));
       return newClasses;
     });
@@ -661,7 +582,7 @@ export function useAppState() {
   /**
    * Tar imot en delt timeplan (fra #del=-lenke). Erstatter timeplan, pauser,
    * farger og emoji for klassen med samme navn – eller oppretter den – og
-   * beholder lokal agenda og nedtellinger. Returnerer { replaced }.
+   * beholder lokale agendamaler og nedtellinger. Returnerer { replaced }.
    * Forrige versjon av akkurat denne klassen lagres, så «Angre» kan gjøres senere.
    */
   const importSharedClass = useCallback((payload) => {
@@ -826,7 +747,6 @@ export function useAppState() {
     themeMode,
     // Panel open states
     timerPanelOpen, setTimerPanelOpen,
-    agendaOpen, setAgendaOpen,
     noteOpen, setNoteOpen,
     underTheHoodOpen, setUnderTheHoodOpen,
     underTheHoodView, setUnderTheHoodView,
@@ -835,12 +755,9 @@ export function useAppState() {
     toolboxOpen, setToolboxOpen,
     // Modal states
     editModal, setEditModal,
-    activityModal, setActivityModal,
     countdownModal, setCountdownModal,
     loginModalOpen, setLoginModalOpen,
     colorDetailModal, setColorDetailModal,
-    // Agenda subject
-    agendaSubject, setAgendaSubject,
     // Actions
     selectClass,
     toggleTimelineClass,
@@ -857,13 +774,7 @@ export function useAppState() {
     saveCountdown,
     deleteCountdown,
     toggleCountdownVisibility,
-    saveAgendaItem,
-    toggleAgendaItemCompleted,
-    deleteAgendaItem,
-    reorderAgendaItems,
-    clearAgenda,
-    saveAgendaTemplate,
-    loadAgendaTemplate,
+    lagreTimeMal,
     saveSubjectColor,
     generatePalette,
     importSharedClass,

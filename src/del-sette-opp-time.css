@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   Dagens time: tittel, tid, læringsmål og agenda på tavla
+   «Agenda for timen»: tittel, tid, læringsmål og agenda på tavla
    Kortet er glass (elevene leser det, samme flate som «Akkurat nå»),
    dialogen og de små knappene er instrument.
    Safari 14: ingen color-mix(), ingen inset-snarvei.
@@ -192,7 +192,7 @@
     .dt-agenda.er-mange { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* ─── Verktøykassa: dagens time er det første valget ────────────── */
+/* ─── Verktøykassa: «Agenda for timen» ──────────────────────────── */
 
 .toolbox-item--time .icon { color: var(--ny); }
 
@@ -254,6 +254,57 @@
     box-shadow: none;
 }
 .dt-nytt-punkt { align-self: flex-start; }
+
+/* ─── Fagmerket: symbol i fagfargen, på kortet og i dialogen ──────── */
+.dt-fagmerke {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25em;
+    height: 1.25em;
+    border-radius: var(--radius-m);
+    vertical-align: -0.18em;
+}
+.dt-fagmerke .ikon, .dt-fagmerke .symbol { width: 0.78em; height: 0.78em; }
+.dt-fagmerke.is-noytral { background: var(--instrument-3); color: var(--tekst); }
+body.colorful-mode .dt-fagmerke.is-noytral { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.dt-tittel .dt-fagmerke { margin-right: 0.3em; font-size: 0.82em; }
+
+/* ─── Rask vei: faget og tiden på én linje øverst i dialogen ───── */
+.dt-sammendrag {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--instrument-kant);
+    border-radius: var(--radius-m);
+    background: var(--instrument-2);
+    font-size: 1.25rem;
+}
+.dt-sammendrag-fag { font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+.dt-sammendrag-tid { font-weight: 700; color: var(--tekst-dempet); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dt-sammendrag-endre { margin-left: auto; }
+
+/* Malen for faget: én knapp over punktene */
+.dt-bruk-mal { align-self: flex-start; min-height: 48px; white-space: normal; text-align: left; }
+.dt-bruk-mal-antall { font-weight: 600; opacity: 0.8; }
+
+/* «Nytt punkt» og «Læringsmål» på samme rad under punktene */
+.dt-tillegg { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Lagre som mal: stille rad nederst, under knappene som viser agendaen */
+.dt-mal-rad {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--instrument-kant);
+}
+.dt-mal-hint { font-size: 0.88rem; color: var(--tekst-dempet); }
+.dt-mal-hint:empty { display: none; }
 
 /* Eksempeltekst skal ikke kunne forveksles med noe som alt er fylt inn */
 .k-dialog--time .k-input::placeholder { color: var(--tekst-svak); font-weight: 500; font-style: italic; }

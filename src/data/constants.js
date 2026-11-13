@@ -116,8 +116,7 @@ export const defaultClassTemplate = {
     "Torsdag": cloneBreaks(),
     "Fredag": cloneBreaks()
   },
-  agendas: {},
-  templates: {},
+  timeMaler: {},
   subjectColors: pickSubjectColors(DEFAULT_CLASS_SUBJECTS),
   subjectEmojis: pickSubjectEmojis(DEFAULT_CLASS_SUBJECTS),
 

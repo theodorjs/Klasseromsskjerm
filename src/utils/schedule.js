@@ -382,14 +382,35 @@ export function ensureClassData(classData) {
     if (classData.subjectEmojis.Arbeidslivsfag === 'hammer') classData.subjectEmojis.Arbeidslivsfag = 'stige';
     classData.symbolVersjon = 2;
   }
-  classData.agendas = normalizeSubjectKeyMap(classData.agendas || {}, true);
-  classData.templates = normalizeSubjectKeyMap(classData.templates || {}, true);
+  // «Agenda for timen»: én mal per fag. Det gamle agendaverktøyet (agendas,
+  // templates) er borte, og dataene fra det tas ikke vare på.
+  classData.timeMaler = normaliserTimeMaler(classData.timeMaler);
+  delete classData.agendas;
+  delete classData.templates;
   classData.customCountdowns = normalizeCountdownEntries(classData.customCountdowns || []);
   classData.countdownsVisible = classData.countdownsVisible !== false;
   if (typeof classData.multiGradeMode !== 'boolean') {
     classData.multiGradeMode = extractGradesFromName(classData.name || '').length === 2;
   }
   classData.multiGradeLabels = getClassMultiGradeLabels(classData);
+}
+
+/**
+ * Maler for «Agenda for timen», per fag: { [fag]: { maal, punkter: [tekst] } }.
+ * Tomme maler og ugyldige verdier fjernes.
+ */
+export function normaliserTimeMaler(maler) {
+  const ut = {};
+  Object.entries(normalizeSubjectKeyMap(maler || {})).forEach(([fag, mal]) => {
+    if (!mal || typeof mal !== 'object') return;
+    const punkter = (Array.isArray(mal.punkter) ? mal.punkter : [])
+      .filter(t => typeof t === 'string')
+      .map(t => t.trim())
+      .filter(Boolean);
+    const maal = typeof mal.maal === 'string' ? mal.maal.trim() : '';
+    if (punkter.length || maal) ut[fag] = { maal, punkter };
+  });
+  return ut;
 }
 
 export function normalizeActiveTimelineClassNames(list, classes, currentClassName) {

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { safeGetItem, safeSetItem } from '../utils/storage.js';
 import { getOsloDateParts, getMinutesFromTime } from '../utils/time.js';
 
-/* Dagens time: tittel, tid, læringsmål og agenda som læreren setter opp for
+/* «Agenda for timen»: tittel, tid, læringsmål og agenda som læreren setter opp for
    én time i dag. Lagres for seg (ikke i klassedataene), gjelder bare denne
    skjermen og bare i dag, så den kan aldri ødelegge timeplanen. */
 
@@ -45,6 +45,9 @@ function rensTime(t) {
     dato: t.dato,
     dag: typeof t.dag === 'string' ? t.dag : '',
     tittel: typeof t.tittel === 'string' ? t.tittel : '',
+    // Faget fra timeplanen: vises når tittelen er tom, og velger malen
+    fag: typeof t.fag === 'string' ? t.fag : '',
+    fagNokkel: typeof t.fagNokkel === 'string' ? t.fagNokkel : '',
     fra,
     til,
     maal: typeof t.maal === 'string' ? t.maal : '',
@@ -95,6 +98,11 @@ export function finnSynligTime(timer, dato, dag, minutter) {
     }
   }
   return iVindu || festet;
+}
+
+/** Det som står øverst på kortet: egen tittel, ellers faget fra timeplanen. */
+export function timeTittel(time) {
+  return (time?.tittel || '').trim() || time?.fag || '';
 }
 
 /** «35 min», «1 t 10 min» */

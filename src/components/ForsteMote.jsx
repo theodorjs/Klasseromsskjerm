@@ -56,7 +56,7 @@ export default function ForsteMote({ klassenavn, skjult, onOpenPlanlegg, onOpenT
   // så sett opp timen, start nedtelleren eller skriv en beskjed.
   const valg = [
     { id: 'klasse', ikon: 'school', tittel: 'Velg din klasse', hint: 'Klasse og timeplan', handling: onOpenClass, hoved: true },
-    { id: 'time', ikon: 'clipboard-list', tittel: 'Sett opp timen', hint: 'Mål og agenda på tavla', handling: onOpenPlanlegg },
+    { id: 'time', ikon: 'list-checks', tittel: 'Agenda for timen', hint: 'Agenda og mål på tavla', handling: onOpenPlanlegg },
     { id: 'nedteller', ikon: 'timer', tittel: 'Nedteller', hint: 'Gi elevene en frist', handling: onOpenTimer },
     { id: 'notat', ikon: 'notebook-pen', tittel: 'Notat', hint: 'Skriv en beskjed', handling: onOpenNote },
   ];

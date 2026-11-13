@@ -552,18 +552,6 @@
         opacity: 0.72;
     }
 
-    .ep-gjoremal {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        margin-top: 4px;
-        font-size: clamp(0.95rem, 2.2vw, 1.35rem);
-        font-weight: 600;
-    }
-
-    .ep-gjoremal-punkt { display: flex; align-items: center; gap: 0.4em; }
-    .ep-gjoremal-punkt.er-gjort { opacity: 0.6; text-decoration: line-through; }
-
     .ep-status {
         flex: 0 0 auto;
         font-size: clamp(0.95rem, 2.4vw, 1.5rem);

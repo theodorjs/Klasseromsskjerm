@@ -50,72 +50,6 @@ function EditModalInner({ displayActivity, hasTempActivity, onSave, onReset, onC
   );
 }
 
-// ─── Gjøremål i agendaen ─────────────────────────────────────────────────────
-
-function ActivityModalInner({ item, itemIndex, subject, onSave, onCancel }) {
-  const [name, setName] = useState(item?.name || '');
-  const [emoji, setEmoji] = useState(item?.emoji || '');
-  const [duration, setDuration] = useState(item?.duration || '');
-  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const nameRef = useRef(null);
-
-  useEffect(() => {
-    const id = setTimeout(() => { nameRef.current?.focus(); nameRef.current?.select(); }, 50);
-    return () => clearTimeout(id);
-  }, []);
-
-  function handleSave() {
-    if (name.trim() && subject) {
-      onSave({ name: name.trim(), emoji, duration, completed: false }, itemIndex);
-    }
-  }
-
-  return (
-    <Dialog onClose={onCancel} title={item ? 'Rediger gjøremål' : 'Nytt gjøremål'}>
-      {subject && <Info>Legges i agendaen for {subject}. Elevene ser den på skjermen når agendaen er åpen.</Info>}
-      <label className="k-field">
-        <span>Navn</span>
-        <input
-          type="text"
-          id="activity-name-input"
-          className="k-input"
-          placeholder="For eksempel «Intro» eller «Oppgave 3»"
-          ref={nameRef}
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') handleSave(); }}
-        />
-      </label>
-      <div className="k-field-row">
-        <label className="k-field" style={{ flex: '0 0 150px' }}>
-          <span>Varighet (minutter)</span>
-          <input
-            type="number"
-            id="activity-duration-input"
-            className="k-input"
-            inputMode="numeric"
-            min="0"
-            placeholder="10"
-            value={duration}
-            onChange={e => setDuration(e.target.value)}
-          />
-        </label>
-      </div>
-      <SymbolVelger
-        id="activity-emoji-input"
-        value={emoji}
-        open={emojiPickerOpen}
-        onToggle={() => setEmojiPickerOpen(v => !v)}
-        onPick={em => { setEmoji(em); setEmojiPickerOpen(false); }}
-      />
-      <div className="k-dialog-actions">
-        <button type="button" id="activity-save" className="k-btn k-btn--ny k-btn--fylt" onClick={handleSave} disabled={!name.trim()}>Lagre</button>
-        <button type="button" id="activity-cancel" className="k-btn k-btn--tilbake" onClick={onCancel}>Avbryt</button>
-      </div>
-    </Dialog>
-  );
-}
-
 // ─── Dager til en dato ───────────────────────────────────────────────────────
 const DAGER_TIL_TIMER = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const DAGER_TIL_MINUTTER = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
@@ -227,7 +161,7 @@ function LoginModalInner({ onSuccess, onCancel }) {
 
   return (
     <Dialog onClose={onCancel} title="Lås opp for læreren">
-      <Info>Passordet låser opp redigering av timeplan, agenda og «Dager til» på denne skjermen.</Info>
+      <Info>Passordet låser opp redigering av timeplan, agendamaler og «Dager til» på denne skjermen.</Info>
       <label className="k-field">
         <span>Passord</span>
         <input
@@ -349,10 +283,6 @@ function ColorDetailModalInner({ subject, currentColor, currentEmoji, onSave, on
 
 export function EditModal(props) {
   return props.open ? <EditModalInner {...props} /> : null;
-}
-
-export function ActivityModal(props) {
-  return props.open ? <ActivityModalInner {...props} /> : null;
 }
 
 export function CountdownModal(props) {
