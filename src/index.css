@@ -1049,11 +1049,14 @@ body.ui-light .schedule-subject-input::placeholder {
     font-size: 0.85rem;
 }
 
+/* Lyst tema: hvit tekst forsvant mot den lyse bakgrunnen, så merket blir et
+   hvitt skilt med mørk tekst */
 body.ui-light .timeline-class-badge {
-    background: rgba(255, 255, 255, 0.34);
-    border-color: rgba(255, 255, 255, 0.42);
-    color: rgba(255, 255, 255, 0.98);
-    box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.4), inset -1px -1px 2px rgba(125, 138, 158, 0.12);
+    background: rgba(255, 255, 255, 0.86);
+    border-color: rgba(28, 39, 53, 0.14);
+    color: #1C2735;
+    text-shadow: none;
+    box-shadow: 0 2px 8px rgba(28, 39, 53, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 body.ui-dark .timeline-class-badge {

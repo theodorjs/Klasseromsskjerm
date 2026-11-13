@@ -197,6 +197,9 @@ body.ui-light {
     /* Lange ord som «Sikkerhetskopi» deles ved myk bindestrek i stedet for å stikke ut */
     -webkit-hyphens: manual; hyphens: manual; overflow-wrap: break-word;
 }
+/* Én kolonne: knappene ligger under hverandre i full bredde */
+.k-group-grid--en { grid-template-columns: minmax(0, 1fr); }
+.k-group-grid--en .k-btn { white-space: nowrap; }
 /* En del nr. to inne i en gruppe, under en tynn strek (som «Se en annen tid» under «Klasser») */
 .k-group-del {
     display: flex;

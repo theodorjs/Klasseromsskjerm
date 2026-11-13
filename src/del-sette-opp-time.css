@@ -192,10 +192,6 @@
     .dt-agenda.er-mange { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* ─── Verktøykassa: «Agenda for timen» ──────────────────────────── */
-
-.toolbox-item--time .icon { color: var(--ny); }
-
 /* ─── Dialogen ───────────────────────────────────────────────────── */
 
 .k-dialog.k-dialog--time {

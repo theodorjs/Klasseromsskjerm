@@ -51,6 +51,12 @@ html[data-skole="torderod"] body.skole-mode .week-number {
 
 /* Verktøykassa: symbolet i samme røde, navnet som før */
 html[data-skole="torderod"] body.skole-mode .toolbox-main .ikon { color: var(--skole-rod); }
+/* Klassemerket foran hver rad i tidslinja: skolens rødt på hvitt */
+html[data-skole="torderod"] body.skole-mode .timeline-class-badge {
+    background: #fff;
+    border-color: var(--skole-kant);
+    color: var(--skole-rod);
+}
 html[data-skole="torderod"] body.skole-mode .toolbox-main { border-color: var(--skole-kant); }
 
 /* ─── «Dager til»: hvit brikke med krem tittelfelt ─────────────────

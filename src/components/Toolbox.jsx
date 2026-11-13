@@ -100,6 +100,16 @@ export default function Toolbox({
             øverst, det som styrer hva skjermen viser i midten, oppsett nederst */}
         <p className="toolbox-gruppe" aria-hidden="true">I timen</p>
 
+        {/* «Agenda for timen»: agendapunkter, og ved behov tittel, tid og mål */}
+        <div className="toolbox-item" id="tool-plan" role="button" onClick={e => {
+          e.stopPropagation();
+          closeToolbox();
+          onOpenPlanlegg?.();
+        }}>
+          <span className="icon"><Ikon navn="list-checks" /></span>
+          <span className="label">Agenda for timen</span>
+        </div>
+
         <div className="toolbox-item" id="tool-timer" role="button" onClick={e => {
           e.stopPropagation();
           onOpenTimer();
@@ -107,16 +117,6 @@ export default function Toolbox({
         }}>
           <span className="icon"><Ikon navn="timer" /></span>
           <span className="label">Nedteller</span>
-        </div>
-
-        {/* «Agenda for timen»: agendapunkter, og ved behov tittel, tid og mål */}
-        <div className="toolbox-item toolbox-item--time" id="tool-plan" role="button" onClick={e => {
-          e.stopPropagation();
-          closeToolbox();
-          onOpenPlanlegg?.();
-        }}>
-          <span className="icon"><Ikon navn="list-checks" /></span>
-          <span className="label">Agenda for timen</span>
         </div>
 
         <div className="toolbox-item" id="tool-note" role="button" onClick={e => {
@@ -128,6 +128,19 @@ export default function Toolbox({
         </div>
 
         <p className="toolbox-gruppe" aria-hidden="true">På skjermen</p>
+
+        <div className="toolbox-item theme-switch-tool" id="tool-mode" onClick={e => e.stopPropagation()}>
+          <ThemeSwitch themeMode={themeMode} onSetTheme={mode => { onSetTheme(mode); resetTimer(); }} />
+        </div>
+
+        <div className="toolbox-item" id="tool-wall" role="button" onClick={e => {
+          e.stopPropagation();
+          closeToolbox();
+          onEnterWallMode?.();
+        }}>
+          <span className="icon"><Ikon navn="tv" /></span>
+          <span className="label">Veggskjerm</span>
+        </div>
 
         <div className="toolbox-item countdown-tool" id="tool-countdown"
           onClick={e => e.stopPropagation()}
@@ -165,19 +178,6 @@ export default function Toolbox({
               }}
             ><Ikon navn={countdownsVisible ? 'eye' : 'eye-off'} /></button>
           </div>
-        </div>
-
-        <div className="toolbox-item" id="tool-wall" role="button" onClick={e => {
-          e.stopPropagation();
-          closeToolbox();
-          onEnterWallMode?.();
-        }}>
-          <span className="icon"><Ikon navn="tv" /></span>
-          <span className="label">Veggskjerm</span>
-        </div>
-
-        <div className="toolbox-item theme-switch-tool" id="tool-mode" onClick={e => e.stopPropagation()}>
-          <ThemeSwitch themeMode={themeMode} onSetTheme={mode => { onSetTheme(mode); resetTimer(); }} />
         </div>
 
         <p className="toolbox-gruppe" aria-hidden="true">Oppsett</p>

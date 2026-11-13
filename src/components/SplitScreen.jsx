@@ -195,12 +195,13 @@ export default function SplitScreen({
 
             <section className="k-group" aria-label="Deling og sikkerhetskopi">
               <h3 className="k-group-title">Deling og sikkerhetskopi</h3>
-              <div className="k-group-grid">
+              {/* Én knapp per linje i full bredde: lange ord som «Sikkerhetskopi» får plass */}
+              <div className="k-group-grid k-group-grid--en">
                 {currentClassName && classes[currentClassName] && (
                   <button className="k-btn" id="share-class-btn" onClick={onOpenShare}><Ikon navn="link" /> Del timeplan</button>
                 )}
-                <button className="k-btn" id="backup-download-btn" onClick={handleDownloadBackup}><Ikon navn="download" /> Sikkerhets­kopi</button>
-                <button className="k-btn" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}><Ikon navn="upload" /> Gjen­opprett</button>
+                <button className="k-btn" id="backup-download-btn" onClick={handleDownloadBackup}><Ikon navn="download" /> Sikkerhetskopi</button>
+                <button className="k-btn" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}><Ikon navn="upload" /> Gjenopprett</button>
                 {canUndoImport && lastImportInfo && (
                   <button className="k-btn" id="undo-import-btn" onClick={() => {
                     const when = lastImportInfo.at
