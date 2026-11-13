@@ -192,7 +192,22 @@ body.ui-light {
     gap: 10px;
     width: 100%;
 }
-.k-group-grid .k-btn { width: 100%; min-height: 52px; white-space: normal; text-align: center; }
+.k-group-grid .k-btn {
+    width: 100%; min-height: 52px; min-width: 0; white-space: normal; text-align: center;
+    /* Lange ord som «Sikkerhetskopi» deles ved myk bindestrek i stedet for å stikke ut */
+    -webkit-hyphens: manual; hyphens: manual; overflow-wrap: break-word;
+}
+/* En del nr. to inne i en gruppe, under en tynn strek (som «Se en annen tid» under «Klasser») */
+.k-group-del {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--instrument-kant);
+}
 .k-group-grid .k-btn:only-child { grid-column: 1 / -1; }
 
 /* ─── (i) Forklaringer ───────────────────────────────────────────── */
@@ -1188,6 +1203,32 @@ body.under-the-hood-active .timer-panel:not(.is-big) { display: none; }
     padding: 24px 48px 64px;
 }
 .klasse-meny .class-grid { width: 100%; max-width: 900px; }
+/* Tilbake-knappen står fast øverst til venstre, som i timeplaneditoren,
+   og blir synlig uansett hvor langt siden rulles (klassemenyen og
+   bursdagslista) */
+.k-tilbake-fast {
+    position: fixed;
+    top: calc(var(--topp, 0px) + 16px);
+    left: 16px;
+    z-index: 5;
+    box-shadow: 0 6px 16px rgba(28, 39, 53, 0.16);
+}
+/* Låsen speiler «Tilbake»: fast øverst til høyre */
+.k-las-fast {
+    position: fixed;
+    top: calc(var(--topp, 0px) + 16px);
+    right: 16px;
+    z-index: 5;
+    box-shadow: 0 6px 16px rgba(28, 39, 53, 0.16);
+}
+/* Smale skjermer: tittelen flyttes ned under knappene, så de ikke kolliderer */
+@media (max-width: 860px) {
+    .klasse-meny.har-fast-tilbake { padding-top: 72px; }
+}
+/* Telefon: «Tilbake» uten «til skjermen», så den og låsen får plass på én rad */
+@media (max-width: 520px) {
+    .k-skjul-smal { display: none; }
+}
 .klasse-meny .class-tool-title { margin-bottom: 8px; }
 .klasse-grupper {
     display: flex;
@@ -1733,20 +1774,31 @@ body.under-the-hood-active .timer-mini { display: none !important; }
 /* Små overskrifter i verktøymenyen: I timen, På skjermen, Oppsett.
    Samme stil som overskriftene i «Klasse og timeplan». */
 .toolbox-gruppe {
-    margin: 6px 14px -2px;
-    font-size: 0.72rem;
+    /* Liten merkelapp på eget glass, så den kan leses oppå hva som helst bak */
+    align-self: flex-start;
+    margin: 6px 10px -2px;
+    padding: 4px 10px;
+    border: 1px solid var(--instrument-kant);
+    border-radius: 999px;
+    background: var(--instrument);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22), inset 0 1px 0 var(--instrument-lys);
+    font-size: 0.7rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     line-height: 1.2;
-    color: rgba(255, 255, 255, 0.78);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    color: var(--tekst-dempet);
     pointer-events: none;
     user-select: none;
     -webkit-user-select: none;
 }
 .toolbox-gruppe:first-child { margin-top: 0; }
-body.light-mode .toolbox-gruppe { color: rgba(28, 39, 53, 0.66); text-shadow: none; }
+/* Liggende iPad: menyen må slutte over tidslinja, så alt strammes litt inn */
+@media (max-height: 900px) {
+    .toolbox-items { gap: 6px; }
+    .toolbox-item { padding-top: 8px; padding-bottom: 8px; }
+    .toolbox-gruppe { margin-top: 4px; margin-bottom: -2px; padding: 3px 9px; font-size: 0.66rem; }
+}
 .countdown-tool-btn {
     background: var(--instrument-3);
     color: var(--tekst);

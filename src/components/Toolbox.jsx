@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ThemeSwitch from './ThemeSwitch.jsx';
 import Ikon from './Ikon.jsx';
 import useRolig from '../hooks/useRolig.js';
-import { skoleTjeneste, innloggingsadresse, forlatElev, lyttTilTjeneste, lesTjenesteTilstand } from '../utils/ksTjeneste.js';
 
 export default function Toolbox({
   themeMode,
@@ -12,17 +11,12 @@ export default function Toolbox({
   onOpenAgenda,
   onOpenNote,
   onOpenClass,
-  editPermission,
-  onToggleLock,
   currentClass,
   onAddCountdown,
   onToggleCountdownVisibility,
   onEnterWallMode,
 }) {
   const [open, setOpen] = useState(false);
-  const [tjeneste] = useState(() => skoleTjeneste());
-  const { elev } = useSyncExternalStore(lyttTilTjeneste, lesTjenesteTilstand);
-  const elevmodus = !!tjeneste && elev;
   const containerRef = useRef(null);
   const timerRef = useRef(null);
   // Starter med navnet «Verktøy», krymper til bare kofferten når ingen rører skjermen
@@ -207,24 +201,6 @@ export default function Toolbox({
           <span className="label">Klasse og timeplan</span>
         </div>
 
-        {/* Elevmodus på skolens adresse: i stedet for «Lås opp» kan en lærer logge inn med Feide */}
-        {elevmodus ? (
-          <div className="toolbox-item" id="tool-teacher-login" role="button"
-            title="Gå ut av elevmodus og logg inn med Feide"
-            onClick={e => {
-              e.stopPropagation();
-              forlatElev();
-              window.location.assign(innloggingsadresse(tjeneste));
-            }}>
-            <span className="icon"><Ikon navn="lock" /></span>
-            <span className="label">Logg inn som lærer</span>
-          </div>
-        ) : (
-          <div className="toolbox-item" id="tool-lock" role="button" onClick={() => onToggleLock()}>
-            <span className="icon" id="lock-icon"><Ikon navn={editPermission ? 'lock-open' : 'lock'} /></span>
-            <span className="label" id="lock-label">{editPermission ? 'Låst opp' : 'Lås opp'}</span>
-          </div>
-        )}
       </div>
 
     </div>

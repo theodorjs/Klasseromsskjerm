@@ -96,7 +96,7 @@ function SkoleTjeneste() {
     <div className="om-tjeneste">
       <p className="k-dialog-tekst">
         {navn ? <>Innlogget som <strong>{navn}</strong>.</> : 'Innlogget med Feide.'}{' '}
-        Bursdagene finner du under «Klasse og timeplan» når du har trykket «Lås opp» i verktøykassen.
+        Bursdagene finner du under «Klasse og timeplan» når du har trykket «Lås opp» øverst til høyre der.
       </p>
       <div className="om-tjeneste-knapper">
         <button type="button" className="k-btn k-btn--tilbake k-btn--liten" onClick={loggUt}>Logg ut</button>

@@ -233,9 +233,10 @@ export default function App() {
   // Handler: lock toggle
   function handleToggleLock() {
     if (editPermission) {
-      if (confirm('Vil du logge ut?')) {
+      if (confirm('Vil du låse igjen? Da kan ingen endre timeplan, fag og klasser før noen låser opp.')) {
         revokeEditPermission();
-        setUnderTheHoodOpen(false);
+        // Låsen står i «Klasse og timeplan»: bli der, men tilbake til klassevalget
+        setUnderTheHoodView('classGrid');
       }
     } else {
       setLoginModalOpen(true);
@@ -310,8 +311,6 @@ export default function App() {
             onOpenAgenda={() => setAgendaOpen(true)}
             onOpenNote={() => setNoteOpen(true)}
             onOpenClass={() => { setUnderTheHoodOpen(true); setUnderTheHoodView('classGrid'); }}
-            editPermission={editPermission}
-            onToggleLock={handleToggleLock}
             currentClass={currentClass}
             onAddCountdown={() => setCountdownModal({ index: null })}
             onToggleCountdownVisibility={toggleCountdownVisibility}
@@ -431,6 +430,7 @@ export default function App() {
         activeTimelineClassNames={activeTimelineClassNames}
         editPermission={editPermission}
         onClose={() => setUnderTheHoodOpen(false)}
+        onToggleLock={handleToggleLock}
         onOpenTimePicker={() => { setUnderTheHoodOpen(false); setTimePickerOpen(true); }}
         onSelectClass={selectClass}
         onToggleTimelineClass={toggleTimelineClass}

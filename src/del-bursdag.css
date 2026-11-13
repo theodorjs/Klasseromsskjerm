@@ -165,19 +165,6 @@ body.light-mode .k-btn--bursdag { --k: #7B3FB8; --k-tint: rgba(123, 63, 184, 0.1
 .k-btn-ballong { width: 1.05em; height: 1.7em; margin: -0.35em 0 -0.2em; flex: 0 0 auto; }
 
 .bursdagsliste { max-width: 640px; }
-/* Tilbake-knappen står fast øverst til venstre på skjermen, som i
-   timeplaneditoren, og blir stående der mens lista rulles */
-.bl-tilbake {
-    position: fixed;
-    top: calc(var(--topp, 0px) + 16px);
-    left: 16px;
-    z-index: 5;
-    box-shadow: 0 6px 16px rgba(28, 39, 53, 0.16);
-}
-/* Smale skjermer: tittelen flyttes ned under knappen, så de ikke kolliderer */
-@media (max-width: 860px) {
-    .klasse-meny.bursdagsliste { padding-top: 72px; }
-}
 .bl-tittel { display: flex; align-items: center; justify-content: center; gap: 12px; text-align: center; }
 .bl-tittel-ballong { width: 1.1em; height: 1.75em; margin: -0.3em 0; flex: 0 0 auto; }
 .bl-gruppe { width: 100%; max-width: 560px; }

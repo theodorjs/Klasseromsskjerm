@@ -59,9 +59,9 @@ export default function Bursdagsliste({ klassenavn, onBack }) {
   }
 
   return (
-    <div className="klasse-meny bursdagsliste">
+    <div className="klasse-meny bursdagsliste har-fast-tilbake">
       {/* Står fast øverst til venstre mens lista rulles */}
-      <button type="button" className="k-btn k-btn--tilbake k-btn--liten bl-tilbake" onClick={onBack}>
+      <button type="button" className="k-btn k-btn--tilbake k-btn--liten k-tilbake-fast" onClick={onBack}>
         <Ikon navn="arrow-left" /> Tilbake
       </button>
       <h1 className="class-tool-title bl-tittel">

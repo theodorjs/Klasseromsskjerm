@@ -1,11 +1,11 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 import ScheduleEditor from './ScheduleEditor.jsx';
 import SubjectColorPicker from './SubjectColorPicker.jsx';
 import { downloadBackup, parseBackupFile, applyBackup } from '../utils/backup.js';
 import Ikon from './Ikon.jsx';
 import Ballong from './Ballong.jsx';
 import Bursdagsliste from './Bursdagsliste.jsx';
-import { kanSeBursdager } from '../utils/ksTjeneste.js';
+import { kanSeBursdager, skoleTjeneste, innloggingsadresse, forlatElev, lyttTilTjeneste, lesTjenesteTilstand } from '../utils/ksTjeneste.js';
 import OmKlasseskjerm, { Signatur } from './OmKlasseskjerm.jsx';
 
 export default function SplitScreen({
@@ -18,6 +18,7 @@ export default function SplitScreen({
   activeTimelineClassNames,
   editPermission,
   onClose,
+  onToggleLock,
   onOpenTimePicker,
   onSelectClass,
   onToggleTimelineClass,
@@ -36,6 +37,10 @@ export default function SplitScreen({
   const fileInputRef = useRef(null);
   const [dataMessage, setDataMessage] = useState(null); // { text, kind: 'ok' | 'error' }
   const [omOpen, setOmOpen] = useState(false);
+  // Elevmodus på skolens adresse: i stedet for «Lås opp» kan en lærer logge inn med Feide
+  const [tjeneste] = useState(() => skoleTjeneste());
+  const { elev } = useSyncExternalStore(lyttTilTjeneste, lesTjenesteTilstand);
+  const elevmodus = !!tjeneste && elev;
 
   // Meldingen hører til økten i panelet, ikke til neste gang det åpnes
   const [wasOpen, setWasOpen] = useState(open);
@@ -72,19 +77,33 @@ export default function SplitScreen({
   }
 
   function renderClassGrid() {
-    // For alle, også låst: se hvordan skjermen ser ut en annen dag eller tid
-    const tidGruppe = (
-      <section className="k-group" aria-label="Se skjermen på en annen tid">
+    // For alle, også låst: se hvordan skjermen ser ut en annen dag eller tid.
+    // Låst opp ligger den nederst i «Klasser»-boksen, så det ikke blir en ekstra rad.
+    const tidInnhold = (
+      <>
         <h3 className="k-group-title">Se en annen tid</h3>
         <div className="k-group-row">
           <button className="k-btn" id="tool-calendar" onClick={onOpenTimePicker}><Ikon navn="calendar-clock" /> Velg tid</button>
         </div>
         <p className="info">Sjekk timeplanen en annen dag eller tid. «Simulert tid» står øverst til du går tilbake til nå.</p>
-      </section>
+      </>
     );
 
     return (
-      <div className="klasse-meny">
+      <div className="klasse-meny har-fast-tilbake">
+        <button className="k-btn k-btn--tilbake k-btn--liten k-tilbake-fast" id="class-back-btn" onClick={onClose}><Ikon navn="arrow-left" /> Tilbake<span className="k-skjul-smal"> til skjermen</span></button>
+        {/* Låsen hører til innstillingene: fast øverst til høyre, speilet av «Tilbake» */}
+        {elevmodus ? (
+          <button className="k-btn k-btn--liten k-las-fast" id="tool-teacher-login"
+            title="Gå ut av elevmodus og logg inn med Feide"
+            onClick={() => { forlatElev(); window.location.assign(innloggingsadresse(tjeneste)); }}>
+            <Ikon navn="lock" /> Logg inn som lærer
+          </button>
+        ) : (
+          <button className={`k-btn k-btn--liten k-las-fast${editPermission ? '' : ' k-btn--ny'}`} id="tool-lock" onClick={onToggleLock}>
+            <Ikon navn={editPermission ? 'lock-open' : 'lock'} /> <span id="lock-label">{editPermission ? 'Lås igjen' : 'Lås opp'}</span>
+          </button>
+        )}
         <h1 className="class-tool-title">Velg klasse</h1>
         <div className="class-grid" id="class-grid">
           {Object.keys(classes).map(className => {
@@ -118,7 +137,9 @@ export default function SplitScreen({
         </div>
         {!editPermission && (
           <p className="klasse-laas">
-            <Ikon navn="lock" /> Logg inn med «Lås opp» i verktøykassen for å endre timeplan, fag og klasser{kanSeBursdager() ? ' og se bursdagene' : ''}.
+            <Ikon navn="lock" /> {elevmodus
+              ? 'Logg inn som lærer øverst til høyre'
+              : 'Trykk «Lås opp» øverst til høyre'} for å endre timeplan, fag og klasser{kanSeBursdager() ? ' og se bursdagene' : ''}.
           </p>
         )}
 
@@ -169,6 +190,7 @@ export default function SplitScreen({
                 }}>+ Ny klasse</button>
               </div>
               <p className="info">Huk av klassene som skal vises i tidslinjen. Trykk på kortet for å velge hvilken klasse skjermen følger.</p>
+              <div className="k-group-del" role="group" aria-label="Se skjermen på en annen tid">{tidInnhold}</div>
             </section>
 
             <section className="k-group" aria-label="Deling og sikkerhetskopi">
@@ -177,8 +199,8 @@ export default function SplitScreen({
                 {currentClassName && classes[currentClassName] && (
                   <button className="k-btn" id="share-class-btn" onClick={onOpenShare}><Ikon navn="link" /> Del timeplan</button>
                 )}
-                <button className="k-btn" id="backup-download-btn" onClick={handleDownloadBackup}><Ikon navn="download" /> Sikkerhetskopi</button>
-                <button className="k-btn" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}><Ikon navn="upload" /> Gjenopprett</button>
+                <button className="k-btn" id="backup-download-btn" onClick={handleDownloadBackup}><Ikon navn="download" /> Sikkerhets­kopi</button>
+                <button className="k-btn" id="backup-restore-btn" onClick={() => fileInputRef.current?.click()}><Ikon navn="upload" /> Gjen­opprett</button>
                 {canUndoImport && lastImportInfo && (
                   <button className="k-btn" id="undo-import-btn" onClick={() => {
                     const when = lastImportInfo.at
@@ -202,8 +224,6 @@ export default function SplitScreen({
                 onChange={handleRestoreFile}
               />
             </section>
-
-            {tidGruppe}
           </div>
         )}
         {editPermission && dataMessage && (
@@ -212,9 +232,11 @@ export default function SplitScreen({
           </p>
         )}
 
-        {!editPermission && <div className="klasse-grupper">{tidGruppe}</div>}
-
-        <button className="k-btn k-btn--tilbake" id="class-back-btn" onClick={onClose}><Ikon navn="arrow-left" /> Tilbake til skjermen</button>
+        {!editPermission && (
+          <div className="klasse-grupper">
+            <section className="k-group" aria-label="Se skjermen på en annen tid">{tidInnhold}</section>
+          </div>
+        )}
 
         {/* Opphav og «Om» hører til innstillingene, ikke til verktøyene i timen */}
         <footer className="klasse-fot">
